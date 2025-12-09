@@ -5,7 +5,7 @@
  */
 
 $pageTitle = 'Empfehlungsprogramm nach Branche';
-$metaDescription = 'Leadbusiness für Ihre Branche: Zahnärzte, Friseure, Fitnessstudios, Restaurants, Coaches, Online-Shops und mehr. Finden Sie die perfekte Lösung für Ihr Empfehlungsprogramm.';
+$metaDescription = 'Leadbusiness für Ihre Branche: Zahnärzte, Friseure, Fitnessstudios, Restaurants, Coaches, Online-Shops, Handwerker und mehr. Finden Sie die perfekte Lösung für Ihr Empfehlungsprogramm.';
 $currentPage = 'branchen';
 
 require_once __DIR__ . '/../../templates/marketing/header.php';
@@ -66,9 +66,18 @@ $branchen = [
         'description' => 'Kunden empfehlen Ihren Shop – Rabatte, Gutscheine oder Gratis-Versand als Belohnung.',
     ],
     [
-        'name' => 'Online-Kurse & Infoprodukte',
+        'name' => 'Handwerker',
+        'slug' => 'handwerker',
+        'icon' => 'fa-hammer',
+        'color' => 'amber',
+        'bgFrom' => 'from-amber-500',
+        'bgTo' => 'to-orange-600',
+        'description' => 'Zufriedene Kunden empfehlen Sie in der Nachbarschaft – Rabatte oder Gratis-Anfahrt als Belohnung.',
+    ],
+    [
+        'name' => 'Online-Marketing & Kurse',
         'slug' => 'onlinemarketing',
-        'icon' => 'fa-graduation-cap',
+        'icon' => 'fa-bullhorn',
         'color' => 'indigo',
         'bgFrom' => 'from-indigo-500',
         'bgTo' => 'to-violet-600',
@@ -96,25 +105,25 @@ $branchen = [
 <!-- Branchen Grid -->
 <section class="py-12 md:py-20 bg-white dark:bg-slate-900">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
             <?php foreach ($branchen as $branche): ?>
             <a href="/branchen/<?= $branche['slug'] ?>" 
-               class="group bg-white dark:bg-slate-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 dark:border-slate-700">
+               class="group bg-white dark:bg-slate-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 dark:border-slate-700 hover:border-<?= $branche['color'] ?>-300 dark:hover:border-<?= $branche['color'] ?>-700">
                 
                 <!-- Header mit Gradient -->
-                <div class="h-32 bg-gradient-to-br <?= $branche['bgFrom'] ?> <?= $branche['bgTo'] ?> relative flex items-center justify-center">
-                    <div class="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
-                        <i class="fas <?= $branche['icon'] ?> text-white text-3xl"></i>
+                <div class="h-28 bg-gradient-to-br <?= $branche['bgFrom'] ?> <?= $branche['bgTo'] ?> relative flex items-center justify-center">
+                    <div class="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center transform group-hover:scale-110 transition-transform">
+                        <i class="fas <?= $branche['icon'] ?> text-white text-2xl"></i>
                     </div>
-                    <div class="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-black/20 to-transparent"></div>
+                    <div class="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-black/20 to-transparent"></div>
                 </div>
                 
                 <!-- Content -->
-                <div class="p-6">
-                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+                <div class="p-5">
+                    <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2 group-hover:text-<?= $branche['color'] ?>-600 dark:group-hover:text-<?= $branche['color'] ?>-400 transition-colors">
                         <?= $branche['name'] ?>
                     </h3>
-                    <p class="text-gray-600 dark:text-gray-400 text-sm mb-4">
+                    <p class="text-gray-600 dark:text-gray-400 text-sm mb-3 line-clamp-2">
                         <?= $branche['description'] ?>
                     </p>
                     <div class="flex items-center text-primary-500 font-medium text-sm group-hover:text-primary-600 transition-colors">
@@ -140,6 +149,28 @@ $branchen = [
                 Kein Problem! Leadbusiness funktioniert für jedes Unternehmen mit zufriedenen Kunden. 
                 Sie können alle Texte, Belohnungen und das Design individuell anpassen.
             </p>
+            
+            <!-- Beispiel weitere Branchen -->
+            <div class="flex flex-wrap justify-center gap-2 mb-8">
+                <?php
+                $weitereBranchen = [
+                    ['icon' => 'fa-stethoscope', 'name' => 'Ärzte'],
+                    ['icon' => 'fa-heart', 'name' => 'Therapeuten'],
+                    ['icon' => 'fa-camera', 'name' => 'Fotografen'],
+                    ['icon' => 'fa-spa', 'name' => 'Kosmetik'],
+                    ['icon' => 'fa-car', 'name' => 'Autowerkstätten'],
+                    ['icon' => 'fa-hotel', 'name' => 'Hotels'],
+                    ['icon' => 'fa-dog', 'name' => 'Tierärzte'],
+                    ['icon' => 'fa-laptop-code', 'name' => 'Software'],
+                ];
+                foreach ($weitereBranchen as $wb): ?>
+                <span class="px-3 py-1 bg-gray-100 dark:bg-slate-600 rounded-full text-sm text-gray-600 dark:text-gray-300 inline-flex items-center gap-1">
+                    <i class="fas <?= $wb['icon'] ?> text-gray-400"></i>
+                    <?= $wb['name'] ?>
+                </span>
+                <?php endforeach; ?>
+            </div>
+            
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
                 <a href="/onboarding" class="btn-primary btn-large inline-flex items-center justify-center gap-2">
                     <span>Jetzt kostenlos starten</span>
