@@ -247,7 +247,7 @@ require_once __DIR__ . '/../templates/marketing/header.php';
                         <span>Was kostet Leadbusiness?</span>
                     </div>
                     <div class="faq-answer text-gray-600">
-                        <p>Einmalig 499€ für die Einrichtung, dann 49€/Monat (Starter) oder 99€/Monat (Professional). Die ersten 14 Tage sind kostenlos zum Testen. Alle Preise verstehen sich zzgl. gesetzlicher MwSt.</p>
+                        <p>Einmalig 499€ für die Einrichtung, dann 49€/Monat (Starter) oder 99€/Monat (Professional). Die ersten 7 Tage sind kostenlos zum Testen. Alle Preise verstehen sich zzgl. gesetzlicher MwSt.</p>
                     </div>
                 </div>
                 
@@ -256,7 +256,7 @@ require_once __DIR__ . '/../templates/marketing/header.php';
                         <span>Gibt es eine Testphase?</span>
                     </div>
                     <div class="faq-answer text-gray-600">
-                        <p>Ja, Sie können Leadbusiness 14 Tage lang kostenlos testen. Keine Kreditkarte erforderlich. Nach der Testphase entscheiden Sie, ob Sie weitermachen möchten. Wenn nicht, werden alle Daten gelöscht.</p>
+                        <p>Ja, Sie können Leadbusiness 7 Tage lang kostenlos testen. Keine Kreditkarte erforderlich. Nach der Testphase entscheiden Sie, ob Sie weitermachen möchten. Wenn nicht, werden alle Daten gelöscht.</p>
                     </div>
                 </div>
                 
