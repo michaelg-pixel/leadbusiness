@@ -5,8 +5,6 @@
  * Allgemeine Hilfsfunktionen für das gesamte Projekt.
  */
 
-use Leadbusiness\Database;
-
 /**
  * Konfiguration laden
  */
@@ -28,7 +26,6 @@ function config(string $key, $default = null)
     
     $value = $configs[$file];
     
-    // Verschachtelte Keys auflösen
     for ($i = 1; $i < count($parts); $i++) {
         if (!is_array($value) || !isset($value[$parts[$i]])) {
             return $default;
@@ -41,10 +38,13 @@ function config(string $key, $default = null)
 
 /**
  * Datenbank-Instanz abrufen
+ * Hinweis: Wird nur definiert wenn nicht bereits in init.php definiert
  */
-function db(): Database
-{
-    return Database::getInstance();
+if (!function_exists('db')) {
+    function db(): \Leadbusiness\Database
+    {
+        return \Leadbusiness\Database::getInstance();
+    }
 }
 
 /**
@@ -126,9 +126,9 @@ function jsonError(string $message, int $status = 400, array $errors = []): void
 /**
  * String escapen für HTML
  */
-function e(string $string): string
+function e(?string $string): string
 {
-    return htmlspecialchars($string, ENT_QUOTES, 'UTF-8');
+    return htmlspecialchars($string ?? '', ENT_QUOTES, 'UTF-8');
 }
 
 /**
@@ -137,6 +137,15 @@ function e(string $string): string
 function input(string $key, $default = null)
 {
     return $_POST[$key] ?? $_GET[$key] ?? $default;
+}
+
+/**
+ * Input sanitizen
+ */
+function sanitize(?string $value): string
+{
+    if ($value === null) return '';
+    return trim(htmlspecialchars($value, ENT_QUOTES, 'UTF-8'));
 }
 
 /**
@@ -178,7 +187,7 @@ function hashIp(string $ip): string
 function getClientIp(): string
 {
     $headers = [
-        'HTTP_CF_CONNECTING_IP',     // Cloudflare
+        'HTTP_CF_CONNECTING_IP',
         'HTTP_X_FORWARDED_FOR',
         'HTTP_X_REAL_IP',
         'REMOTE_ADDR'
@@ -251,7 +260,7 @@ function generateToken(int $length = 32): string
 function getSubdomain(): ?string
 {
     $host = $_SERVER['HTTP_HOST'] ?? '';
-    $baseDomain = config('settings.subdomain.base_domain', 'empfohlen.de');
+    $baseDomain = config('settings.subdomain.base_domain', 'empfehlungen.cloud');
     
     if (str_ends_with($host, '.' . $baseDomain)) {
         return substr($host, 0, -(strlen($baseDomain) + 1));
@@ -268,26 +277,23 @@ function validateSubdomain(string $subdomain): array
     $errors = [];
     $settings = config('settings.subdomain');
     
-    // Länge prüfen
-    if (strlen($subdomain) < $settings['min_length']) {
-        $errors[] = "Subdomain muss mindestens {$settings['min_length']} Zeichen lang sein";
+    if (strlen($subdomain) < ($settings['min_length'] ?? 3)) {
+        $errors[] = "Subdomain muss mindestens 3 Zeichen lang sein";
     }
     
-    if (strlen($subdomain) > $settings['max_length']) {
-        $errors[] = "Subdomain darf maximal {$settings['max_length']} Zeichen lang sein";
+    if (strlen($subdomain) > ($settings['max_length'] ?? 50)) {
+        $errors[] = "Subdomain darf maximal 50 Zeichen lang sein";
     }
     
-    // Format prüfen
     if (!preg_match('/^[a-z0-9][a-z0-9-]*[a-z0-9]$/', $subdomain) && strlen($subdomain) > 2) {
         $errors[] = "Subdomain darf nur Kleinbuchstaben, Zahlen und Bindestriche enthalten";
     }
     
-    // Reservierte Namen prüfen
-    if (in_array($subdomain, $settings['reserved'])) {
+    $reserved = $settings['reserved'] ?? ['www', 'admin', 'api', 'app', 'dashboard', 'mail', 'smtp', 'ftp', 'test', 'dev', 'staging'];
+    if (in_array($subdomain, $reserved)) {
         $errors[] = "Diese Subdomain ist reserviert";
     }
     
-    // Bereits vergeben prüfen
     if (empty($errors)) {
         $exists = db()->fetchColumn("SELECT COUNT(*) FROM customers WHERE subdomain = ?", [$subdomain]);
         if ($exists) {
@@ -311,32 +317,19 @@ function validateEmail(string $email): bool
  */
 function slugify(string $text, string $divider = '-'): string
 {
-    // Umlaute ersetzen
     $text = str_replace(
         ['ä', 'ö', 'ü', 'ß', 'Ä', 'Ö', 'Ü'],
         ['ae', 'oe', 'ue', 'ss', 'ae', 'oe', 'ue'],
         $text
     );
     
-    // Alles außer Buchstaben und Zahlen durch Divider ersetzen
     $text = preg_replace('~[^\pL\d]+~u', $divider, $text);
-    
-    // Transliterate
     $text = iconv('utf-8', 'us-ascii//TRANSLIT', $text);
-    
-    // Alles außer Buchstaben, Zahlen und Divider entfernen
     $text = preg_replace('~[^-\w]+~', '', $text);
-    
-    // Trim
     $text = trim($text, $divider);
-    
-    // Mehrfache Divider entfernen
     $text = preg_replace('~-+~', $divider, $text);
     
-    // Kleinschreibung
-    $text = strtolower($text);
-    
-    return $text;
+    return strtolower($text);
 }
 
 /**
@@ -344,11 +337,7 @@ function slugify(string $text, string $divider = '-'): string
  */
 function formatDate(?string $date, string $format = 'd.m.Y'): string
 {
-    if (!$date) {
-        return '';
-    }
-    
-    return date($format, strtotime($date));
+    return $date ? date($format, strtotime($date)) : '';
 }
 
 /**
@@ -356,28 +345,20 @@ function formatDate(?string $date, string $format = 'd.m.Y'): string
  */
 function formatDateTime(?string $date, string $format = 'd.m.Y H:i'): string
 {
-    if (!$date) {
-        return '';
-    }
-    
-    return date($format, strtotime($date));
+    return $date ? date($format, strtotime($date)) : '';
 }
 
 /**
- * Relative Zeit formatieren (vor X Minuten, etc.)
+ * Relative Zeit formatieren
  */
 function timeAgo(?string $datetime): string
 {
-    if (!$datetime) {
-        return '';
-    }
+    if (!$datetime) return '';
     
     $time = strtotime($datetime);
     $diff = time() - $time;
     
-    if ($diff < 60) {
-        return 'gerade eben';
-    }
+    if ($diff < 60) return 'gerade eben';
     if ($diff < 3600) {
         $minutes = floor($diff / 60);
         return "vor {$minutes} " . ($minutes === 1 ? 'Minute' : 'Minuten');
@@ -444,11 +425,9 @@ function anonymizeName(string $name): string
     $parts = explode(' ', trim($name));
     
     if (count($parts) >= 2) {
-        // Vorname + Initial Nachname
         return $parts[0] . ' ' . mb_substr($parts[count($parts) - 1], 0, 1) . '.';
     }
     
-    // Nur ein Name: Ersten 3 Buchstaben + ...
     return mb_substr($name, 0, 3) . '...';
 }
 
@@ -457,16 +436,12 @@ function anonymizeName(string $name): string
  */
 function debug_log(mixed $data, string $label = ''): void
 {
-    if (!config('settings.debug')) {
-        return;
-    }
+    if (!config('settings.debug')) return;
     
     $logFile = __DIR__ . '/../logs/debug.log';
     $logDir = dirname($logFile);
     
-    if (!is_dir($logDir)) {
-        mkdir($logDir, 0755, true);
-    }
+    if (!is_dir($logDir)) mkdir($logDir, 0755, true);
     
     $timestamp = date('Y-m-d H:i:s');
     $message = $label ? "[{$label}] " : '';
@@ -476,44 +451,11 @@ function debug_log(mixed $data, string $label = ''): void
 }
 
 /**
- * Error-Log
- */
-function error_log_custom(string $message, array $context = []): void
-{
-    $logFile = __DIR__ . '/../logs/error.log';
-    $logDir = dirname($logFile);
-    
-    if (!is_dir($logDir)) {
-        mkdir($logDir, 0755, true);
-    }
-    
-    $timestamp = date('Y-m-d H:i:s');
-    $contextStr = !empty($context) ? ' | ' . json_encode($context) : '';
-    
-    file_put_contents($logFile, "[{$timestamp}] {$message}{$contextStr}\n", FILE_APPEND);
-}
-
-/**
- * View rendern
- */
-function view(string $template, array $data = []): string
-{
-    extract($data);
-    
-    ob_start();
-    include __DIR__ . "/../templates/{$template}.php";
-    return ob_get_clean();
-}
-
-/**
  * Flash-Nachricht setzen
  */
 function flash(string $type, string $message): void
 {
-    if (!isset($_SESSION['flash'])) {
-        $_SESSION['flash'] = [];
-    }
-    
+    if (!isset($_SESSION['flash'])) $_SESSION['flash'] = [];
     $_SESSION['flash'][$type] = $message;
 }
 
