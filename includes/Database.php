@@ -219,16 +219,17 @@ class Database
     
     /**
      * Alle Zeilen mit Bedingung finden
+     * FIXED: Explicit nullable types for PHP 8.4 compatibility
      */
-    public function findAllBy(string $table, array $conditions, string $orderBy = null, int $limit = null): array
+    public function findAllBy(string $table, array $conditions, ?string $orderBy = null, ?int $limit = null): array
     {
         $where = implode(' = ? AND ', array_keys($conditions)) . ' = ?';
         $sql = "SELECT * FROM {$table} WHERE {$where}";
         
-        if ($orderBy) {
+        if ($orderBy !== null) {
             $sql .= " ORDER BY {$orderBy}";
         }
-        if ($limit) {
+        if ($limit !== null) {
             $sql .= " LIMIT {$limit}";
         }
         
@@ -258,7 +259,7 @@ class Database
     /**
      * Unserialisierung verhindern (Singleton)
      */
-    public function __wakeup()
+    public function __wakeup(): void
     {
         throw new \Exception("Cannot unserialize singleton");
     }
