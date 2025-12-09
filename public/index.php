@@ -147,28 +147,160 @@ require_once __DIR__ . '/../templates/marketing/header.php';
     </div>
 </section>
 
-<!-- Logo Slider (Social Proof) -->
-<section class="py-12 bg-gray-50 dark:bg-slate-800">
+<!-- Logo Slider / Industry Ticker (Social Proof) -->
+<section class="py-12 bg-gray-50 dark:bg-slate-800 overflow-hidden">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <p class="text-center text-gray-500 dark:text-gray-400 mb-8 font-medium">Vertrauen von Unternehmen aus allen Branchen</p>
-        <div class="flex flex-wrap justify-center items-center gap-8 md:gap-16 opacity-60">
-            <div class="flex items-center gap-2 text-xl font-bold text-gray-400">
-                <i class="fas fa-tooth text-2xl"></i> Zahnärzte
-            </div>
-            <div class="flex items-center gap-2 text-xl font-bold text-gray-400">
-                <i class="fas fa-cut text-2xl"></i> Friseure
-            </div>
-            <div class="flex items-center gap-2 text-xl font-bold text-gray-400">
-                <i class="fas fa-dumbbell text-2xl"></i> Fitness
-            </div>
-            <div class="flex items-center gap-2 text-xl font-bold text-gray-400">
-                <i class="fas fa-shopping-cart text-2xl"></i> Online-Shops
-            </div>
-            <div class="flex items-center gap-2 text-xl font-bold text-gray-400">
-                <i class="fas fa-lightbulb text-2xl"></i> Coaches
+    </div>
+    
+    <!-- Animierte Laufschrift -->
+    <div class="industry-ticker-wrapper relative">
+        <!-- Gradient Overlays für sanftes Ein-/Ausblenden -->
+        <div class="absolute left-0 top-0 bottom-0 w-20 md:w-40 bg-gradient-to-r from-gray-50 dark:from-slate-800 to-transparent z-10 pointer-events-none"></div>
+        <div class="absolute right-0 top-0 bottom-0 w-20 md:w-40 bg-gradient-to-l from-gray-50 dark:from-slate-800 to-transparent z-10 pointer-events-none"></div>
+        
+        <div class="industry-ticker">
+            <div class="industry-ticker-track">
+                <?php
+                // Erweiterte Liste aller Zielgruppen
+                $industries = [
+                    ['icon' => 'fa-tooth', 'name' => 'Zahnärzte'],
+                    ['icon' => 'fa-cut', 'name' => 'Friseure'],
+                    ['icon' => 'fa-dumbbell', 'name' => 'Fitnessstudios'],
+                    ['icon' => 'fa-shopping-cart', 'name' => 'Online-Shops'],
+                    ['icon' => 'fa-lightbulb', 'name' => 'Coaches'],
+                    ['icon' => 'fa-bullhorn', 'name' => 'Online Marketer'],
+                    ['icon' => 'fa-utensils', 'name' => 'Restaurants'],
+                    ['icon' => 'fa-hammer', 'name' => 'Handwerker'],
+                    ['icon' => 'fa-stethoscope', 'name' => 'Ärzte'],
+                    ['icon' => 'fa-heart', 'name' => 'Therapeuten'],
+                    ['icon' => 'fa-graduation-cap', 'name' => 'Kursanbieter'],
+                    ['icon' => 'fa-envelope', 'name' => 'Newsletter'],
+                    ['icon' => 'fa-laptop-code', 'name' => 'SaaS & Software'],
+                    ['icon' => 'fa-paint-brush', 'name' => 'Webdesigner'],
+                    ['icon' => 'fa-chart-line', 'name' => 'SEO-Agenturen'],
+                    ['icon' => 'fa-camera', 'name' => 'Fotografen'],
+                    ['icon' => 'fa-spa', 'name' => 'Kosmetikstudios'],
+                    ['icon' => 'fa-car', 'name' => 'Autowerkstätten'],
+                    ['icon' => 'fa-home', 'name' => 'Immobilienmakler'],
+                    ['icon' => 'fa-balance-scale', 'name' => 'Rechtsanwälte'],
+                    ['icon' => 'fa-calculator', 'name' => 'Steuerberater'],
+                    ['icon' => 'fa-dog', 'name' => 'Tierärzte'],
+                    ['icon' => 'fa-music', 'name' => 'Musikschulen'],
+                    ['icon' => 'fa-chalkboard-teacher', 'name' => 'Nachhilfelehrer'],
+                    ['icon' => 'fa-hotel', 'name' => 'Hotels'],
+                    ['icon' => 'fa-bicycle', 'name' => 'Fahrradläden'],
+                    ['icon' => 'fa-leaf', 'name' => 'Gärtner'],
+                    ['icon' => 'fa-baby', 'name' => 'Hebammen'],
+                    ['icon' => 'fa-glasses', 'name' => 'Optiker'],
+                    ['icon' => 'fa-podcast', 'name' => 'Podcaster'],
+                    ['icon' => 'fa-video', 'name' => 'Content Creator'],
+                    ['icon' => 'fa-gem', 'name' => 'Juweliere'],
+                ];
+                
+                // Items zweimal für nahtlose Schleife
+                for ($i = 0; $i < 2; $i++):
+                    foreach ($industries as $industry):
+                ?>
+                <div class="industry-ticker-item">
+                    <i class="fas <?= $industry['icon'] ?>"></i>
+                    <span><?= $industry['name'] ?></span>
+                </div>
+                <?php 
+                    endforeach;
+                endfor;
+                ?>
             </div>
         </div>
     </div>
+    
+    <style>
+        .industry-ticker-wrapper {
+            width: 100%;
+            overflow: hidden;
+        }
+        
+        .industry-ticker {
+            display: flex;
+            width: 100%;
+        }
+        
+        .industry-ticker-track {
+            display: flex;
+            gap: 2rem;
+            animation: ticker-scroll 60s linear infinite;
+            will-change: transform;
+        }
+        
+        .industry-ticker:hover .industry-ticker-track {
+            animation-play-state: paused;
+        }
+        
+        .industry-ticker-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            white-space: nowrap;
+            padding: 0.75rem 1.5rem;
+            background: white;
+            border-radius: 9999px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            font-weight: 600;
+            color: #6b7280;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+        
+        .dark .industry-ticker-item {
+            background: #334155;
+            color: #9ca3af;
+        }
+        
+        .industry-ticker-item:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            color: #667eea;
+        }
+        
+        .dark .industry-ticker-item:hover {
+            color: #818cf8;
+        }
+        
+        .industry-ticker-item i {
+            font-size: 1.25rem;
+            color: #667eea;
+        }
+        
+        .dark .industry-ticker-item i {
+            color: #818cf8;
+        }
+        
+        @keyframes ticker-scroll {
+            0% {
+                transform: translateX(0);
+            }
+            100% {
+                transform: translateX(-50%);
+            }
+        }
+        
+        /* Responsive Anpassungen */
+        @media (max-width: 768px) {
+            .industry-ticker-track {
+                animation-duration: 45s;
+                gap: 1rem;
+            }
+            
+            .industry-ticker-item {
+                padding: 0.5rem 1rem;
+                font-size: 0.875rem;
+            }
+            
+            .industry-ticker-item i {
+                font-size: 1rem;
+            }
+        }
+    </style>
 </section>
 
 <!-- Problem/Solution Section -->
@@ -383,7 +515,7 @@ require_once __DIR__ . '/../templates/marketing/header.php';
         
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
             <?php
-            $industries = [
+            $industriesList = [
                 ['icon' => 'fa-tooth', 'name' => 'Zahnärzte', 'color' => 'blue'],
                 ['icon' => 'fa-cut', 'name' => 'Friseure', 'color' => 'pink'],
                 ['icon' => 'fa-dumbbell', 'name' => 'Fitness', 'color' => 'green'],
@@ -392,7 +524,7 @@ require_once __DIR__ . '/../templates/marketing/header.php';
                 ['icon' => 'fa-lightbulb', 'name' => 'Coaches', 'color' => 'yellow'],
             ];
             
-            foreach ($industries as $industry):
+            foreach ($industriesList as $industry):
             ?>
             <div class="bg-white dark:bg-slate-700 rounded-2xl p-6 text-center shadow-sm hover:shadow-lg transition-shadow cursor-pointer group">
                 <div class="industry-icon mx-auto group-hover:scale-110 transition-transform">
