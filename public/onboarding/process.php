@@ -5,11 +5,12 @@
  * Verarbeitet das Onboarding-Formular und richtet den Kunden-Account ein
  */
 
-require_once __DIR__ . '/../config/database.php';
-require_once __DIR__ . '/../config/settings.php';
-require_once __DIR__ . '/../includes/Database.php';
-require_once __DIR__ . '/../includes/Auth.php';
-require_once __DIR__ . '/../includes/helpers.php';
+// KORRIGIERTE PFADE - von /public/onboarding/ zwei Ebenen hoch
+require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../../config/settings.php';
+require_once __DIR__ . '/../../includes/Database.php';
+require_once __DIR__ . '/../../includes/Auth.php';
+require_once __DIR__ . '/../../includes/helpers.php';
 
 // Session starten
 if (session_status() === PHP_SESSION_NONE) {
@@ -159,7 +160,7 @@ try {
             'contact_name' => $data['contact_name'],
             'company_name' => $data['company_name'],
             'subdomain' => $data['subdomain'],
-            'dashboard_url' => 'https://empfohlen.de/dashboard'
+            'dashboard_url' => 'https://empfehlungen.cloud/dashboard'
         ]),
         'priority' => 10,
         'status' => 'pending',
@@ -244,6 +245,7 @@ function validateOnboardingData($data) {
 
 /**
  * Logo hochladen
+ * KORRIGIERTER PFAD: Von /public/onboarding/ eine Ebene hoch zu /public/uploads/
  */
 function handleLogoUpload($file, $subdomain) {
     $uploadDir = __DIR__ . '/../uploads/logos/';
@@ -276,6 +278,7 @@ function handleLogoUpload($file, $subdomain) {
 
 /**
  * Custom Background hochladen
+ * KORRIGIERTER PFAD: Von /public/onboarding/ eine Ebene hoch zu /public/uploads/
  */
 function handleBackgroundUpload($file, $subdomain) {
     $uploadDir = __DIR__ . '/../uploads/backgrounds/';
