@@ -1,8 +1,12 @@
 /**
  * Leadbusiness - Onboarding Wizard JavaScript
+ * 
+ * Verbesserte Version mit Touch-Support und Mobile-Optimierung
  */
 
 document.addEventListener('DOMContentLoaded', function() {
+    
+    console.log('Onboarding Wizard initialized');
     
     // Elements
     const form = document.getElementById('onboardingForm');
@@ -18,44 +22,87 @@ document.addEventListener('DOMContentLoaded', function() {
     const totalSteps = 8;
     let formData = {};
     
-    // Industry Card Selection
-    const industryCards = document.querySelectorAll('.industry-card');
-    industryCards.forEach(card => {
-        card.addEventListener('click', function() {
-            // Remove selection from all
-            industryCards.forEach(c => c.classList.remove('selected'));
-            // Add selection to clicked
-            this.classList.add('selected');
-            // Check the radio
-            const radio = this.querySelector('input[type="radio"]');
-            if (radio) radio.checked = true;
-            
-            // Update backgrounds for selected industry
-            updateBackgroundsForIndustry(radio.value);
-        });
-    });
+    // ================================
+    // INDUSTRY CARD SELECTION
+    // ================================
     
-    // Logo Upload
+    function initIndustryCards() {
+        const industryCards = document.querySelectorAll('.industry-card');
+        
+        console.log('Found industry cards:', industryCards.length);
+        
+        industryCards.forEach(card => {
+            // Remove existing listeners to prevent duplicates
+            const newCard = card.cloneNode(true);
+            card.parentNode.replaceChild(newCard, card);
+            
+            // Add click handler
+            newCard.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                console.log('Industry card clicked:', this.dataset.industry);
+                
+                // Remove selection from all cards
+                document.querySelectorAll('.industry-card').forEach(c => {
+                    c.classList.remove('selected');
+                });
+                
+                // Add selection to clicked card
+                this.classList.add('selected');
+                
+                // Check the radio input
+                const radio = this.querySelector('.industry-radio');
+                if (radio) {
+                    radio.checked = true;
+                    console.log('Radio checked:', radio.value);
+                }
+                
+                // Update backgrounds for selected industry
+                const industry = this.dataset.industry;
+                if (industry) {
+                    updateBackgroundsForIndustry(industry);
+                }
+            });
+            
+            // Touch support
+            newCard.addEventListener('touchend', function(e) {
+                // Trigger click on touch
+                this.click();
+            }, { passive: true });
+        });
+    }
+    
+    // Initialize industry cards
+    initIndustryCards();
+    
+    // ================================
+    // LOGO UPLOAD
+    // ================================
+    
     const logoDropzone = document.getElementById('logoDropzone');
     const logoInput = document.getElementById('logoInput');
     const logoPreview = document.getElementById('logoPreview');
     const logoPlaceholder = document.getElementById('logoPlaceholder');
     
-    if (logoDropzone) {
-        logoDropzone.addEventListener('click', () => logoInput.click());
-        
-        logoDropzone.addEventListener('dragover', (e) => {
+    if (logoDropzone && logoInput) {
+        logoDropzone.addEventListener('click', function(e) {
             e.preventDefault();
-            logoDropzone.classList.add('border-primary-500', 'bg-primary-50');
+            logoInput.click();
         });
         
-        logoDropzone.addEventListener('dragleave', () => {
-            logoDropzone.classList.remove('border-primary-500', 'bg-primary-50');
+        logoDropzone.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            this.classList.add('border-primary-500', 'bg-primary-50');
         });
         
-        logoDropzone.addEventListener('drop', (e) => {
+        logoDropzone.addEventListener('dragleave', function() {
+            this.classList.remove('border-primary-500', 'bg-primary-50');
+        });
+        
+        logoDropzone.addEventListener('drop', function(e) {
             e.preventDefault();
-            logoDropzone.classList.remove('border-primary-500', 'bg-primary-50');
+            this.classList.remove('border-primary-500', 'bg-primary-50');
             
             if (e.dataTransfer.files.length) {
                 logoInput.files = e.dataTransfer.files;
@@ -63,9 +110,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
-        logoInput.addEventListener('change', () => {
-            if (logoInput.files.length) {
-                handleLogoUpload(logoInput.files[0]);
+        logoInput.addEventListener('change', function() {
+            if (this.files.length) {
+                handleLogoUpload(this.files[0]);
             }
         });
     }
@@ -82,67 +129,97 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         const reader = new FileReader();
-        reader.onload = (e) => {
-            logoPreview.querySelector('img').src = e.target.result;
-            logoPreview.classList.remove('hidden');
-            logoPlaceholder.classList.add('hidden');
+        reader.onload = function(e) {
+            if (logoPreview && logoPlaceholder) {
+                logoPreview.querySelector('img').src = e.target.result;
+                logoPreview.classList.remove('hidden');
+                logoPlaceholder.classList.add('hidden');
+            }
         };
         reader.readAsDataURL(file);
     }
     
-    // Update backgrounds based on industry
+    // ================================
+    // BACKGROUND SELECTION
+    // ================================
+    
     function updateBackgroundsForIndustry(industry) {
         const container = document.getElementById('backgroundsContainer');
         if (!container) return;
         
+        console.log('Updating backgrounds for industry:', industry);
+        
+        // Get backgrounds from global variable (set by PHP)
+        let backgrounds = [];
+        if (typeof backgroundsByIndustry !== 'undefined') {
+            backgrounds = backgroundsByIndustry[industry] || backgroundsByIndustry['allgemein'] || [];
+        }
+        
+        console.log('Found backgrounds:', backgrounds.length);
+        
         container.innerHTML = '';
         
-        let backgrounds = backgroundsByIndustry[industry] || backgroundsByIndustry['allgemein'] || [];
+        if (backgrounds.length === 0) {
+            container.innerHTML = '<p class="col-span-3 text-center text-gray-500 py-8">Keine Hintergrundbilder für diese Branche verfügbar.</p>';
+            return;
+        }
         
-        backgrounds.forEach((bg, index) => {
+        backgrounds.forEach(function(bg, index) {
             const card = document.createElement('div');
-            card.className = 'background-card relative rounded-xl overflow-hidden cursor-pointer border-4 border-transparent hover:border-primary-300';
+            card.className = 'background-card relative rounded-xl overflow-hidden cursor-pointer border-4 transition-all';
             card.dataset.id = bg.id;
             
+            // First one is selected by default
             if (index === 0) {
                 card.classList.add('border-primary-500');
                 document.getElementById('selectedBackground').value = bg.id;
+            } else {
+                card.classList.add('border-transparent', 'hover:border-primary-300');
             }
             
             card.innerHTML = `
                 <img src="/assets/backgrounds/${bg.industry}/${bg.filename}" 
                      alt="${bg.display_name}" 
-                     class="w-full h-32 object-cover">
+                     class="w-full h-24 sm:h-32 object-cover"
+                     onerror="this.src='/assets/images/placeholder-bg.jpg'; this.onerror=null;">
                 <div class="absolute inset-0 bg-black/40"></div>
                 <div class="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/60">
-                    <span class="text-white text-sm font-medium">${bg.display_name}</span>
+                    <span class="text-white text-xs sm:text-sm font-medium">${bg.display_name}</span>
                 </div>
-                ${index === 0 ? '<div class="absolute top-2 right-2 w-6 h-6 bg-primary-500 rounded-full flex items-center justify-center"><i class="fas fa-check text-white text-xs"></i></div>' : ''}
+                ${index === 0 ? '<div class="absolute top-2 right-2 w-5 h-5 sm:w-6 sm:h-6 bg-primary-500 rounded-full flex items-center justify-center"><i class="fas fa-check text-white text-xs"></i></div>' : ''}
             `;
             
-            card.addEventListener('click', () => selectBackground(card, bg.id));
+            card.addEventListener('click', function() {
+                selectBackground(this, bg.id);
+            });
+            
             container.appendChild(card);
         });
     }
     
     function selectBackground(card, id) {
         // Remove selection from all
-        document.querySelectorAll('.background-card').forEach(c => {
+        document.querySelectorAll('.background-card').forEach(function(c) {
             c.classList.remove('border-primary-500');
+            c.classList.add('border-transparent');
             const check = c.querySelector('.fa-check');
             if (check) check.parentElement.remove();
         });
         
         // Add selection to clicked
+        card.classList.remove('border-transparent');
         card.classList.add('border-primary-500');
         card.insertAdjacentHTML('beforeend', 
-            '<div class="absolute top-2 right-2 w-6 h-6 bg-primary-500 rounded-full flex items-center justify-center"><i class="fas fa-check text-white text-xs"></i></div>'
+            '<div class="absolute top-2 right-2 w-5 h-5 sm:w-6 sm:h-6 bg-primary-500 rounded-full flex items-center justify-center"><i class="fas fa-check text-white text-xs"></i></div>'
         );
         
         document.getElementById('selectedBackground').value = id;
     }
     
-    // Subdomain Input
+    // ================================
+    // SUBDOMAIN INPUT
+    // ================================
+    
     const subdomainInput = document.getElementById('subdomainInput');
     const subdomainStatus = document.getElementById('subdomainStatus');
     const previewUrl = document.getElementById('previewUrl');
@@ -167,9 +244,11 @@ document.addEventListener('DOMContentLoaded', function() {
             // Check availability (debounced)
             clearTimeout(debounceTimer);
             if (value.length >= 3) {
-                debounceTimer = setTimeout(() => checkSubdomainAvailability(value), 500);
+                debounceTimer = setTimeout(function() {
+                    checkSubdomainAvailability(value);
+                }, 500);
             } else {
-                subdomainStatus.classList.add('hidden');
+                if (subdomainStatus) subdomainStatus.classList.add('hidden');
             }
         });
     }
@@ -179,22 +258,27 @@ document.addEventListener('DOMContentLoaded', function() {
             const response = await fetch('/api/check-subdomain.php?subdomain=' + encodeURIComponent(subdomain));
             const data = await response.json();
             
-            subdomainStatus.classList.remove('hidden');
-            const span = subdomainStatus.querySelector('span');
-            
-            if (data.available) {
-                span.className = 'text-sm text-green-600';
-                span.innerHTML = '<i class="fas fa-check-circle mr-1"></i>Diese Subdomain ist verfügbar!';
-            } else {
-                span.className = 'text-sm text-red-600';
-                span.innerHTML = '<i class="fas fa-times-circle mr-1"></i>Diese Subdomain ist bereits vergeben.';
+            if (subdomainStatus) {
+                subdomainStatus.classList.remove('hidden');
+                const span = subdomainStatus.querySelector('span');
+                
+                if (data.available) {
+                    span.className = 'text-sm text-green-600';
+                    span.innerHTML = '<i class="fas fa-check-circle mr-1"></i>Diese Subdomain ist verfügbar!';
+                } else {
+                    span.className = 'text-sm text-red-600';
+                    span.innerHTML = '<i class="fas fa-times-circle mr-1"></i>Diese Subdomain ist bereits vergeben.';
+                }
             }
         } catch (error) {
             console.error('Error checking subdomain:', error);
         }
     }
     
-    // Add Reward Button (Professional only)
+    // ================================
+    // ADD REWARD BUTTON (Professional only)
+    // ================================
+    
     const addRewardBtn = document.getElementById('addRewardBtn');
     let rewardCount = 3;
     
@@ -209,25 +293,25 @@ document.addEventListener('DOMContentLoaded', function() {
             const container = document.getElementById('rewardsContainer');
             
             const newReward = document.createElement('div');
-            newReward.className = 'reward-level border rounded-xl p-6';
+            newReward.className = 'reward-level border rounded-xl p-4 sm:p-6';
             newReward.innerHTML = `
-                <div class="flex items-center gap-4 mb-4">
-                    <div class="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center text-primary-600 font-bold">
+                <div class="flex items-center gap-3 sm:gap-4 mb-4">
+                    <div class="w-8 h-8 sm:w-10 sm:h-10 bg-primary-100 rounded-full flex items-center justify-center text-primary-600 font-bold text-sm sm:text-base">
                         ${rewardCount}
                     </div>
                     <div class="flex-1">
-                        <h3 class="font-semibold">Stufe ${rewardCount}</h3>
-                        <p class="text-sm text-gray-500">Nach <input type="number" name="reward_${rewardCount}_threshold" value="${10 + (rewardCount - 3) * 5}" min="1" max="100" class="w-16 px-2 py-1 border rounded text-center"> erfolgreichen Empfehlungen</p>
+                        <h3 class="font-semibold text-sm sm:text-base">Stufe ${rewardCount}</h3>
+                        <p class="text-xs sm:text-sm text-gray-500">Nach <input type="number" name="reward_${rewardCount}_threshold" value="${10 + (rewardCount - 3) * 5}" min="1" max="100" class="w-12 sm:w-16 px-2 py-1 border rounded text-center text-sm"> erfolgreichen Empfehlungen</p>
                     </div>
-                    <button type="button" class="remove-reward text-red-500 hover:text-red-700" onclick="this.closest('.reward-level').remove(); rewardCount--;">
+                    <button type="button" class="remove-reward text-red-500 hover:text-red-700 p-2" title="Entfernen">
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>
                 
-                <div class="grid md:grid-cols-2 gap-4">
+                <div class="grid sm:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Belohnungstyp</label>
-                        <select name="reward_${rewardCount}_type" class="w-full px-3 py-2 border rounded-lg">
+                        <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Belohnungstyp</label>
+                        <select name="reward_${rewardCount}_type" class="w-full px-3 py-2 border rounded-lg text-sm">
                             <option value="discount">Rabatt (%)</option>
                             <option value="coupon_code">Gutschein-Code</option>
                             <option value="free_product">Gratis-Produkt</option>
@@ -236,24 +320,36 @@ document.addEventListener('DOMContentLoaded', function() {
                         </select>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Beschreibung</label>
+                        <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Beschreibung</label>
                         <input type="text" name="reward_${rewardCount}_description" 
-                            class="w-full px-3 py-2 border rounded-lg"
+                            class="w-full px-3 py-2 border rounded-lg text-sm"
                             placeholder="z.B. VIP-Status">
                     </div>
                 </div>
             `;
             
+            // Add remove handler
+            const removeBtn = newReward.querySelector('.remove-reward');
+            removeBtn.addEventListener('click', function() {
+                newReward.remove();
+                rewardCount--;
+            });
+            
             container.appendChild(newReward);
         });
     }
     
-    // Navigation Functions
+    // ================================
+    // NAVIGATION FUNCTIONS
+    // ================================
+    
     function updateProgress() {
         const progress = ((currentStep - 1) / (totalSteps - 1)) * 100;
-        progressBar.style.width = progress + '%';
+        if (progressBar) {
+            progressBar.style.width = progress + '%';
+        }
         
-        stepItems.forEach((item, index) => {
+        stepItems.forEach(function(item, index) {
             const stepNum = index + 1;
             item.classList.remove('active', 'completed');
             
@@ -266,7 +362,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function showPanel(step) {
-        panels.forEach(panel => {
+        panels.forEach(function(panel) {
             panel.classList.remove('active');
             if (parseInt(panel.dataset.panel) === step) {
                 panel.classList.add('active');
@@ -274,9 +370,9 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         // Update buttons
-        prevBtn.classList.toggle('hidden', step === 1);
-        nextBtn.classList.toggle('hidden', step === totalSteps);
-        submitBtn.classList.toggle('hidden', step !== totalSteps);
+        if (prevBtn) prevBtn.classList.toggle('hidden', step === 1);
+        if (nextBtn) nextBtn.classList.toggle('hidden', step === totalSteps);
+        if (submitBtn) submitBtn.classList.toggle('hidden', step !== totalSteps);
         
         // Generate summary on last step
         if (step === totalSteps) {
@@ -288,10 +384,12 @@ document.addEventListener('DOMContentLoaded', function() {
     
     function validateStep(step) {
         const panel = document.querySelector(`.wizard-panel[data-panel="${step}"]`);
+        if (!panel) return true;
+        
         const inputs = panel.querySelectorAll('input[required], select[required]');
         
         let valid = true;
-        inputs.forEach(input => {
+        inputs.forEach(function(input) {
             if (!input.checkValidity()) {
                 input.classList.add('border-red-500');
                 valid = false;
@@ -310,23 +408,24 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         if (step === 3) {
-            const password = form.querySelector('input[name="password"]').value;
-            const passwordConfirm = form.querySelector('input[name="password_confirm"]').value;
+            const password = form.querySelector('input[name="password"]');
+            const passwordConfirm = form.querySelector('input[name="password_confirm"]');
             
-            if (password !== passwordConfirm) {
-                alert('Die Passwörter stimmen nicht überein.');
-                return false;
-            }
-            
-            if (password.length < 8) {
-                alert('Das Passwort muss mindestens 8 Zeichen lang sein.');
-                return false;
+            if (password && passwordConfirm) {
+                if (password.value !== passwordConfirm.value) {
+                    alert('Die Passwörter stimmen nicht überein.');
+                    return false;
+                }
+                
+                if (password.value.length < 8) {
+                    alert('Das Passwort muss mindestens 8 Zeichen lang sein.');
+                    return false;
+                }
             }
         }
         
         if (step === 7) {
-            const subdomain = subdomainInput.value;
-            if (subdomain.length < 3) {
+            if (subdomainInput && subdomainInput.value.length < 3) {
                 alert('Die Subdomain muss mindestens 3 Zeichen lang sein.');
                 return false;
             }
@@ -337,101 +436,121 @@ document.addEventListener('DOMContentLoaded', function() {
     
     function generateSummary() {
         const container = document.getElementById('summaryContainer');
+        if (!container) return;
         
         const industry = form.querySelector('input[name="industry"]:checked');
-        const companyName = form.querySelector('input[name="company_name"]').value;
-        const contactName = form.querySelector('input[name="contact_name"]').value;
-        const email = form.querySelector('input[name="email"]').value;
-        const subdomain = form.querySelector('input[name="subdomain"]').value;
-        const plan = form.querySelector('input[name="plan"]').value;
+        const companyName = form.querySelector('input[name="company_name"]');
+        const contactName = form.querySelector('input[name="contact_name"]');
+        const email = form.querySelector('input[name="email"]');
+        const subdomain = form.querySelector('input[name="subdomain"]');
+        const plan = form.querySelector('input[name="plan"]');
         
         container.innerHTML = `
-            <div class="grid md:grid-cols-2 gap-6">
+            <div class="grid sm:grid-cols-2 gap-4 sm:gap-6">
                 <div>
-                    <h4 class="font-semibold text-gray-700 mb-2">Unternehmen</h4>
-                    <p class="text-gray-600">${companyName || '-'}</p>
-                    <p class="text-sm text-gray-500">${industry ? industry.value : '-'}</p>
+                    <h4 class="font-semibold text-gray-700 mb-1 text-sm sm:text-base">Unternehmen</h4>
+                    <p class="text-gray-600 text-sm sm:text-base">${companyName ? companyName.value : '-'}</p>
+                    <p class="text-xs sm:text-sm text-gray-500">${industry ? industry.value : '-'}</p>
                 </div>
                 <div>
-                    <h4 class="font-semibold text-gray-700 mb-2">Kontakt</h4>
-                    <p class="text-gray-600">${contactName}</p>
-                    <p class="text-sm text-gray-500">${email}</p>
+                    <h4 class="font-semibold text-gray-700 mb-1 text-sm sm:text-base">Kontakt</h4>
+                    <p class="text-gray-600 text-sm sm:text-base">${contactName ? contactName.value : '-'}</p>
+                    <p class="text-xs sm:text-sm text-gray-500">${email ? email.value : '-'}</p>
                 </div>
                 <div>
-                    <h4 class="font-semibold text-gray-700 mb-2">Empfehlungsseite</h4>
-                    <p class="text-gray-600">${subdomain}.empfohlen.de</p>
+                    <h4 class="font-semibold text-gray-700 mb-1 text-sm sm:text-base">Empfehlungsseite</h4>
+                    <p class="text-gray-600 text-sm sm:text-base">${subdomain ? subdomain.value : 'ihre-firma'}.empfohlen.de</p>
                 </div>
                 <div>
-                    <h4 class="font-semibold text-gray-700 mb-2">Tarif</h4>
-                    <p class="text-gray-600">${plan === 'professional' ? 'Professional' : 'Starter'}</p>
+                    <h4 class="font-semibold text-gray-700 mb-1 text-sm sm:text-base">Tarif</h4>
+                    <p class="text-gray-600 text-sm sm:text-base">${plan && plan.value === 'professional' ? 'Professional' : 'Starter'}</p>
                 </div>
             </div>
         `;
     }
     
-    // Event Listeners
-    prevBtn.addEventListener('click', () => {
-        if (currentStep > 1) {
-            currentStep--;
-            showPanel(currentStep);
-        }
-    });
+    // ================================
+    // EVENT LISTENERS
+    // ================================
     
-    nextBtn.addEventListener('click', () => {
-        if (validateStep(currentStep)) {
-            if (currentStep < totalSteps) {
-                currentStep++;
+    if (prevBtn) {
+        prevBtn.addEventListener('click', function() {
+            if (currentStep > 1) {
+                currentStep--;
                 showPanel(currentStep);
-                window.scrollTo(0, 0);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
             }
-        }
-    });
+        });
+    }
+    
+    if (nextBtn) {
+        nextBtn.addEventListener('click', function() {
+            if (validateStep(currentStep)) {
+                if (currentStep < totalSteps) {
+                    currentStep++;
+                    showPanel(currentStep);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            }
+        });
+    }
     
     // Form Submit
-    form.addEventListener('submit', async function(e) {
-        e.preventDefault();
-        
-        if (!validateStep(currentStep)) {
-            return;
-        }
-        
-        const termsCheckbox = document.getElementById('acceptTerms');
-        if (!termsCheckbox.checked) {
-            alert('Bitte akzeptieren Sie die AGB und Datenschutzerklärung.');
-            return;
-        }
-        
-        // Show loading state
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Wird eingerichtet...';
-        
-        try {
-            const formData = new FormData(form);
+    if (form) {
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
             
-            const response = await fetch('/onboarding/process.php', {
-                method: 'POST',
-                body: formData
-            });
-            
-            const result = await response.json();
-            
-            if (result.success) {
-                // Redirect to success page or dashboard
-                window.location.href = result.redirect || '/dashboard';
-            } else {
-                alert(result.error || 'Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.');
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = '<i class="fas fa-rocket mr-2"></i>Einrichtung starten';
+            if (!validateStep(currentStep)) {
+                return;
             }
-        } catch (error) {
-            console.error('Error:', error);
-            alert('Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.');
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = '<i class="fas fa-rocket mr-2"></i>Einrichtung starten';
-        }
-    });
+            
+            const termsCheckbox = document.getElementById('acceptTerms');
+            if (termsCheckbox && !termsCheckbox.checked) {
+                alert('Bitte akzeptieren Sie die AGB und Datenschutzerklärung.');
+                return;
+            }
+            
+            // Show loading state
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Wird eingerichtet...';
+            }
+            
+            try {
+                const formData = new FormData(form);
+                
+                const response = await fetch('/onboarding/process.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Redirect to success page or dashboard
+                    window.location.href = result.redirect || '/dashboard';
+                } else {
+                    alert(result.error || 'Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.');
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = '<i class="fas fa-rocket mr-2"></i><span class="hidden sm:inline">Einrichtung </span>starten';
+                    }
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.');
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="fas fa-rocket mr-2"></i><span class="hidden sm:inline">Einrichtung </span>starten';
+                }
+            }
+        });
+    }
     
-    // Initialize
+    // ================================
+    // INITIALIZE
+    // ================================
+    
     showPanel(1);
     
     // Auto-fill backgrounds for default industry
@@ -441,4 +560,6 @@ document.addEventListener('DOMContentLoaded', function() {
     } else {
         updateBackgroundsForIndustry('allgemein');
     }
+    
+    console.log('Onboarding Wizard ready');
 });
