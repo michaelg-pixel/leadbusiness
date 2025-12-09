@@ -87,24 +87,70 @@ $theme = $_COOKIE['site_theme'] ?? 'light';
     <link rel="stylesheet" href="/assets/css/style.css">
     
     <style>
-        /* Dark Mode Styles */
-        .dark body { background-color: #0f172a; color: #e2e8f0; }
+        /* ========================================
+           DARK MODE STYLES - COMPREHENSIVE
+           ======================================== */
+        
+        /* Base Dark Mode */
+        .dark body { 
+            background-color: #0f172a; 
+            color: #e2e8f0; 
+        }
+        
+        /* Background Colors - Dark Mode */
         .dark .bg-white { background-color: #1e293b; }
         .dark .bg-gray-50 { background-color: #0f172a; }
         .dark .bg-gray-100 { background-color: #1e293b; }
+        .dark .bg-gray-200 { background-color: #334155; }
+        
+        /* Text Colors - Dark Mode */
         .dark .text-gray-900 { color: #f1f5f9; }
         .dark .text-gray-800 { color: #e2e8f0; }
         .dark .text-gray-700 { color: #cbd5e1; }
         .dark .text-gray-600 { color: #94a3b8; }
         .dark .text-gray-500 { color: #64748b; }
+        
+        /* Border Colors - Dark Mode */
+        .dark .border-gray-100 { border-color: #334155; }
         .dark .border-gray-200 { border-color: #334155; }
         .dark .border-gray-300 { border-color: #475569; }
+        
+        /* Hover States - Dark Mode */
         .dark .hover\:bg-gray-100:hover { background-color: #334155; }
         .dark .hover\:bg-gray-50:hover { background-color: #1e293b; }
-        .dark #header { background-color: #1e293b; border-color: #334155; }
-        .dark .shadow-lg { box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3); }
+        .dark .hover\:bg-gray-200:hover { background-color: #475569; }
         
-        /* Header Navigation - Dark Mode Fix */
+        /* Header - Dark Mode */
+        .dark #header { 
+            background-color: #1e293b; 
+            border-color: #334155; 
+        }
+        .dark #header.scrolled {
+            background-color: rgba(30, 41, 59, 0.95);
+            backdrop-filter: blur(8px);
+        }
+        
+        /* Shadows - Dark Mode */
+        .dark .shadow-lg { box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3); }
+        .dark .shadow-sm { box-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+        
+        /* ========================================
+           HEADER NAVIGATION - ALL MODES
+           ======================================== */
+        
+        /* Navigation Links - Light Mode */
+        .nav-link {
+            color: #4b5563;
+            transition: color 0.2s ease;
+        }
+        .nav-link:hover {
+            color: #667eea;
+        }
+        .nav-link.active {
+            color: #667eea;
+        }
+        
+        /* Navigation Links - Dark Mode */
         .dark .nav-link {
             color: #e2e8f0 !important;
         }
@@ -118,7 +164,7 @@ $theme = $_COOKIE['site_theme'] ?? 'light';
         /* Header CTA Button */
         .header-cta {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            color: white !important;
             padding: 0.5rem 1.25rem;
             border-radius: 0.5rem;
             font-weight: 600;
@@ -155,6 +201,66 @@ $theme = $_COOKIE['site_theme'] ?? 'light';
             background-color: #475569;
             color: #fff;
         }
+        
+        /* ========================================
+           HERO SECTION - DARK MODE
+           ======================================== */
+        .dark .bg-gradient-to-br.from-gray-50 {
+            background: linear-gradient(to bottom right, #1e293b, #0f172a) !important;
+        }
+        
+        /* ========================================
+           CARDS & BOXES - DARK MODE
+           ======================================== */
+        .dark .bg-primary-50 { background-color: rgba(102, 126, 234, 0.1); }
+        .dark .bg-primary-100 { background-color: rgba(102, 126, 234, 0.15); }
+        .dark .bg-green-100 { background-color: rgba(34, 197, 94, 0.15); }
+        .dark .bg-yellow-100 { background-color: rgba(234, 179, 8, 0.15); }
+        .dark .bg-blue-100 { background-color: rgba(59, 130, 246, 0.15); }
+        .dark .bg-red-100 { background-color: rgba(239, 68, 68, 0.15); }
+        .dark .bg-purple-100 { background-color: rgba(168, 85, 247, 0.15); }
+        .dark .bg-pink-100 { background-color: rgba(236, 72, 153, 0.15); }
+        .dark .bg-orange-100 { background-color: rgba(249, 115, 22, 0.15); }
+        .dark .bg-cyan-100 { background-color: rgba(6, 182, 212, 0.15); }
+        .dark .bg-indigo-100 { background-color: rgba(99, 102, 241, 0.15); }
+        
+        /* Feature Cards - Dark Mode */
+        .dark .feature-card,
+        .dark [class*="rounded-2xl"][class*="p-6"][class*="shadow"] {
+            background-color: #1e293b;
+            border-color: #334155;
+        }
+        
+        /* ========================================
+           TABLE - DARK MODE
+           ======================================== */
+        .dark table { color: #e2e8f0; }
+        .dark thead tr { border-color: #475569; }
+        .dark tbody tr { border-color: #334155; }
+        .dark th { color: #f1f5f9; }
+        .dark td { color: #cbd5e1; }
+        .dark .bg-primary-50 td,
+        .dark td.bg-primary-50 { 
+            background-color: rgba(102, 126, 234, 0.1); 
+        }
+        
+        /* ========================================
+           CODE BLOCKS - DARK MODE
+           ======================================== */
+        .dark code {
+            background-color: #334155;
+            color: #a5b4fc;
+        }
+        
+        /* ========================================
+           GRADIENT TEXT - ALL MODES
+           ======================================== */
+        .gradient-text {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
     </style>
     
     <?php if (isset($additionalHead)): ?>
@@ -178,16 +284,16 @@ $theme = $_COOKIE['site_theme'] ?? 'light';
                 
                 <!-- Desktop Navigation -->
                 <nav class="hidden md:flex items-center space-x-8">
-                    <a href="/funktionen" class="nav-link font-medium transition-colors <?= $currentPage === 'funktionen' ? 'active text-primary-500 dark:text-primary-400' : 'text-gray-600 dark:text-gray-200 hover:text-primary-500 dark:hover:text-primary-400' ?>">
+                    <a href="/funktionen" class="nav-link font-medium <?= $currentPage === 'funktionen' ? 'active' : '' ?>">
                         Funktionen
                     </a>
-                    <a href="/preise" class="nav-link font-medium transition-colors <?= $currentPage === 'preise' ? 'active text-primary-500 dark:text-primary-400' : 'text-gray-600 dark:text-gray-200 hover:text-primary-500 dark:hover:text-primary-400' ?>">
+                    <a href="/preise" class="nav-link font-medium <?= $currentPage === 'preise' ? 'active' : '' ?>">
                         Preise
                     </a>
-                    <a href="/faq" class="nav-link font-medium transition-colors <?= $currentPage === 'faq' ? 'active text-primary-500 dark:text-primary-400' : 'text-gray-600 dark:text-gray-200 hover:text-primary-500 dark:hover:text-primary-400' ?>">
+                    <a href="/faq" class="nav-link font-medium <?= $currentPage === 'faq' ? 'active' : '' ?>">
                         FAQ
                     </a>
-                    <a href="/kontakt" class="nav-link font-medium transition-colors <?= $currentPage === 'kontakt' ? 'active text-primary-500 dark:text-primary-400' : 'text-gray-600 dark:text-gray-200 hover:text-primary-500 dark:hover:text-primary-400' ?>">
+                    <a href="/kontakt" class="nav-link font-medium <?= $currentPage === 'kontakt' ? 'active' : '' ?>">
                         Kontakt
                     </a>
                 </nav>
