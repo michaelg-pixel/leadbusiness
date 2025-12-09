@@ -55,12 +55,7 @@
                             </a>
                         </li>
                         <li>
-                            <a href="/onboarding" class="text-gray-400 hover:text-white transition-colors">
-                                Jetzt starten
-                            </a>
-                        </li>
-                        <li>
-                            <a href="/dashboard/login" class="text-gray-400 hover:text-white transition-colors">
+                            <a href="/admin/login.php" class="text-gray-400 hover:text-white transition-colors">
                                 Login
                             </a>
                         </li>
@@ -105,8 +100,8 @@
                     <ul class="space-y-4">
                         <li class="flex items-start space-x-3">
                             <i class="fas fa-envelope mt-1 text-primary-400"></i>
-                            <a href="mailto:support@leadbusiness.de" class="text-gray-400 hover:text-white transition-colors">
-                                support@leadbusiness.de
+                            <a href="mailto:support@empfehlungen.cloud" class="text-gray-400 hover:text-white transition-colors">
+                                support@empfehlungen.cloud
                             </a>
                         </li>
                         <li class="flex items-start space-x-3">
@@ -155,29 +150,188 @@
                         <a href="/agb" class="text-gray-500 hover:text-white transition-colors">
                             AGB
                         </a>
+                        <button onclick="openCookieSettings()" class="text-gray-500 hover:text-white transition-colors">
+                            Cookie-Einstellungen
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
     </footer>
     
-    <!-- Cookie Banner -->
-    <div id="cookie-banner" class="hidden fixed bottom-0 left-0 right-0 bg-white shadow-2xl border-t z-50 p-4 md:p-6">
-        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-            <div class="flex-1">
-                <p class="text-gray-600 text-sm md:text-base">
-                    Wir verwenden Cookies, um Ihre Erfahrung auf unserer Website zu verbessern. 
-                    Durch die weitere Nutzung stimmen Sie unserer 
-                    <a href="/datenschutz" class="text-primary-500 hover:underline">Datenschutzerklärung</a> zu.
-                </p>
+    <!-- Cookie Banner (Borlabs Style) -->
+    <div id="cookie-banner" class="hidden fixed inset-0 z-[9999] flex items-end sm:items-center justify-center">
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+        
+        <!-- Banner Content -->
+        <div class="relative w-full max-w-2xl mx-4 mb-4 sm:mb-0 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl overflow-hidden">
+            <!-- Header -->
+            <div class="bg-gradient-to-r from-primary-500 to-purple-600 px-6 py-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-cookie-bite text-white text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-white font-bold text-lg">Cookie-Einstellungen</h3>
+                        <p class="text-white/80 text-sm">Wir respektieren Ihre Privatsphäre</p>
+                    </div>
+                </div>
             </div>
-            <div class="flex gap-4">
-                <button id="cookie-accept" class="btn-primary text-sm">
-                    Akzeptieren
+            
+            <!-- Content -->
+            <div class="px-6 py-5">
+                <p class="text-gray-600 dark:text-gray-300 text-sm leading-relaxed mb-6">
+                    Wir verwenden Cookies, um Ihnen die bestmögliche Erfahrung auf unserer Website zu bieten. 
+                    Einige Cookies sind für den Betrieb der Website unerlässlich, während andere uns helfen, 
+                    die Website und Ihr Erlebnis zu verbessern.
+                </p>
+                
+                <!-- Quick Info -->
+                <div class="grid grid-cols-3 gap-3 mb-6">
+                    <div class="bg-gray-50 dark:bg-slate-700 rounded-xl p-3 text-center">
+                        <div class="w-8 h-8 mx-auto mb-2 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-check text-green-500 text-sm"></i>
+                        </div>
+                        <p class="text-xs text-gray-600 dark:text-gray-300 font-medium">Notwendig</p>
+                    </div>
+                    <div class="bg-gray-50 dark:bg-slate-700 rounded-xl p-3 text-center">
+                        <div class="w-8 h-8 mx-auto mb-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-chart-bar text-blue-500 text-sm"></i>
+                        </div>
+                        <p class="text-xs text-gray-600 dark:text-gray-300 font-medium">Statistik</p>
+                    </div>
+                    <div class="bg-gray-50 dark:bg-slate-700 rounded-xl p-3 text-center">
+                        <div class="w-8 h-8 mx-auto mb-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-bullhorn text-purple-500 text-sm"></i>
+                        </div>
+                        <p class="text-xs text-gray-600 dark:text-gray-300 font-medium">Marketing</p>
+                    </div>
+                </div>
+                
+                <!-- Buttons -->
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <button onclick="acceptAllCookies()" class="flex-1 px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-semibold rounded-xl hover:shadow-lg transition-all flex items-center justify-center gap-2">
+                        <i class="fas fa-check"></i>
+                        Alle akzeptieren
+                    </button>
+                    <button onclick="rejectAllCookies()" class="flex-1 px-6 py-3 bg-gray-200 dark:bg-slate-600 text-gray-700 dark:text-gray-200 font-semibold rounded-xl hover:bg-gray-300 dark:hover:bg-slate-500 transition-all flex items-center justify-center gap-2">
+                        <i class="fas fa-times"></i>
+                        Nur notwendige
+                    </button>
+                    <button onclick="openCookieSettings()" class="flex-1 px-6 py-3 border-2 border-gray-300 dark:border-slate-500 text-gray-700 dark:text-gray-200 font-semibold rounded-xl hover:border-primary-500 hover:text-primary-500 transition-all flex items-center justify-center gap-2">
+                        <i class="fas fa-cog"></i>
+                        Einstellungen
+                    </button>
+                </div>
+                
+                <!-- Footer Links -->
+                <div class="mt-4 pt-4 border-t border-gray-200 dark:border-slate-600 flex justify-center gap-4 text-xs text-gray-500 dark:text-gray-400">
+                    <a href="/datenschutz" class="hover:text-primary-500">Datenschutz</a>
+                    <span>|</span>
+                    <a href="/impressum" class="hover:text-primary-500">Impressum</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Cookie Settings Modal -->
+    <div id="cookie-settings-modal" class="hidden fixed inset-0 z-[10000] flex items-center justify-center">
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeCookieSettings()"></div>
+        
+        <!-- Modal Content -->
+        <div class="relative w-full max-w-lg mx-4 max-h-[90vh] overflow-auto bg-white dark:bg-slate-800 rounded-2xl shadow-2xl">
+            <!-- Header -->
+            <div class="sticky top-0 bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 px-6 py-4 flex items-center justify-between">
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white">Cookie-Einstellungen</h3>
+                <button onclick="closeCookieSettings()" class="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors">
+                    <i class="fas fa-times text-gray-500"></i>
                 </button>
-                <a href="/datenschutz" class="btn-secondary text-sm">
-                    Mehr erfahren
-                </a>
+            </div>
+            
+            <!-- Content -->
+            <div class="px-6 py-5 space-y-4">
+                
+                <!-- Notwendig -->
+                <div class="bg-gray-50 dark:bg-slate-700 rounded-xl p-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-shield-alt text-green-500"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-gray-900 dark:text-white">Notwendig</h4>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">Erforderlich für Grundfunktionen</p>
+                            </div>
+                        </div>
+                        <div class="relative">
+                            <input type="checkbox" checked disabled class="sr-only peer">
+                            <div class="w-11 h-6 bg-green-500 rounded-full"></div>
+                            <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform translate-x-5"></div>
+                        </div>
+                    </div>
+                    <p class="text-sm text-gray-600 dark:text-gray-300">
+                        Diese Cookies sind für das Funktionieren der Website unerlässlich und können nicht deaktiviert werden.
+                    </p>
+                </div>
+                
+                <!-- Statistik -->
+                <div class="bg-gray-50 dark:bg-slate-700 rounded-xl p-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-chart-line text-blue-500"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-gray-900 dark:text-white">Statistik</h4>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">Hilft uns, die Website zu verbessern</p>
+                            </div>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="cookie-statistics" class="sr-only peer">
+                            <div class="w-11 h-6 bg-gray-300 dark:bg-slate-600 peer-checked:bg-blue-500 rounded-full peer-focus:ring-2 peer-focus:ring-blue-300 transition-colors"></div>
+                            <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-5"></div>
+                        </label>
+                    </div>
+                    <p class="text-sm text-gray-600 dark:text-gray-300">
+                        Diese Cookies sammeln anonyme Informationen darüber, wie Besucher unsere Website nutzen.
+                    </p>
+                </div>
+                
+                <!-- Marketing -->
+                <div class="bg-gray-50 dark:bg-slate-700 rounded-xl p-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-bullhorn text-purple-500"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-gray-900 dark:text-white">Marketing</h4>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">Personalisierte Werbung</p>
+                            </div>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="cookie-marketing" class="sr-only peer">
+                            <div class="w-11 h-6 bg-gray-300 dark:bg-slate-600 peer-checked:bg-purple-500 rounded-full peer-focus:ring-2 peer-focus:ring-purple-300 transition-colors"></div>
+                            <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-5"></div>
+                        </label>
+                    </div>
+                    <p class="text-sm text-gray-600 dark:text-gray-300">
+                        Diese Cookies werden verwendet, um Ihnen relevante Werbung anzuzeigen.
+                    </p>
+                </div>
+                
+            </div>
+            
+            <!-- Footer -->
+            <div class="sticky bottom-0 bg-white dark:bg-slate-800 border-t border-gray-200 dark:border-slate-700 px-6 py-4 flex gap-3">
+                <button onclick="saveCustomCookies()" class="flex-1 px-6 py-3 bg-gradient-to-r from-primary-500 to-purple-600 text-white font-semibold rounded-xl hover:shadow-lg transition-all">
+                    Auswahl speichern
+                </button>
+                <button onclick="acceptAllCookies()" class="px-6 py-3 bg-green-500 text-white font-semibold rounded-xl hover:bg-green-600 transition-all">
+                    Alle akzeptieren
+                </button>
             </div>
         </div>
     </div>
@@ -190,8 +344,107 @@
     <!-- JavaScript -->
     <script src="/assets/js/main.js"></script>
     
-    <!-- Back to Top Script -->
+    <!-- Cookie & Scroll Scripts -->
     <script>
+        // Cookie Consent Functions
+        const COOKIE_NAME = 'cookie_consent';
+        const COOKIE_EXPIRY = 365;
+        
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+            return null;
+        }
+        
+        function setCookie(name, value, days) {
+            const expires = new Date(Date.now() + days * 864e5).toUTCString();
+            document.cookie = `${name}=${value}; expires=${expires}; path=/; SameSite=Lax`;
+        }
+        
+        function showCookieBanner() {
+            document.getElementById('cookie-banner').classList.remove('hidden');
+        }
+        
+        function hideCookieBanner() {
+            document.getElementById('cookie-banner').classList.add('hidden');
+        }
+        
+        function acceptAllCookies() {
+            const consent = { necessary: true, statistics: true, marketing: true, timestamp: Date.now() };
+            setCookie(COOKIE_NAME, JSON.stringify(consent), COOKIE_EXPIRY);
+            hideCookieBanner();
+            closeCookieSettings();
+            loadConsentScripts(consent);
+        }
+        
+        function rejectAllCookies() {
+            const consent = { necessary: true, statistics: false, marketing: false, timestamp: Date.now() };
+            setCookie(COOKIE_NAME, JSON.stringify(consent), COOKIE_EXPIRY);
+            hideCookieBanner();
+            closeCookieSettings();
+        }
+        
+        function saveCustomCookies() {
+            const consent = {
+                necessary: true,
+                statistics: document.getElementById('cookie-statistics').checked,
+                marketing: document.getElementById('cookie-marketing').checked,
+                timestamp: Date.now()
+            };
+            setCookie(COOKIE_NAME, JSON.stringify(consent), COOKIE_EXPIRY);
+            hideCookieBanner();
+            closeCookieSettings();
+            loadConsentScripts(consent);
+        }
+        
+        function openCookieSettings() {
+            hideCookieBanner();
+            document.getElementById('cookie-settings-modal').classList.remove('hidden');
+            
+            // Restore previous settings
+            const existing = getCookie(COOKIE_NAME);
+            if (existing) {
+                try {
+                    const consent = JSON.parse(existing);
+                    document.getElementById('cookie-statistics').checked = consent.statistics || false;
+                    document.getElementById('cookie-marketing').checked = consent.marketing || false;
+                } catch(e) {}
+            }
+        }
+        
+        function closeCookieSettings() {
+            document.getElementById('cookie-settings-modal').classList.add('hidden');
+        }
+        
+        function loadConsentScripts(consent) {
+            // Load analytics if statistics consent
+            if (consent.statistics) {
+                // Google Analytics, Matomo, etc.
+                console.log('Statistics cookies enabled');
+            }
+            
+            // Load marketing scripts if marketing consent
+            if (consent.marketing) {
+                // Facebook Pixel, Google Ads, etc.
+                console.log('Marketing cookies enabled');
+            }
+        }
+        
+        // Check on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const consent = getCookie(COOKIE_NAME);
+            if (!consent) {
+                // Show banner after a short delay for better UX
+                setTimeout(showCookieBanner, 1000);
+            } else {
+                try {
+                    loadConsentScripts(JSON.parse(consent));
+                } catch(e) {}
+            }
+        });
+        
+        // Back to Top
         const backToTop = document.getElementById('back-to-top');
         window.addEventListener('scroll', () => {
             if (window.pageYOffset > 500) {
