@@ -292,6 +292,9 @@ require_once __DIR__ . '/../../templates/marketing/header.php';
             <a href="/branchen/onlineshop" class="px-4 py-2 bg-gray-100 dark:bg-slate-800 hover:bg-primary-100 dark:hover:bg-primary-900/30 rounded-full text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors text-sm font-medium">
                 <i class="fas fa-shopping-cart mr-1"></i> Online-Shops
             </a>
+            <a href="/branchen/handwerker" class="px-4 py-2 bg-gray-100 dark:bg-slate-800 hover:bg-primary-100 dark:hover:bg-primary-900/30 rounded-full text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors text-sm font-medium">
+                <i class="fas fa-hammer mr-1"></i> Handwerker
+            </a>
             <a href="/branchen/onlinemarketing" class="px-4 py-2 bg-gray-100 dark:bg-slate-800 hover:bg-primary-100 dark:hover:bg-primary-900/30 rounded-full text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors text-sm font-medium">
                 <i class="fas fa-bullhorn mr-1"></i> Online-Marketing
             </a>
