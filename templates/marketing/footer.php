@@ -159,13 +159,6 @@
         </div>
     </footer>
     
-    <!-- DEBUG BOX - Wird oben links angezeigt -->
-    <div id="debug-box" style="position:fixed; top:10px; left:10px; background:#1a1a2e; color:#0f0; padding:15px; border-radius:8px; font-family:monospace; font-size:12px; z-index:99999; max-width:350px; box-shadow: 0 4px 20px rgba(0,0,0,0.5);">
-        <div style="color:#fff; font-weight:bold; margin-bottom:10px; border-bottom:1px solid #333; padding-bottom:5px;">🔧 Cookie Debug v5</div>
-        <div id="debug-content">Lade...</div>
-        <button onclick="document.getElementById('debug-box').style.display='none'" style="margin-top:10px; padding:5px 10px; background:#333; color:#fff; border:none; border-radius:4px; cursor:pointer;">Schließen</button>
-    </div>
-    
     <!-- Cookie Banner -->
     <div id="cookie-banner" style="display:none;" class="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center">
         <!-- Backdrop -->
@@ -351,125 +344,95 @@
     <!-- JavaScript -->
     <script src="/assets/js/main.js"></script>
     
-    <!-- Cookie Consent Script v5 with Visual Debug -->
+    <!-- Cookie Consent Script v6 - Production -->
     <script>
-    var COOKIE_NAME = 'lb_cookie_consent';
-    var debugLog = [];
-    
-    function log(msg) {
-        debugLog.push(msg);
-        updateDebugBox();
-    }
-    
-    function updateDebugBox() {
-        var el = document.getElementById('debug-content');
-        if (el) {
-            var cookieVal = getCookie(COOKIE_NAME);
-            var localVal = null;
-            try { localVal = localStorage.getItem(COOKIE_NAME); } catch(e) { localVal = 'ERROR'; }
-            
-            var html = '<div style="margin-bottom:8px;"><span style="color:#888;">Cookie:</span> <span style="color:' + (cookieVal ? '#0f0' : '#f00') + ';">' + (cookieVal || 'LEER') + '</span></div>';
-            html += '<div style="margin-bottom:8px;"><span style="color:#888;">localStorage:</span> <span style="color:' + (localVal ? '#0f0' : '#f00') + ';">' + (localVal || 'LEER') + '</span></div>';
-            html += '<div style="margin-bottom:8px;"><span style="color:#888;">Alle Cookies:</span><br><span style="color:#ff0; word-break:break-all; font-size:10px;">' + (document.cookie || 'keine') + '</span></div>';
-            html += '<div style="border-top:1px solid #333; padding-top:8px; margin-top:8px;"><span style="color:#888;">Log:</span></div>';
-            debugLog.slice(-5).forEach(function(m) {
-                html += '<div style="color:#0ff; font-size:10px;">• ' + m + '</div>';
-            });
-            el.innerHTML = html;
+    (function() {
+        'use strict';
+        
+        var COOKIE_NAME = 'lb_cookie_consent';
+        
+        function setCookie(name, value, days) {
+            var d = new Date();
+            d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+            document.cookie = name + '=' + value + ';expires=' + d.toUTCString() + ';path=/;SameSite=Lax';
         }
-    }
-    
-    function setCookie(name, value, days) {
-        var d = new Date();
-        d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
-        var expires = 'expires=' + d.toUTCString();
-        var cookieStr = name + '=' + value + ';' + expires + ';path=/;SameSite=Lax';
-        document.cookie = cookieStr;
-        log('Cookie gesetzt: ' + value);
-    }
-    
-    function getCookie(name) {
-        var cname = name + '=';
-        var ca = document.cookie.split(';');
-        for(var i = 0; i < ca.length; i++) {
-            var c = ca[i].trim();
-            if (c.indexOf(cname) === 0) {
-                return c.substring(cname.length, c.length);
+        
+        function getCookie(name) {
+            var cname = name + '=';
+            var ca = document.cookie.split(';');
+            for (var i = 0; i < ca.length; i++) {
+                var c = ca[i].trim();
+                if (c.indexOf(cname) === 0) {
+                    return c.substring(cname.length);
+                }
             }
+            return null;
         }
-        return null;
-    }
-    
-    function hasConsent() {
-        var cookie = getCookie(COOKIE_NAME);
-        var local = null;
-        try { local = localStorage.getItem(COOKIE_NAME); } catch(e) {}
-        return cookie || local;
-    }
-    
-    function saveConsent(value) {
-        setCookie(COOKIE_NAME, value, 365);
-        try { 
-            localStorage.setItem(COOKIE_NAME, value);
-            log('localStorage gesetzt: ' + value);
-        } catch(e) {
-            log('localStorage FEHLER!');
+        
+        function hasConsent() {
+            if (getCookie(COOKIE_NAME)) return true;
+            try { 
+                if (localStorage.getItem(COOKIE_NAME)) return true; 
+            } catch(e) {}
+            return false;
         }
-        updateDebugBox();
-    }
+        
+        function saveConsent(value) {
+            setCookie(COOKIE_NAME, value, 365);
+            try { localStorage.setItem(COOKIE_NAME, value); } catch(e) {}
+        }
+        
+        function hideBanner() {
+            var banner = document.getElementById('cookie-banner');
+            var modal = document.getElementById('cookie-settings-modal');
+            if (banner) banner.style.display = 'none';
+            if (modal) modal.style.display = 'none';
+        }
+        
+        function showBanner() {
+            var banner = document.getElementById('cookie-banner');
+            if (banner) banner.style.display = 'flex';
+        }
+        
+        // Global functions
+        window.acceptAllCookies = function() {
+            saveConsent('all');
+            hideBanner();
+        };
+        
+        window.rejectAllCookies = function() {
+            saveConsent('necessary');
+            hideBanner();
+        };
+        
+        window.saveCustomCookies = function() {
+            var stats = document.getElementById('cookie-statistics');
+            var marketing = document.getElementById('cookie-marketing');
+            var consent = 'necessary';
+            if (stats && stats.checked && marketing && marketing.checked) consent = 'all';
+            else if (stats && stats.checked) consent = 'statistics';
+            else if (marketing && marketing.checked) consent = 'marketing';
+            saveConsent(consent);
+            hideBanner();
+        };
+        
+        window.openCookieSettings = function() {
+            document.getElementById('cookie-banner').style.display = 'none';
+            document.getElementById('cookie-settings-modal').style.display = 'flex';
+        };
+        
+        window.closeCookieSettings = function() {
+            document.getElementById('cookie-settings-modal').style.display = 'none';
+            if (!hasConsent()) showBanner();
+        };
+        
+        // Init - show banner if no consent
+        if (!hasConsent()) {
+            showBanner();
+        }
+    })();
     
-    function hideBanner() {
-        document.getElementById('cookie-banner').style.display = 'none';
-        var modal = document.getElementById('cookie-settings-modal');
-        if (modal) modal.style.display = 'none';
-        log('Banner versteckt');
-    }
-    
-    function showBanner() {
-        document.getElementById('cookie-banner').style.display = 'flex';
-        log('Banner angezeigt');
-    }
-    
-    function acceptAllCookies() {
-        log('Klick: Alle akzeptieren');
-        saveConsent('all');
-        hideBanner();
-    }
-    
-    function rejectAllCookies() {
-        log('Klick: Nur notwendige');
-        saveConsent('necessary');
-        hideBanner();
-    }
-    
-    function saveCustomCookies() {
-        log('Klick: Auswahl speichern');
-        saveConsent('custom');
-        hideBanner();
-    }
-    
-    function openCookieSettings() {
-        document.getElementById('cookie-banner').style.display = 'none';
-        document.getElementById('cookie-settings-modal').style.display = 'flex';
-    }
-    
-    function closeCookieSettings() {
-        document.getElementById('cookie-settings-modal').style.display = 'none';
-        if (!hasConsent()) showBanner();
-    }
-    
-    // Init
-    log('Seite geladen');
-    var consent = hasConsent();
-    log('Consent vorhanden: ' + (consent ? 'JA' : 'NEIN'));
-    
-    if (!consent) {
-        showBanner();
-    }
-    
-    updateDebugBox();
-    
-    // Back to top
+    // Back to top button
     document.addEventListener('DOMContentLoaded', function() {
         var btn = document.getElementById('back-to-top');
         if (btn) {
