@@ -249,26 +249,84 @@ function handleBackgroundUpload($file, $subdomain) {
     return '/uploads/backgrounds/' . $filename;
 }
 
+/**
+ * Erstellt Belohnungen aus dem Onboarding-Formular
+ * Speichert alle typspezifischen Felder (Gutschein-Code, Download-URL, etc.)
+ */
 function createRewardsFromForm($db, $customerId, $campaignId, $formData) {
     for ($i = 1; $i <= 5; $i++) {
         $threshold = intval($formData["reward_{$i}_threshold"] ?? 0);
         $type = $formData["reward_{$i}_type"] ?? '';
-        $description = $formData["reward_{$i}_description"] ?? '';
+        $description = trim($formData["reward_{$i}_description"] ?? '');
         
-        if ($threshold > 0 && !empty($type) && !empty($description)) {
-            $db->insert('rewards', [
+        // Nur speichern wenn Threshold und Typ vorhanden
+        if ($threshold > 0 && !empty($type)) {
+            
+            // Basis-Daten für alle Typen
+            $rewardData = [
                 'customer_id' => $customerId,
                 'campaign_id' => $campaignId,
                 'level' => $i,
-                'required_conversions' => $threshold,
+                'conversions_required' => $threshold,
                 'reward_type' => $type,
-                'reward_value' => $description,
+                'title' => $description ?: getDefaultRewardTitle($type),
                 'description' => $description,
                 'is_active' => 1,
                 'created_at' => date('Y-m-d H:i:s')
-            ]);
+            ];
+            
+            // Typspezifische Felder
+            switch ($type) {
+                case 'discount':
+                    // Rabatt in Prozent
+                    $rewardData['discount_percent'] = intval($formData["reward_{$i}_discount_percent"] ?? 0);
+                    break;
+                    
+                case 'coupon_code':
+                    // Gutschein-Code und Gültigkeit
+                    $rewardData['coupon_code'] = trim($formData["reward_{$i}_coupon_code"] ?? '');
+                    $rewardData['coupon_validity_days'] = intval($formData["reward_{$i}_coupon_validity"] ?? 30);
+                    break;
+                    
+                case 'digital_download':
+                    // Download-URL
+                    $downloadUrl = trim($formData["reward_{$i}_download_url"] ?? '');
+                    if (!empty($downloadUrl) && filter_var($downloadUrl, FILTER_VALIDATE_URL)) {
+                        $rewardData['download_file_url'] = $downloadUrl;
+                    }
+                    break;
+                    
+                case 'voucher':
+                    // Wertgutschein in Euro
+                    $amount = floatval($formData["reward_{$i}_voucher_amount"] ?? 0);
+                    $rewardData['voucher_amount'] = $amount > 0 ? $amount : null;
+                    break;
+                    
+                case 'free_product':
+                case 'free_service':
+                    // Adressabfrage erforderlich?
+                    $rewardData['requires_address'] = isset($formData["reward_{$i}_requires_address"]) ? 1 : 0;
+                    break;
+            }
+            
+            $db->insert('rewards', $rewardData);
         }
     }
+}
+
+/**
+ * Gibt einen Standard-Titel für einen Belohnungstyp zurück
+ */
+function getDefaultRewardTitle($type) {
+    $titles = [
+        'discount' => 'Rabatt',
+        'coupon_code' => 'Gutschein-Code',
+        'free_product' => 'Gratis-Produkt',
+        'free_service' => 'Gratis-Service',
+        'digital_download' => 'Digital-Download',
+        'voucher' => 'Wertgutschein'
+    ];
+    return $titles[$type] ?? 'Belohnung';
 }
 
 function activateEmailSequences($db, $customerId) {
