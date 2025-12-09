@@ -78,7 +78,10 @@ header('Content-Type: text/html; charset=utf-8');
         try {
             require_once __DIR__ . '/../config/database.php';
             require_once __DIR__ . '/../includes/Database.php';
-            $db = Database::getInstance();
+            
+            // Mit korrektem Namespace aufrufen
+            $db = \Leadbusiness\Database::getInstance();
+            
             $testQuery = $db->fetchColumn("SELECT COUNT(*) FROM background_images");
             $checks['Datenbank: Verbindung'] = [
                 'status' => true,
@@ -98,6 +101,14 @@ header('Content-Type: text/html; charset=utf-8');
                 'status' => $filenameCorrect,
                 'value' => $sampleBg ? $sampleBg['filename'] : 'N/A',
                 'expected' => 'bg-X.jpg (ohne Pfad)'
+            ];
+            
+            // Kunden zählen
+            $customerCount = $db->fetchColumn("SELECT COUNT(*) FROM customers");
+            $checks['Datenbank: Kunden'] = [
+                'status' => true,
+                'value' => $customerCount . ' Kunden',
+                'expected' => '-'
             ];
             
         } catch (Exception $e) {
@@ -144,7 +155,7 @@ header('Content-Type: text/html; charset=utf-8');
         
         $checks['Hintergrundbilder'] = [
             'status' => $existingImages === 33,
-            'value' => "{$existingImages}/33 vorhanden" . (count($missingImages) > 0 ? " ({count($missingImages)} fehlen)" : ""),
+            'value' => "{$existingImages}/33 vorhanden" . (count($missingImages) > 0 ? " (" . count($missingImages) . " fehlen)" : ""),
             'expected' => '33/33'
         ];
         
@@ -186,14 +197,15 @@ header('Content-Type: text/html; charset=utf-8');
             }
         }
         
-        // 9. Git Status prüfen
-        $gitHead = __DIR__ . '/../.git/HEAD';
-        if (file_exists($gitHead)) {
-            $headContent = trim(file_get_contents($gitHead));
-            $checks['Git: Status'] = [
-                'status' => true,
-                'value' => $headContent,
-                'expected' => 'ref: refs/heads/main'
+        // 9. JavaScript-Datei prüfen
+        $jsPath = __DIR__ . '/assets/js/onboarding.js';
+        if (file_exists($jsPath)) {
+            $jsContent = file_get_contents($jsPath);
+            $hasTouchSupport = str_contains($jsContent, 'touchend');
+            $checks['JavaScript: onboarding.js'] = [
+                'status' => $hasTouchSupport,
+                'value' => $hasTouchSupport ? '✓ Mit Touch-Support' : '⚠️ Ohne Touch-Support (alte Version)',
+                'expected' => 'Mit Touch-Support'
             ];
         }
         
@@ -206,7 +218,7 @@ header('Content-Type: text/html; charset=utf-8');
         <div class="mb-6 p-4 rounded-lg <?= $allPassed ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800' ?>">
             <strong><?= $passedCount ?>/<?= $totalCount ?> Checks bestanden</strong>
             <?php if (!$allPassed): ?>
-                <p class="mt-2">Einige Probleme müssen behoben werden. Führe <code class="bg-yellow-200 px-2 py-1 rounded">git pull origin main</code> auf dem Server aus.</p>
+                <p class="mt-2">Einige Probleme müssen behoben werden. Siehe Details unten.</p>
             <?php endif; ?>
         </div>
         
@@ -243,7 +255,7 @@ header('Content-Type: text/html; charset=utf-8');
         
         <?php if (count($missingImages) > 0 && count($missingImages) <= 33): ?>
         <div class="mt-8 bg-white rounded-lg shadow p-6">
-            <h2 class="text-xl font-bold mb-4">🖼️ Fehlende Hintergrundbilder</h2>
+            <h2 class="text-xl font-bold mb-4">🖼️ Fehlende Hintergrundbilder (<?= count($missingImages) ?>)</h2>
             <div class="grid grid-cols-3 gap-2 text-sm">
                 <?php foreach ($missingImages as $img): ?>
                 <div class="bg-gray-100 px-2 py-1 rounded"><?= htmlspecialchars($img) ?></div>
@@ -257,9 +269,10 @@ header('Content-Type: text/html; charset=utf-8');
             <pre class="bg-gray-900 text-green-400 p-4 rounded-lg overflow-x-auto text-sm">
 # 1. Git Pull (wichtigster Schritt!)
 cd /home/empfehlungen/htdocs/www.empfehlungen.cloud
+git checkout -- .
 git pull origin main
 
-# 2. Verzeichnisse erstellen
+# 2. Verzeichnisse erstellen (falls nicht vorhanden)
 mkdir -p public/assets/backgrounds/{zahnarzt,friseur,handwerker,coach,restaurant,fitness,onlineshop,onlinemarketing,newsletter,software,allgemein}
 mkdir -p public/uploads/{logos,backgrounds}
 
@@ -267,6 +280,16 @@ mkdir -p public/uploads/{logos,backgrounds}
 chmod -R 755 public/assets/backgrounds
 chmod -R 755 public/uploads
             </pre>
+        </div>
+        
+        <div class="mt-8 bg-blue-50 rounded-lg shadow p-6">
+            <h2 class="text-xl font-bold mb-4 text-blue-800">📋 Test-Links</h2>
+            <ul class="space-y-2">
+                <li><a href="/onboarding/" class="text-blue-600 hover:underline">→ Onboarding Wizard</a></li>
+                <li><a href="/dashboard/login.php" class="text-blue-600 hover:underline">→ Kunden-Login</a></li>
+                <li><a href="/admin/login.php" class="text-blue-600 hover:underline">→ Admin-Login</a></li>
+                <li><a href="/api/check-subdomain.php?subdomain=test123" class="text-blue-600 hover:underline">→ Subdomain-API Test</a></li>
+            </ul>
         </div>
         
         <p class="mt-8 text-center text-gray-500">
