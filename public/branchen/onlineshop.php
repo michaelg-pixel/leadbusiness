@@ -100,7 +100,7 @@ $stats = [
                 <div class="mt-8 flex flex-wrap gap-6 text-white/80 text-sm">
                     <div class="flex items-center gap-2">
                         <i class="fas fa-check-circle text-green-300"></i>
-                        <span>14 Tage kostenlos</span>
+                        <span>7 Tage kostenlos</span>
                     </div>
                     <div class="flex items-center gap-2">
                         <i class="fas fa-check-circle text-green-300"></i>
@@ -392,7 +392,7 @@ $stats = [
         </p>
         <div class="flex flex-col sm:flex-row gap-4 justify-center">
             <a href="/onboarding" class="btn-white btn-large inline-flex items-center justify-center gap-2">
-                <span>Jetzt 14 Tage kostenlos testen</span>
+                <span>Jetzt 7 Tage kostenlos testen</span>
                 <i class="fas fa-arrow-right"></i>
             </a>
         </div>
