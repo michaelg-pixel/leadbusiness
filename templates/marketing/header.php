@@ -103,6 +103,17 @@ $theme = $_COOKIE['site_theme'] ?? 'light';
         .dark .hover\:bg-gray-50:hover { background-color: #1e293b; }
         .dark #header { background-color: #1e293b; border-color: #334155; }
         .dark .shadow-lg { box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3); }
+        
+        /* Header Navigation - Dark Mode Fix */
+        .dark .nav-link {
+            color: #e2e8f0 !important;
+        }
+        .dark .nav-link:hover {
+            color: #a5b4fc !important;
+        }
+        .dark .nav-link.active {
+            color: #a5b4fc !important;
+        }
     </style>
     
     <?php if (isset($additionalHead)): ?>
@@ -121,21 +132,21 @@ $theme = $_COOKIE['site_theme'] ?? 'light';
                     <div class="w-10 h-10 gradient-bg rounded-xl flex items-center justify-center">
                         <i class="fas fa-paper-plane text-white text-lg"></i>
                     </div>
-                    <span class="text-xl font-bold text-gray-900 dark:text-white">Lead<span class="text-primary-500">business</span></span>
+                    <span class="text-xl font-bold text-gray-900 dark:text-white">Lead<span class="text-primary-500 dark:text-primary-400">business</span></span>
                 </a>
                 
                 <!-- Desktop Navigation -->
                 <nav class="hidden md:flex items-center space-x-8">
-                    <a href="/funktionen" class="text-gray-600 dark:text-gray-300 hover:text-primary-500 font-medium transition-colors <?= $currentPage === 'funktionen' ? 'text-primary-500' : '' ?>">
+                    <a href="/funktionen" class="nav-link font-medium transition-colors <?= $currentPage === 'funktionen' ? 'active text-primary-500 dark:text-primary-400' : 'text-gray-600 dark:text-gray-200 hover:text-primary-500 dark:hover:text-primary-400' ?>">
                         Funktionen
                     </a>
-                    <a href="/preise" class="text-gray-600 dark:text-gray-300 hover:text-primary-500 font-medium transition-colors <?= $currentPage === 'preise' ? 'text-primary-500' : '' ?>">
+                    <a href="/preise" class="nav-link font-medium transition-colors <?= $currentPage === 'preise' ? 'active text-primary-500 dark:text-primary-400' : 'text-gray-600 dark:text-gray-200 hover:text-primary-500 dark:hover:text-primary-400' ?>">
                         Preise
                     </a>
-                    <a href="/faq" class="text-gray-600 dark:text-gray-300 hover:text-primary-500 font-medium transition-colors <?= $currentPage === 'faq' ? 'text-primary-500' : '' ?>">
+                    <a href="/faq" class="nav-link font-medium transition-colors <?= $currentPage === 'faq' ? 'active text-primary-500 dark:text-primary-400' : 'text-gray-600 dark:text-gray-200 hover:text-primary-500 dark:hover:text-primary-400' ?>">
                         FAQ
                     </a>
-                    <a href="/kontakt" class="text-gray-600 dark:text-gray-300 hover:text-primary-500 font-medium transition-colors <?= $currentPage === 'kontakt' ? 'text-primary-500' : '' ?>">
+                    <a href="/kontakt" class="nav-link font-medium transition-colors <?= $currentPage === 'kontakt' ? 'active text-primary-500 dark:text-primary-400' : 'text-gray-600 dark:text-gray-200 hover:text-primary-500 dark:hover:text-primary-400' ?>">
                         Kontakt
                     </a>
                 </nav>
@@ -144,13 +155,13 @@ $theme = $_COOKIE['site_theme'] ?? 'light';
                 <div class="hidden md:flex items-center space-x-4">
                     <!-- Dark Mode Toggle -->
                     <button onclick="toggleTheme()" 
-                            class="p-2 rounded-lg bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-600 transition-all"
+                            class="p-2 rounded-lg bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-yellow-400 hover:bg-gray-200 dark:hover:bg-slate-600 transition-all"
                             title="Design wechseln">
                         <i class="fas fa-moon dark:hidden"></i>
                         <i class="fas fa-sun hidden dark:inline"></i>
                     </button>
                     
-                    <a href="/admin/login.php" class="text-gray-600 dark:text-gray-300 hover:text-primary-500 font-medium transition-colors">
+                    <a href="/admin/login.php" class="nav-link font-medium transition-colors text-gray-600 dark:text-gray-200 hover:text-primary-500 dark:hover:text-primary-400">
                         Login
                     </a>
                 </div>
@@ -159,14 +170,14 @@ $theme = $_COOKIE['site_theme'] ?? 'light';
                 <div class="flex items-center gap-2 md:hidden">
                     <!-- Mobile Dark Mode Toggle -->
                     <button onclick="toggleTheme()" 
-                            class="p-2 rounded-lg bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-300"
+                            class="p-2 rounded-lg bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-yellow-400"
                             title="Design wechseln">
                         <i class="fas fa-moon dark:hidden"></i>
                         <i class="fas fa-sun hidden dark:inline"></i>
                     </button>
                     
                     <button id="mobile-menu-btn" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors">
-                        <i class="fas fa-bars text-2xl text-gray-700 dark:text-gray-300"></i>
+                        <i class="fas fa-bars text-2xl text-gray-700 dark:text-gray-200"></i>
                     </button>
                 </div>
             </div>
@@ -182,35 +193,35 @@ $theme = $_COOKIE['site_theme'] ?? 'light';
                     <div class="w-10 h-10 gradient-bg rounded-xl flex items-center justify-center">
                         <i class="fas fa-paper-plane text-white text-lg"></i>
                     </div>
-                    <span class="text-xl font-bold dark:text-white">Lead<span class="text-primary-500">business</span></span>
+                    <span class="text-xl font-bold text-gray-900 dark:text-white">Lead<span class="text-primary-500 dark:text-primary-400">business</span></span>
                 </a>
                 <button id="mobile-menu-close" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700">
-                    <i class="fas fa-times text-2xl text-gray-700 dark:text-gray-300"></i>
+                    <i class="fas fa-times text-2xl text-gray-700 dark:text-gray-200"></i>
                 </button>
             </div>
             
             <!-- Mobile Navigation -->
             <nav class="flex-1 overflow-y-auto py-6 px-4">
                 <div class="space-y-2">
-                    <a href="/" class="block py-3 px-4 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 font-medium text-lg dark:text-white">
-                        <i class="fas fa-home w-8 text-primary-500"></i> Startseite
+                    <a href="/" class="block py-3 px-4 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 font-medium text-lg text-gray-800 dark:text-gray-100">
+                        <i class="fas fa-home w-8 text-primary-500 dark:text-primary-400"></i> Startseite
                     </a>
-                    <a href="/funktionen" class="block py-3 px-4 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 font-medium text-lg dark:text-white">
-                        <i class="fas fa-star w-8 text-primary-500"></i> Funktionen
+                    <a href="/funktionen" class="block py-3 px-4 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 font-medium text-lg text-gray-800 dark:text-gray-100 <?= $currentPage === 'funktionen' ? 'bg-primary-50 dark:bg-primary-900/30' : '' ?>">
+                        <i class="fas fa-star w-8 text-primary-500 dark:text-primary-400"></i> Funktionen
                     </a>
-                    <a href="/preise" class="block py-3 px-4 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 font-medium text-lg dark:text-white">
-                        <i class="fas fa-tags w-8 text-primary-500"></i> Preise
+                    <a href="/preise" class="block py-3 px-4 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 font-medium text-lg text-gray-800 dark:text-gray-100 <?= $currentPage === 'preise' ? 'bg-primary-50 dark:bg-primary-900/30' : '' ?>">
+                        <i class="fas fa-tags w-8 text-primary-500 dark:text-primary-400"></i> Preise
                     </a>
-                    <a href="/faq" class="block py-3 px-4 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 font-medium text-lg dark:text-white">
-                        <i class="fas fa-question-circle w-8 text-primary-500"></i> FAQ
+                    <a href="/faq" class="block py-3 px-4 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 font-medium text-lg text-gray-800 dark:text-gray-100 <?= $currentPage === 'faq' ? 'bg-primary-50 dark:bg-primary-900/30' : '' ?>">
+                        <i class="fas fa-question-circle w-8 text-primary-500 dark:text-primary-400"></i> FAQ
                     </a>
-                    <a href="/kontakt" class="block py-3 px-4 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 font-medium text-lg dark:text-white">
-                        <i class="fas fa-envelope w-8 text-primary-500"></i> Kontakt
+                    <a href="/kontakt" class="block py-3 px-4 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 font-medium text-lg text-gray-800 dark:text-gray-100 <?= $currentPage === 'kontakt' ? 'bg-primary-50 dark:bg-primary-900/30' : '' ?>">
+                        <i class="fas fa-envelope w-8 text-primary-500 dark:text-primary-400"></i> Kontakt
                     </a>
                 </div>
                 
                 <div class="border-t dark:border-slate-700 mt-6 pt-6 space-y-4">
-                    <a href="/admin/login.php" class="block py-3 px-4 rounded-lg bg-gray-100 dark:bg-slate-800 text-center font-semibold dark:text-white">
+                    <a href="/admin/login.php" class="block py-3 px-4 rounded-lg bg-gray-100 dark:bg-slate-800 text-center font-semibold text-gray-800 dark:text-gray-100">
                         Login
                     </a>
                 </div>
