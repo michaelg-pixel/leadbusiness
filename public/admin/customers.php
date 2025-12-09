@@ -4,18 +4,14 @@
  * Leadbusiness - Empfehlungsprogramm
  */
 
-require_once __DIR__ . '/../../config/database.php';
-require_once __DIR__ . '/../../includes/Database.php';
-require_once __DIR__ . '/../../includes/helpers.php';
-
-session_start();
+require_once __DIR__ . '/../../includes/init.php';
 
 if (!isset($_SESSION['admin_id'])) {
     header('Location: /admin/login.php');
     exit;
 }
 
-$db = Database::getInstance();
+$db = db();
 $pageTitle = 'Kunden';
 
 // Filter & Suche
@@ -81,7 +77,6 @@ include __DIR__ . '/../../includes/admin-header.php';
 <!-- Filter Bar -->
 <div class="bg-white dark:bg-slate-800 rounded-xl p-4 mb-6 shadow-sm border border-slate-200 dark:border-slate-700">
     <form method="GET" class="flex flex-wrap items-center gap-4">
-        <!-- Suche -->
         <div class="flex-1 min-w-[200px]">
             <div class="relative">
                 <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
@@ -95,7 +90,6 @@ include __DIR__ . '/../../includes/admin-header.php';
             </div>
         </div>
         
-        <!-- Status Filter -->
         <select name="status" onchange="this.form.submit()"
                 class="px-4 py-2 border border-slate-200 dark:border-slate-600 rounded-lg 
                        bg-white dark:bg-slate-700 text-slate-800 dark:text-white">
@@ -106,7 +100,6 @@ include __DIR__ . '/../../includes/admin-header.php';
             <option value="paused" <?= $status === 'paused' ? 'selected' : '' ?>>Pausiert</option>
         </select>
         
-        <!-- Plan Filter -->
         <select name="plan" onchange="this.form.submit()"
                 class="px-4 py-2 border border-slate-200 dark:border-slate-600 rounded-lg 
                        bg-white dark:bg-slate-700 text-slate-800 dark:text-white">
@@ -116,7 +109,6 @@ include __DIR__ . '/../../includes/admin-header.php';
             <option value="enterprise" <?= $plan === 'enterprise' ? 'selected' : '' ?>>Enterprise</option>
         </select>
         
-        <!-- Sortierung -->
         <select name="sort" onchange="this.form.submit()"
                 class="px-4 py-2 border border-slate-200 dark:border-slate-600 rounded-lg 
                        bg-white dark:bg-slate-700 text-slate-800 dark:text-white">
@@ -178,27 +170,13 @@ include __DIR__ . '/../../includes/admin-header.php';
         <table class="w-full">
             <thead class="bg-slate-50 dark:bg-slate-700/50">
                 <tr>
-                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
-                        Kunde
-                    </th>
-                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
-                        Plan
-                    </th>
-                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
-                        Status
-                    </th>
-                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
-                        Leads
-                    </th>
-                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
-                        Conversions
-                    </th>
-                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
-                        Registriert
-                    </th>
-                    <th class="px-6 py-3 text-right text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
-                        Aktionen
-                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">Kunde</th>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">Plan</th>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">Status</th>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">Leads</th>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">Conversions</th>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">Registriert</th>
+                    <th class="px-6 py-3 text-right text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">Aktionen</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
@@ -218,8 +196,8 @@ include __DIR__ . '/../../includes/admin-header.php';
                             <div>
                                 <p class="font-medium text-slate-800 dark:text-white"><?= e($customer['company_name']) ?></p>
                                 <p class="text-xs text-slate-500">
-                                    <a href="https://<?= e($customer['subdomain']) ?>.empfohlen.de" target="_blank" class="hover:text-primary-600">
-                                        <?= e($customer['subdomain']) ?>.empfohlen.de <i class="fas fa-external-link text-[10px]"></i>
+                                    <a href="https://<?= e($customer['subdomain']) ?>.empfehlungen.cloud" target="_blank" class="hover:text-primary-600">
+                                        <?= e($customer['subdomain']) ?>.empfehlungen.cloud <i class="fas fa-external-link text-[10px]"></i>
                                     </a>
                                 </p>
                             </div>
@@ -265,13 +243,11 @@ include __DIR__ . '/../../includes/admin-header.php';
                     <td class="px-6 py-4 text-right">
                         <div class="flex items-center justify-end gap-2">
                             <a href="/admin/customer-detail.php?id=<?= $customer['id'] ?>" 
-                               class="p-2 text-slate-400 hover:text-primary-600 transition-colors"
-                               title="Details anzeigen">
+                               class="p-2 text-slate-400 hover:text-primary-600 transition-colors" title="Details anzeigen">
                                 <i class="fas fa-eye"></i>
                             </a>
-                            <a href="https://<?= e($customer['subdomain']) ?>.empfohlen.de" target="_blank"
-                               class="p-2 text-slate-400 hover:text-green-600 transition-colors"
-                               title="Seite öffnen">
+                            <a href="https://<?= e($customer['subdomain']) ?>.empfehlungen.cloud" target="_blank"
+                               class="p-2 text-slate-400 hover:text-green-600 transition-colors" title="Seite öffnen">
                                 <i class="fas fa-external-link"></i>
                             </a>
                         </div>
@@ -291,7 +267,6 @@ include __DIR__ . '/../../includes/admin-header.php';
         </table>
     </div>
     
-    <!-- Pagination -->
     <?php if ($totalPages > 1): ?>
     <div class="px-6 py-4 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between">
         <p class="text-sm text-slate-500">
