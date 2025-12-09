@@ -4,11 +4,7 @@
  * Leadbusiness - Empfehlungsprogramm
  */
 
-require_once __DIR__ . '/../../config/database.php';
-require_once __DIR__ . '/../../includes/Database.php';
-require_once __DIR__ . '/../../includes/helpers.php';
-
-session_start();
+require_once __DIR__ . '/../../includes/init.php';
 
 // Bereits eingeloggt?
 if (isset($_SESSION['admin_id'])) {
@@ -27,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($email) || empty($password)) {
         $error = 'Bitte alle Felder ausfüllen.';
     } else {
-        $db = Database::getInstance();
+        $db = db();
         $admin = $db->fetch(
             "SELECT * FROM admin_users WHERE email = ? AND is_active = 1",
             [$email]
@@ -59,14 +55,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             redirect('/admin/');
         } else {
             $error = 'Ungültige Anmeldedaten.';
-            
-            // Login-Versuch loggen
             error_log("Failed admin login attempt for: " . $email);
         }
     }
 }
 
-// Theme aus Cookie lesen
 $theme = $_COOKIE['admin_theme'] ?? 'light';
 ?>
 <!DOCTYPE html>
@@ -84,17 +77,9 @@ $theme = $_COOKIE['admin_theme'] ?? 'light';
                 extend: {
                     colors: {
                         primary: {
-                            50: '#f0f9ff',
-                            100: '#e0f2fe',
-                            200: '#bae6fd',
-                            300: '#7dd3fc',
-                            400: '#38bdf8',
-                            500: '#0ea5e9',
-                            600: '#0284c7',
-                            700: '#0369a1',
-                            800: '#075985',
-                            900: '#0c4a6e',
-                            950: '#082f49'
+                            50: '#f0f9ff', 100: '#e0f2fe', 200: '#bae6fd', 300: '#7dd3fc',
+                            400: '#38bdf8', 500: '#0ea5e9', 600: '#0284c7', 700: '#0369a1',
+                            800: '#075985', 900: '#0c4a6e', 950: '#082f49'
                         }
                     }
                 }
@@ -102,24 +87,18 @@ $theme = $_COOKIE['admin_theme'] ?? 'light';
         }
     </script>
     <style>
-        .gradient-bg {
-            background: linear-gradient(135deg, #0c4a6e 0%, #1e3a5f 50%, #0f172a 100%);
-        }
-        .dark .gradient-bg {
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
-        }
+        .gradient-bg { background: linear-gradient(135deg, #0c4a6e 0%, #1e3a5f 50%, #0f172a 100%); }
+        .dark .gradient-bg { background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%); }
     </style>
 </head>
 <body class="min-h-screen gradient-bg flex items-center justify-center p-4">
     
-    <!-- Theme Toggle -->
     <button onclick="toggleTheme()" class="fixed top-4 right-4 p-3 rounded-full bg-white/10 backdrop-blur-sm text-white hover:bg-white/20 transition-all">
         <i class="fas fa-moon dark:hidden"></i>
         <i class="fas fa-sun hidden dark:inline"></i>
     </button>
     
     <div class="w-full max-w-md">
-        <!-- Logo -->
         <div class="text-center mb-8">
             <div class="inline-flex items-center justify-center w-16 h-16 bg-white/10 backdrop-blur-sm rounded-2xl mb-4">
                 <i class="fas fa-shield-halved text-3xl text-white"></i>
@@ -128,26 +107,20 @@ $theme = $_COOKIE['admin_theme'] ?? 'light';
             <p class="text-white/60 mt-1">Admin-Bereich</p>
         </div>
         
-        <!-- Login Card -->
         <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-8">
             <h2 class="text-xl font-semibold text-slate-800 dark:text-white mb-6">Anmelden</h2>
             
             <?php if ($error): ?>
             <div class="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded-lg mb-6">
-                <i class="fas fa-exclamation-circle mr-2"></i>
-                <?= e($error) ?>
+                <i class="fas fa-exclamation-circle mr-2"></i><?= e($error) ?>
             </div>
             <?php endif; ?>
             
             <form method="POST" class="space-y-5">
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                        E-Mail-Adresse
-                    </label>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">E-Mail-Adresse</label>
                     <div class="relative">
-                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
-                            <i class="fas fa-envelope"></i>
-                        </span>
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400"><i class="fas fa-envelope"></i></span>
                         <input type="email" name="email" value="<?= e($email) ?>" required
                                class="w-full pl-10 pr-4 py-3 border border-slate-200 dark:border-slate-600 rounded-lg 
                                       bg-white dark:bg-slate-700 text-slate-800 dark:text-white
@@ -157,13 +130,9 @@ $theme = $_COOKIE['admin_theme'] ?? 'light';
                 </div>
                 
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                        Passwort
-                    </label>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Passwort</label>
                     <div class="relative">
-                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
-                            <i class="fas fa-lock"></i>
-                        </span>
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400"><i class="fas fa-lock"></i></span>
                         <input type="password" name="password" required id="password"
                                class="w-full pl-10 pr-12 py-3 border border-slate-200 dark:border-slate-600 rounded-lg 
                                       bg-white dark:bg-slate-700 text-slate-800 dark:text-white
@@ -178,57 +147,34 @@ $theme = $_COOKIE['admin_theme'] ?? 'light';
                 
                 <div class="flex items-center justify-between">
                     <label class="flex items-center">
-                        <input type="checkbox" name="remember" 
-                               class="w-4 h-4 text-primary-600 border-slate-300 rounded focus:ring-primary-500">
+                        <input type="checkbox" name="remember" class="w-4 h-4 text-primary-600 border-slate-300 rounded focus:ring-primary-500">
                         <span class="ml-2 text-sm text-slate-600 dark:text-slate-400">Angemeldet bleiben</span>
                     </label>
-                    <a href="/admin/forgot-password.php" class="text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400">
-                        Passwort vergessen?
-                    </a>
+                    <a href="/admin/forgot-password.php" class="text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400">Passwort vergessen?</a>
                 </div>
                 
-                <button type="submit" 
-                        class="w-full py-3 px-4 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg 
-                               transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-primary-600/30">
-                    <i class="fas fa-sign-in-alt"></i>
-                    Anmelden
+                <button type="submit" class="w-full py-3 px-4 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-primary-600/30">
+                    <i class="fas fa-sign-in-alt"></i>Anmelden
                 </button>
             </form>
         </div>
         
-        <!-- Footer -->
-        <p class="text-center text-white/40 text-sm mt-6">
-            &copy; <?= date('Y') ?> Leadbusiness. Alle Rechte vorbehalten.
-        </p>
+        <p class="text-center text-white/40 text-sm mt-6">&copy; <?= date('Y') ?> Leadbusiness. Alle Rechte vorbehalten.</p>
     </div>
     
     <script>
         function toggleTheme() {
             const html = document.documentElement;
-            const isDark = html.classList.contains('dark');
-            
-            if (isDark) {
-                html.classList.remove('dark');
-                document.cookie = 'admin_theme=light;path=/;max-age=31536000';
-            } else {
-                html.classList.add('dark');
-                document.cookie = 'admin_theme=dark;path=/;max-age=31536000';
-            }
+            html.classList.toggle('dark');
+            document.cookie = `admin_theme=${html.classList.contains('dark') ? 'dark' : 'light'};path=/;max-age=31536000`;
         }
         
         function togglePassword() {
             const input = document.getElementById('password');
             const icon = document.getElementById('toggleIcon');
-            
-            if (input.type === 'password') {
-                input.type = 'text';
-                icon.classList.remove('fa-eye');
-                icon.classList.add('fa-eye-slash');
-            } else {
-                input.type = 'password';
-                icon.classList.remove('fa-eye-slash');
-                icon.classList.add('fa-eye');
-            }
+            input.type = input.type === 'password' ? 'text' : 'password';
+            icon.classList.toggle('fa-eye');
+            icon.classList.toggle('fa-eye-slash');
         }
     </script>
 </body>
