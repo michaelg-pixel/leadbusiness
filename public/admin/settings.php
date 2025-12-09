@@ -4,29 +4,25 @@
  * Leadbusiness - Empfehlungsprogramm
  */
 
-require_once __DIR__ . '/../../config/database.php';
-require_once __DIR__ . '/../../includes/Database.php';
-require_once __DIR__ . '/../../includes/helpers.php';
-
-session_start();
+require_once __DIR__ . '/../../includes/init.php';
 
 if (!isset($_SESSION['admin_id'])) {
     header('Location: /admin/login.php');
     exit;
 }
 
-$db = Database::getInstance();
+$db = db();
 $pageTitle = 'Einstellungen';
 
 // Aktionen verarbeiten
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if (isPost()) {
     $action = $_POST['action'] ?? '';
     
     switch ($action) {
         case 'update_settings':
             $settings = [
                 'site_name' => sanitize($_POST['site_name'] ?? 'Leadbusiness'),
-                'site_domain' => sanitize($_POST['site_domain'] ?? 'empfohlen.de'),
+                'site_domain' => sanitize($_POST['site_domain'] ?? 'empfehlungen.cloud'),
                 'admin_email' => sanitize($_POST['admin_email'] ?? ''),
                 'mailgun_from_name' => sanitize($_POST['mailgun_from_name'] ?? ''),
                 'mailgun_from_email' => sanitize($_POST['mailgun_from_email'] ?? ''),
@@ -99,10 +95,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // Einstellungen laden
-$settings = [];
+$settingsData = [];
 $rows = $db->fetchAll("SELECT setting_key, setting_value FROM system_settings");
 foreach ($rows as $row) {
-    $settings[$row['setting_key']] = $row['setting_value'];
+    $settingsData[$row['setting_key']] = $row['setting_value'];
 }
 
 // E-Mail Blacklist
@@ -144,19 +140,19 @@ include __DIR__ . '/../../includes/admin-header.php';
             <div class="grid grid-cols-2 gap-4">
                 <div>
                     <label class="block text-sm text-slate-600 dark:text-slate-400 mb-1">Site Name</label>
-                    <input type="text" name="site_name" value="<?= e($settings['site_name'] ?? 'Leadbusiness') ?>"
+                    <input type="text" name="site_name" value="<?= e($settingsData['site_name'] ?? 'Leadbusiness') ?>"
                            class="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white">
                 </div>
                 <div>
                     <label class="block text-sm text-slate-600 dark:text-slate-400 mb-1">Domain</label>
-                    <input type="text" name="site_domain" value="<?= e($settings['site_domain'] ?? 'empfohlen.de') ?>"
+                    <input type="text" name="site_domain" value="<?= e($settingsData['site_domain'] ?? 'empfehlungen.cloud') ?>"
                            class="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white">
                 </div>
             </div>
             
             <div>
                 <label class="block text-sm text-slate-600 dark:text-slate-400 mb-1">Admin E-Mail</label>
-                <input type="email" name="admin_email" value="<?= e($settings['admin_email'] ?? '') ?>"
+                <input type="email" name="admin_email" value="<?= e($settingsData['admin_email'] ?? '') ?>"
                        class="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white">
             </div>
             
@@ -165,19 +161,19 @@ include __DIR__ . '/../../includes/admin-header.php';
             <div class="grid grid-cols-2 gap-4">
                 <div>
                     <label class="block text-sm text-slate-600 dark:text-slate-400 mb-1">Mailgun Absendername</label>
-                    <input type="text" name="mailgun_from_name" value="<?= e($settings['mailgun_from_name'] ?? '') ?>"
+                    <input type="text" name="mailgun_from_name" value="<?= e($settingsData['mailgun_from_name'] ?? '') ?>"
                            class="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white">
                 </div>
                 <div>
                     <label class="block text-sm text-slate-600 dark:text-slate-400 mb-1">Mailgun Absender-E-Mail</label>
-                    <input type="email" name="mailgun_from_email" value="<?= e($settings['mailgun_from_email'] ?? '') ?>"
+                    <input type="email" name="mailgun_from_email" value="<?= e($settingsData['mailgun_from_email'] ?? '') ?>"
                            class="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white">
                 </div>
             </div>
             
             <div>
                 <label class="block text-sm text-slate-600 dark:text-slate-400 mb-1">Digistore24 Vendor ID</label>
-                <input type="text" name="digistore_vendor_id" value="<?= e($settings['digistore_vendor_id'] ?? '') ?>"
+                <input type="text" name="digistore_vendor_id" value="<?= e($settingsData['digistore_vendor_id'] ?? '') ?>"
                        class="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white">
             </div>
             
@@ -185,13 +181,13 @@ include __DIR__ . '/../../includes/admin-header.php';
                 <div>
                     <label class="block text-sm text-slate-600 dark:text-slate-400 mb-1">Standard-Plan</label>
                     <select name="default_plan" class="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white">
-                        <option value="starter" <?= ($settings['default_plan'] ?? '') === 'starter' ? 'selected' : '' ?>>Starter</option>
-                        <option value="professional" <?= ($settings['default_plan'] ?? '') === 'professional' ? 'selected' : '' ?>>Professional</option>
+                        <option value="starter" <?= ($settingsData['default_plan'] ?? '') === 'starter' ? 'selected' : '' ?>>Starter</option>
+                        <option value="professional" <?= ($settingsData['default_plan'] ?? '') === 'professional' ? 'selected' : '' ?>>Professional</option>
                     </select>
                 </div>
                 <div>
                     <label class="block text-sm text-slate-600 dark:text-slate-400 mb-1">Trial-Tage</label>
-                    <input type="number" name="trial_days" value="<?= e($settings['trial_days'] ?? 14) ?>" min="0" max="90"
+                    <input type="number" name="trial_days" value="<?= e($settingsData['trial_days'] ?? 14) ?>" min="0" max="90"
                            class="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white">
                 </div>
             </div>
@@ -251,7 +247,6 @@ include __DIR__ . '/../../includes/admin-header.php';
             </h3>
         </div>
         
-        <!-- Domain hinzufügen -->
         <form method="POST" class="p-4 border-b border-slate-200 dark:border-slate-700">
             <input type="hidden" name="action" value="add_domain">
             <div class="flex gap-2">
@@ -263,7 +258,6 @@ include __DIR__ . '/../../includes/admin-header.php';
             </div>
         </form>
         
-        <!-- Liste -->
         <div class="max-h-64 overflow-y-auto">
             <?php foreach ($blacklistedDomains as $domain): ?>
             <div class="flex items-center justify-between px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-700/30 border-b border-slate-100 dark:border-slate-700 last:border-0">
