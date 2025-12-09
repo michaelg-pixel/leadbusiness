@@ -36,11 +36,11 @@ require_once __DIR__ . '/../templates/marketing/header.php';
                 </p>
                 
                 <div class="flex flex-col sm:flex-row gap-4 mb-12">
-                    <a href="/onboarding" class="btn-primary btn-large bg-white text-primary-600 hover:bg-gray-100 inline-flex items-center justify-center gap-2">
+                    <a href="/onboarding" class="btn-white btn-large inline-flex items-center justify-center gap-2">
                         <span>Jetzt kostenlos starten</span>
                         <i class="fas fa-arrow-right"></i>
                     </a>
-                    <a href="#demo" class="btn-secondary btn-large border-white text-white hover:bg-white hover:text-primary-600 inline-flex items-center justify-center gap-2">
+                    <a href="#demo" class="btn-ghost btn-large inline-flex items-center justify-center gap-2">
                         <i class="fas fa-play-circle"></i>
                         <span>Demo ansehen</span>
                     </a>
@@ -103,7 +103,7 @@ require_once __DIR__ . '/../templates/marketing/header.php';
                                 <i class="fas fa-user-plus"></i>
                             </div>
                             <div class="flex-1">
-                                <div class="text-sm font-medium">Neuer Empfehler</div>
+                                <div class="text-sm font-medium text-gray-900">Neuer Empfehler</div>
                                 <div class="text-xs text-gray-500">Maria S. - vor 2 Min</div>
                             </div>
                         </div>
@@ -112,7 +112,7 @@ require_once __DIR__ . '/../templates/marketing/header.php';
                                 <i class="fas fa-gift"></i>
                             </div>
                             <div class="flex-1">
-                                <div class="text-sm font-medium">Belohnung freigeschaltet</div>
+                                <div class="text-sm font-medium text-gray-900">Belohnung freigeschaltet</div>
                                 <div class="text-xs text-gray-500">Thomas K. - Stufe 2 erreicht</div>
                             </div>
                         </div>
@@ -121,7 +121,7 @@ require_once __DIR__ . '/../templates/marketing/header.php';
                                 <i class="fas fa-share-alt"></i>
                             </div>
                             <div class="flex-1">
-                                <div class="text-sm font-medium">Link geteilt</div>
+                                <div class="text-sm font-medium text-gray-900">Link geteilt</div>
                                 <div class="text-xs text-gray-500">Anna M. via WhatsApp</div>
                             </div>
                         </div>
@@ -141,16 +141,16 @@ require_once __DIR__ . '/../templates/marketing/header.php';
     
     <!-- Wave Divider -->
     <div class="absolute bottom-0 left-0 right-0">
-        <svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M0 120L60 110C120 100 240 80 360 70C480 60 600 60 720 65C840 70 960 80 1080 85C1200 90 1320 90 1380 90L1440 90V120H1380C1320 120 1200 120 1080 120C960 120 840 120 720 120C600 120 480 120 360 120C240 120 120 120 60 120H0V120Z" fill="white"/>
+        <svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg" class="fill-white dark:fill-slate-900">
+            <path d="M0 120L60 110C120 100 240 80 360 70C480 60 600 60 720 65C840 70 960 80 1080 85C1200 90 1320 90 1380 90L1440 90V120H1380C1320 120 1200 120 1080 120C960 120 840 120 720 120C600 120 480 120 360 120C240 120 120 120 60 120H0V120Z"/>
         </svg>
     </div>
 </section>
 
 <!-- Logo Slider (Social Proof) -->
-<section class="py-12 bg-gray-50">
+<section class="py-12 bg-gray-50 dark:bg-slate-800">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <p class="text-center text-gray-500 mb-8 font-medium">Vertrauen von Unternehmen aus allen Branchen</p>
+        <p class="text-center text-gray-500 dark:text-gray-400 mb-8 font-medium">Vertrauen von Unternehmen aus allen Branchen</p>
         <div class="flex flex-wrap justify-center items-center gap-8 md:gap-16 opacity-60">
             <div class="flex items-center gap-2 text-xl font-bold text-gray-400">
                 <i class="fas fa-tooth text-2xl"></i> Zahnärzte
@@ -172,29 +172,29 @@ require_once __DIR__ . '/../templates/marketing/header.php';
 </section>
 
 <!-- Problem/Solution Section -->
-<section class="py-20 bg-white">
+<section class="py-20 bg-white dark:bg-slate-900">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="grid lg:grid-cols-2 gap-16 items-center">
             
             <!-- Problem -->
             <div>
                 <span class="text-red-500 font-semibold uppercase tracking-wide">Das Problem</span>
-                <h2 class="text-3xl md:text-4xl font-bold mt-3 mb-6">Empfehlungen passieren – aber zufällig</h2>
-                <div class="space-y-4 text-gray-600">
+                <h2 class="text-3xl md:text-4xl font-bold mt-3 mb-6 dark:text-white">Empfehlungen passieren – aber zufällig</h2>
+                <div class="space-y-4 text-gray-600 dark:text-gray-300">
                     <div class="flex items-start gap-4">
-                        <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                        <div class="w-8 h-8 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
                             <i class="fas fa-times text-red-500"></i>
                         </div>
                         <p>Zufriedene Kunden empfehlen Sie weiter, aber Sie wissen nicht wer und wie oft</p>
                     </div>
                     <div class="flex items-start gap-4">
-                        <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                        <div class="w-8 h-8 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
                             <i class="fas fa-times text-red-500"></i>
                         </div>
                         <p>Kein System, um Empfehlungen zu tracken und Kunden zu belohnen</p>
                     </div>
                     <div class="flex items-start gap-4">
-                        <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                        <div class="w-8 h-8 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
                             <i class="fas fa-times text-red-500"></i>
                         </div>
                         <p>Wertvolles Wachstumspotenzial bleibt ungenutzt</p>
@@ -205,22 +205,22 @@ require_once __DIR__ . '/../templates/marketing/header.php';
             <!-- Solution -->
             <div>
                 <span class="text-green-500 font-semibold uppercase tracking-wide">Die Lösung</span>
-                <h2 class="text-3xl md:text-4xl font-bold mt-3 mb-6">Leadbusiness automatisiert alles</h2>
-                <div class="space-y-4 text-gray-600">
+                <h2 class="text-3xl md:text-4xl font-bold mt-3 mb-6 dark:text-white">Leadbusiness automatisiert alles</h2>
+                <div class="space-y-4 text-gray-600 dark:text-gray-300">
                     <div class="flex items-start gap-4">
-                        <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                        <div class="w-8 h-8 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
                             <i class="fas fa-check text-green-500"></i>
                         </div>
                         <p>Jeder Kunde bekommt einen persönlichen Empfehlungslink</p>
                     </div>
                     <div class="flex items-start gap-4">
-                        <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                        <div class="w-8 h-8 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
                             <i class="fas fa-check text-green-500"></i>
                         </div>
                         <p>Empfehlungen werden automatisch getrackt und Belohnungen versendet</p>
                     </div>
                     <div class="flex items-start gap-4">
-                        <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                        <div class="w-8 h-8 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
                             <i class="fas fa-check text-green-500"></i>
                         </div>
                         <p>Gamification motiviert Kunden, noch mehr zu empfehlen</p>
@@ -232,22 +232,22 @@ require_once __DIR__ . '/../templates/marketing/header.php';
 </section>
 
 <!-- How it Works Section -->
-<section class="py-20 bg-gray-50">
+<section class="py-20 bg-gray-50 dark:bg-slate-800">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-16">
             <span class="text-primary-500 font-semibold uppercase tracking-wide">So funktioniert's</span>
-            <h2 class="text-3xl md:text-4xl font-bold mt-3">In 3 Schritten zum Empfehlungsprogramm</h2>
+            <h2 class="text-3xl md:text-4xl font-bold mt-3 dark:text-white">In 3 Schritten zum Empfehlungsprogramm</h2>
         </div>
         
         <div class="grid md:grid-cols-3 gap-8">
             <!-- Step 1 -->
             <div class="relative">
-                <div class="bg-white rounded-2xl p-8 shadow-lg card-hover h-full">
+                <div class="bg-white dark:bg-slate-700 rounded-2xl p-8 shadow-lg card-hover h-full">
                     <div class="w-16 h-16 gradient-bg rounded-2xl flex items-center justify-center text-white text-2xl font-bold mb-6">
                         1
                     </div>
-                    <h3 class="text-xl font-bold mb-4">Onboarding ausfüllen</h3>
-                    <p class="text-gray-600">
+                    <h3 class="text-xl font-bold mb-4 dark:text-white">Onboarding ausfüllen</h3>
+                    <p class="text-gray-600 dark:text-gray-300">
                         Beantworten Sie 8 einfache Fragen zu Ihrem Unternehmen. 
                         Das dauert nur 5 Minuten.
                     </p>
@@ -259,12 +259,12 @@ require_once __DIR__ . '/../templates/marketing/header.php';
             
             <!-- Step 2 -->
             <div class="relative">
-                <div class="bg-white rounded-2xl p-8 shadow-lg card-hover h-full">
+                <div class="bg-white dark:bg-slate-700 rounded-2xl p-8 shadow-lg card-hover h-full">
                     <div class="w-16 h-16 gradient-bg rounded-2xl flex items-center justify-center text-white text-2xl font-bold mb-6">
                         2
                     </div>
-                    <h3 class="text-xl font-bold mb-4">Automatische Einrichtung</h3>
-                    <p class="text-gray-600">
+                    <h3 class="text-xl font-bold mb-4 dark:text-white">Automatische Einrichtung</h3>
+                    <p class="text-gray-600 dark:text-gray-300">
                         Wir erstellen automatisch Ihre Empfehlungsseite, 
                         E-Mails und Belohnungsstufen.
                     </p>
@@ -276,12 +276,12 @@ require_once __DIR__ . '/../templates/marketing/header.php';
             
             <!-- Step 3 -->
             <div>
-                <div class="bg-white rounded-2xl p-8 shadow-lg card-hover h-full">
+                <div class="bg-white dark:bg-slate-700 rounded-2xl p-8 shadow-lg card-hover h-full">
                     <div class="w-16 h-16 gradient-bg rounded-2xl flex items-center justify-center text-white text-2xl font-bold mb-6">
                         3
                     </div>
-                    <h3 class="text-xl font-bold mb-4">Kunden einladen</h3>
-                    <p class="text-gray-600">
+                    <h3 class="text-xl font-bold mb-4 dark:text-white">Kunden einladen</h3>
+                    <p class="text-gray-600 dark:text-gray-300">
                         Teilen Sie Ihren Link mit Kunden. 
                         Ab jetzt läuft alles automatisch!
                     </p>
@@ -299,69 +299,69 @@ require_once __DIR__ . '/../templates/marketing/header.php';
 </section>
 
 <!-- Features Section -->
-<section class="py-20 bg-white">
+<section class="py-20 bg-white dark:bg-slate-900">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-16">
             <span class="text-primary-500 font-semibold uppercase tracking-wide">Features</span>
-            <h2 class="text-3xl md:text-4xl font-bold mt-3">Alles, was Sie brauchen</h2>
-            <p class="text-gray-600 mt-4 max-w-2xl mx-auto">
+            <h2 class="text-3xl md:text-4xl font-bold mt-3 dark:text-white">Alles, was Sie brauchen</h2>
+            <p class="text-gray-600 dark:text-gray-400 mt-4 max-w-2xl mx-auto">
                 Ein komplettes Empfehlungsprogramm – fertig konfiguriert und einsatzbereit.
             </p>
         </div>
         
         <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             <!-- Feature 1 -->
-            <div class="p-6 rounded-2xl border border-gray-200 hover:border-primary-500 hover:shadow-lg transition-all">
-                <div class="feature-icon bg-primary-100">
+            <div class="p-6 rounded-2xl border border-gray-200 dark:border-slate-600 hover:border-primary-500 hover:shadow-lg transition-all bg-white dark:bg-slate-800">
+                <div class="feature-icon bg-primary-100 dark:bg-primary-900/30">
                     <i class="fas fa-link text-primary-500"></i>
                 </div>
-                <h3 class="text-lg font-bold mb-2">Persönliche Empfehlungslinks</h3>
-                <p class="text-gray-600">Jeder Kunde bekommt einen einzigartigen Link zum Teilen.</p>
+                <h3 class="text-lg font-bold mb-2 dark:text-white">Persönliche Empfehlungslinks</h3>
+                <p class="text-gray-600 dark:text-gray-300">Jeder Kunde bekommt einen einzigartigen Link zum Teilen.</p>
             </div>
             
             <!-- Feature 2 -->
-            <div class="p-6 rounded-2xl border border-gray-200 hover:border-primary-500 hover:shadow-lg transition-all">
-                <div class="feature-icon bg-green-100">
+            <div class="p-6 rounded-2xl border border-gray-200 dark:border-slate-600 hover:border-primary-500 hover:shadow-lg transition-all bg-white dark:bg-slate-800">
+                <div class="feature-icon bg-green-100 dark:bg-green-900/30">
                     <i class="fas fa-gift text-green-500"></i>
                 </div>
-                <h3 class="text-lg font-bold mb-2">Automatische Belohnungen</h3>
-                <p class="text-gray-600">Empfehler werden automatisch per E-Mail über ihre Belohnung informiert.</p>
+                <h3 class="text-lg font-bold mb-2 dark:text-white">Automatische Belohnungen</h3>
+                <p class="text-gray-600 dark:text-gray-300">Empfehler werden automatisch per E-Mail über ihre Belohnung informiert.</p>
             </div>
             
             <!-- Feature 3 -->
-            <div class="p-6 rounded-2xl border border-gray-200 hover:border-primary-500 hover:shadow-lg transition-all">
-                <div class="feature-icon bg-yellow-100">
+            <div class="p-6 rounded-2xl border border-gray-200 dark:border-slate-600 hover:border-primary-500 hover:shadow-lg transition-all bg-white dark:bg-slate-800">
+                <div class="feature-icon bg-yellow-100 dark:bg-yellow-900/30">
                     <i class="fas fa-trophy text-yellow-500"></i>
                 </div>
-                <h3 class="text-lg font-bold mb-2">Gamification</h3>
-                <p class="text-gray-600">Leaderboards, Badges und Fortschrittsbalken motivieren zum Weiterempfehlen.</p>
+                <h3 class="text-lg font-bold mb-2 dark:text-white">Gamification</h3>
+                <p class="text-gray-600 dark:text-gray-300">Leaderboards, Badges und Fortschrittsbalken motivieren zum Weiterempfehlen.</p>
             </div>
             
             <!-- Feature 4 -->
-            <div class="p-6 rounded-2xl border border-gray-200 hover:border-primary-500 hover:shadow-lg transition-all">
-                <div class="feature-icon bg-blue-100">
+            <div class="p-6 rounded-2xl border border-gray-200 dark:border-slate-600 hover:border-primary-500 hover:shadow-lg transition-all bg-white dark:bg-slate-800">
+                <div class="feature-icon bg-blue-100 dark:bg-blue-900/30">
                     <i class="fas fa-share-alt text-blue-500"></i>
                 </div>
-                <h3 class="text-lg font-bold mb-2">11 Share-Buttons</h3>
-                <p class="text-gray-600">WhatsApp, Facebook, E-Mail, SMS und mehr – mit einem Klick teilen.</p>
+                <h3 class="text-lg font-bold mb-2 dark:text-white">11 Share-Buttons</h3>
+                <p class="text-gray-600 dark:text-gray-300">WhatsApp, Facebook, E-Mail, SMS und mehr – mit einem Klick teilen.</p>
             </div>
             
             <!-- Feature 5 -->
-            <div class="p-6 rounded-2xl border border-gray-200 hover:border-primary-500 hover:shadow-lg transition-all">
-                <div class="feature-icon bg-purple-100">
+            <div class="p-6 rounded-2xl border border-gray-200 dark:border-slate-600 hover:border-primary-500 hover:shadow-lg transition-all bg-white dark:bg-slate-800">
+                <div class="feature-icon bg-purple-100 dark:bg-purple-900/30">
                     <i class="fas fa-palette text-purple-500"></i>
                 </div>
-                <h3 class="text-lg font-bold mb-2">Branchen-Designs</h3>
-                <p class="text-gray-600">Professionelle Hintergrundbilder passend zu Ihrer Branche.</p>
+                <h3 class="text-lg font-bold mb-2 dark:text-white">Branchen-Designs</h3>
+                <p class="text-gray-600 dark:text-gray-300">Professionelle Hintergrundbilder passend zu Ihrer Branche.</p>
             </div>
             
             <!-- Feature 6 -->
-            <div class="p-6 rounded-2xl border border-gray-200 hover:border-primary-500 hover:shadow-lg transition-all">
-                <div class="feature-icon bg-red-100">
+            <div class="p-6 rounded-2xl border border-gray-200 dark:border-slate-600 hover:border-primary-500 hover:shadow-lg transition-all bg-white dark:bg-slate-800">
+                <div class="feature-icon bg-red-100 dark:bg-red-900/30">
                     <i class="fas fa-chart-line text-red-500"></i>
                 </div>
-                <h3 class="text-lg font-bold mb-2">Live-Statistiken</h3>
-                <p class="text-gray-600">Sehen Sie in Echtzeit, wer empfiehlt und wie erfolgreich Sie sind.</p>
+                <h3 class="text-lg font-bold mb-2 dark:text-white">Live-Statistiken</h3>
+                <p class="text-gray-600 dark:text-gray-300">Sehen Sie in Echtzeit, wer empfiehlt und wie erfolgreich Sie sind.</p>
             </div>
         </div>
         
@@ -374,11 +374,11 @@ require_once __DIR__ . '/../templates/marketing/header.php';
 </section>
 
 <!-- Industries Section -->
-<section class="py-20 bg-gray-50">
+<section class="py-20 bg-gray-50 dark:bg-slate-800">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-16">
             <span class="text-primary-500 font-semibold uppercase tracking-wide">Branchen</span>
-            <h2 class="text-3xl md:text-4xl font-bold mt-3">Perfekt für jede Branche</h2>
+            <h2 class="text-3xl md:text-4xl font-bold mt-3 dark:text-white">Perfekt für jede Branche</h2>
         </div>
         
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
@@ -394,54 +394,54 @@ require_once __DIR__ . '/../templates/marketing/header.php';
             
             foreach ($industries as $industry):
             ?>
-            <div class="bg-white rounded-2xl p-6 text-center shadow-sm hover:shadow-lg transition-shadow cursor-pointer group">
+            <div class="bg-white dark:bg-slate-700 rounded-2xl p-6 text-center shadow-sm hover:shadow-lg transition-shadow cursor-pointer group">
                 <div class="industry-icon mx-auto group-hover:scale-110 transition-transform">
                     <i class="fas <?= $industry['icon'] ?>"></i>
                 </div>
-                <h3 class="font-semibold text-gray-900"><?= $industry['name'] ?></h3>
+                <h3 class="font-semibold text-gray-900 dark:text-white"><?= $industry['name'] ?></h3>
             </div>
             <?php endforeach; ?>
         </div>
         
-        <p class="text-center text-gray-500 mt-8">
+        <p class="text-center text-gray-500 dark:text-gray-400 mt-8">
             Und viele weitere: Handwerker, Therapeuten, SaaS, Newsletter, Agenturen...
         </p>
     </div>
 </section>
 
 <!-- Pricing Preview Section -->
-<section class="py-20 bg-white">
+<section class="py-20 bg-white dark:bg-slate-900">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-16">
             <span class="text-primary-500 font-semibold uppercase tracking-wide">Preise</span>
-            <h2 class="text-3xl md:text-4xl font-bold mt-3">Einfach & transparent</h2>
+            <h2 class="text-3xl md:text-4xl font-bold mt-3 dark:text-white">Einfach & transparent</h2>
         </div>
         
         <div class="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
             <!-- Starter Plan -->
-            <div class="bg-white rounded-2xl border-2 border-gray-200 p-8 hover:border-primary-500 transition-colors">
-                <h3 class="text-2xl font-bold mb-2">Starter</h3>
-                <p class="text-gray-500 mb-6">Für den Einstieg</p>
+            <div class="bg-white dark:bg-slate-800 rounded-2xl border-2 border-gray-200 dark:border-slate-600 p-8 hover:border-primary-500 transition-colors">
+                <h3 class="text-2xl font-bold mb-2 dark:text-white">Starter</h3>
+                <p class="text-gray-500 dark:text-gray-400 mb-6">Für den Einstieg</p>
                 
                 <div class="mb-6">
-                    <span class="text-4xl font-extrabold">49€</span>
-                    <span class="text-gray-500">/Monat</span>
+                    <span class="text-4xl font-extrabold dark:text-white">49€</span>
+                    <span class="text-gray-500 dark:text-gray-400">/Monat</span>
                 </div>
                 
                 <ul class="space-y-3 mb-8">
-                    <li class="flex items-center gap-2 text-gray-600">
+                    <li class="flex items-center gap-2 text-gray-600 dark:text-gray-300">
                         <i class="fas fa-check text-green-500"></i>
                         Bis 200 Empfehler
                     </li>
-                    <li class="flex items-center gap-2 text-gray-600">
+                    <li class="flex items-center gap-2 text-gray-600 dark:text-gray-300">
                         <i class="fas fa-check text-green-500"></i>
                         3 Belohnungsstufen
                     </li>
-                    <li class="flex items-center gap-2 text-gray-600">
+                    <li class="flex items-center gap-2 text-gray-600 dark:text-gray-300">
                         <i class="fas fa-check text-green-500"></i>
                         Eigene Subdomain
                     </li>
-                    <li class="flex items-center gap-2 text-gray-600">
+                    <li class="flex items-center gap-2 text-gray-600 dark:text-gray-300">
                         <i class="fas fa-check text-green-500"></i>
                         E-Mail-Support
                     </li>
@@ -453,33 +453,33 @@ require_once __DIR__ . '/../templates/marketing/header.php';
             </div>
             
             <!-- Professional Plan -->
-            <div class="pricing-card popular bg-white rounded-2xl border-2 border-primary-500 p-8 shadow-xl relative">
-                <h3 class="text-2xl font-bold mb-2">Professional</h3>
-                <p class="text-gray-500 mb-6">Für wachsende Unternehmen</p>
+            <div class="pricing-card popular bg-white dark:bg-slate-800 rounded-2xl border-2 border-primary-500 p-8 shadow-xl relative">
+                <h3 class="text-2xl font-bold mb-2 dark:text-white">Professional</h3>
+                <p class="text-gray-500 dark:text-gray-400 mb-6">Für wachsende Unternehmen</p>
                 
                 <div class="mb-6">
-                    <span class="text-4xl font-extrabold">99€</span>
-                    <span class="text-gray-500">/Monat</span>
+                    <span class="text-4xl font-extrabold dark:text-white">99€</span>
+                    <span class="text-gray-500 dark:text-gray-400">/Monat</span>
                 </div>
                 
                 <ul class="space-y-3 mb-8">
-                    <li class="flex items-center gap-2 text-gray-600">
+                    <li class="flex items-center gap-2 text-gray-600 dark:text-gray-300">
                         <i class="fas fa-check text-green-500"></i>
                         Bis 5.000 Empfehler
                     </li>
-                    <li class="flex items-center gap-2 text-gray-600">
+                    <li class="flex items-center gap-2 text-gray-600 dark:text-gray-300">
                         <i class="fas fa-check text-green-500"></i>
                         5 Belohnungsstufen
                     </li>
-                    <li class="flex items-center gap-2 text-gray-600">
+                    <li class="flex items-center gap-2 text-gray-600 dark:text-gray-300">
                         <i class="fas fa-check text-green-500"></i>
                         Mehrere Kampagnen
                     </li>
-                    <li class="flex items-center gap-2 text-gray-600">
+                    <li class="flex items-center gap-2 text-gray-600 dark:text-gray-300">
                         <i class="fas fa-check text-green-500"></i>
                         Lead-Export & API
                     </li>
-                    <li class="flex items-center gap-2 text-gray-600">
+                    <li class="flex items-center gap-2 text-gray-600 dark:text-gray-300">
                         <i class="fas fa-check text-green-500"></i>
                         Prioritäts-Support
                     </li>
@@ -491,7 +491,7 @@ require_once __DIR__ . '/../templates/marketing/header.php';
             </div>
         </div>
         
-        <p class="text-center text-gray-500 mt-8">
+        <p class="text-center text-gray-500 dark:text-gray-400 mt-8">
             <i class="fas fa-info-circle mr-1"></i>
             Einmalige Einrichtungsgebühr: 499€ · 14 Tage kostenlos testen
         </p>
@@ -505,16 +505,16 @@ require_once __DIR__ . '/../templates/marketing/header.php';
 </section>
 
 <!-- Testimonials Section -->
-<section class="py-20 bg-gray-50">
+<section class="py-20 bg-gray-50 dark:bg-slate-800">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-16">
             <span class="text-primary-500 font-semibold uppercase tracking-wide">Kundenstimmen</span>
-            <h2 class="text-3xl md:text-4xl font-bold mt-3">Das sagen unsere Kunden</h2>
+            <h2 class="text-3xl md:text-4xl font-bold mt-3 dark:text-white">Das sagen unsere Kunden</h2>
         </div>
         
         <div class="grid md:grid-cols-3 gap-8">
             <!-- Testimonial 1 -->
-            <div class="testimonial-card bg-white rounded-2xl p-8 shadow-lg">
+            <div class="testimonial-card bg-white dark:bg-slate-700 rounded-2xl p-8 shadow-lg">
                 <div class="flex items-center gap-1 text-yellow-400 mb-4">
                     <i class="fas fa-star"></i>
                     <i class="fas fa-star"></i>
@@ -522,23 +522,23 @@ require_once __DIR__ . '/../templates/marketing/header.php';
                     <i class="fas fa-star"></i>
                     <i class="fas fa-star"></i>
                 </div>
-                <p class="text-gray-600 mb-6">
+                <p class="text-gray-600 dark:text-gray-300 mb-6">
                     "In den ersten 3 Monaten haben wir 47 Neukunden durch Empfehlungen gewonnen. 
                     Das System läuft komplett automatisch – ich muss nichts tun."
                 </p>
                 <div class="flex items-center gap-3">
-                    <div class="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center text-primary-500 font-bold">
+                    <div class="w-12 h-12 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center text-primary-500 font-bold">
                         TM
                     </div>
                     <div>
-                        <div class="font-semibold">Dr. Thomas Müller</div>
-                        <div class="text-sm text-gray-500">Zahnarztpraxis München</div>
+                        <div class="font-semibold dark:text-white">Dr. Thomas Müller</div>
+                        <div class="text-sm text-gray-500 dark:text-gray-400">Zahnarztpraxis München</div>
                     </div>
                 </div>
             </div>
             
             <!-- Testimonial 2 -->
-            <div class="testimonial-card bg-white rounded-2xl p-8 shadow-lg">
+            <div class="testimonial-card bg-white dark:bg-slate-700 rounded-2xl p-8 shadow-lg">
                 <div class="flex items-center gap-1 text-yellow-400 mb-4">
                     <i class="fas fa-star"></i>
                     <i class="fas fa-star"></i>
@@ -546,23 +546,23 @@ require_once __DIR__ . '/../templates/marketing/header.php';
                     <i class="fas fa-star"></i>
                     <i class="fas fa-star"></i>
                 </div>
-                <p class="text-gray-600 mb-6">
+                <p class="text-gray-600 dark:text-gray-300 mb-6">
                     "Meine Kunden lieben das Punktesystem! Sie teilen ihren Link aktiv und 
                     freuen sich über die Belohnungen. Einfach genial."
                 </p>
                 <div class="flex items-center gap-3">
-                    <div class="w-12 h-12 bg-pink-100 rounded-full flex items-center justify-center text-pink-500 font-bold">
+                    <div class="w-12 h-12 bg-pink-100 dark:bg-pink-900/30 rounded-full flex items-center justify-center text-pink-500 font-bold">
                         SB
                     </div>
                     <div>
-                        <div class="font-semibold">Sandra Becker</div>
-                        <div class="text-sm text-gray-500">Friseursalon Style & Cut</div>
+                        <div class="font-semibold dark:text-white">Sandra Becker</div>
+                        <div class="text-sm text-gray-500 dark:text-gray-400">Friseursalon Style & Cut</div>
                     </div>
                 </div>
             </div>
             
             <!-- Testimonial 3 -->
-            <div class="testimonial-card bg-white rounded-2xl p-8 shadow-lg">
+            <div class="testimonial-card bg-white dark:bg-slate-700 rounded-2xl p-8 shadow-lg">
                 <div class="flex items-center gap-1 text-yellow-400 mb-4">
                     <i class="fas fa-star"></i>
                     <i class="fas fa-star"></i>
@@ -570,17 +570,17 @@ require_once __DIR__ . '/../templates/marketing/header.php';
                     <i class="fas fa-star"></i>
                     <i class="fas fa-star"></i>
                 </div>
-                <p class="text-gray-600 mb-6">
+                <p class="text-gray-600 dark:text-gray-300 mb-6">
                     "Als Online-Coach war ich skeptisch, aber die Ergebnisse sprechen für sich: 
                     32% meiner Neukunden kommen jetzt über Empfehlungen."
                 </p>
                 <div class="flex items-center gap-3">
-                    <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center text-green-500 font-bold">
+                    <div class="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center text-green-500 font-bold">
                         MK
                     </div>
                     <div>
-                        <div class="font-semibold">Michael Klein</div>
-                        <div class="text-sm text-gray-500">Business Coach</div>
+                        <div class="font-semibold dark:text-white">Michael Klein</div>
+                        <div class="text-sm text-gray-500 dark:text-gray-400">Business Coach</div>
                     </div>
                 </div>
             </div>
@@ -613,40 +613,40 @@ require_once __DIR__ . '/../templates/marketing/header.php';
 </section>
 
 <!-- FAQ Preview Section -->
-<section class="py-20 bg-white">
+<section class="py-20 bg-white dark:bg-slate-900">
     <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-16">
             <span class="text-primary-500 font-semibold uppercase tracking-wide">FAQ</span>
-            <h2 class="text-3xl md:text-4xl font-bold mt-3">Häufige Fragen</h2>
+            <h2 class="text-3xl md:text-4xl font-bold mt-3 dark:text-white">Häufige Fragen</h2>
         </div>
         
         <div class="space-y-4">
             <!-- FAQ Item 1 -->
-            <div class="faq-item border rounded-xl p-4">
-                <div class="faq-question">
+            <div class="faq-item border dark:border-slate-600 rounded-xl p-4 bg-white dark:bg-slate-800">
+                <div class="faq-question dark:text-white">
                     <span>Brauche ich technisches Wissen?</span>
                 </div>
-                <div class="faq-answer text-gray-600">
+                <div class="faq-answer text-gray-600 dark:text-gray-300">
                     <p>Nein, überhaupt nicht! Sie füllen nur unser Onboarding-Formular aus – alles andere erledigen wir automatisch. Keine Installation, kein Code, keine Technik.</p>
                 </div>
             </div>
             
             <!-- FAQ Item 2 -->
-            <div class="faq-item border rounded-xl p-4">
-                <div class="faq-question">
+            <div class="faq-item border dark:border-slate-600 rounded-xl p-4 bg-white dark:bg-slate-800">
+                <div class="faq-question dark:text-white">
                     <span>Wie lange dauert die Einrichtung?</span>
                 </div>
-                <div class="faq-answer text-gray-600">
+                <div class="faq-answer text-gray-600 dark:text-gray-300">
                     <p>Das Onboarding dauert etwa 5 Minuten. Danach ist Ihr Empfehlungsprogramm sofort einsatzbereit – inklusive eigener Subdomain, E-Mail-System und Belohnungsstufen.</p>
                 </div>
             </div>
             
             <!-- FAQ Item 3 -->
-            <div class="faq-item border rounded-xl p-4">
-                <div class="faq-question">
+            <div class="faq-item border dark:border-slate-600 rounded-xl p-4 bg-white dark:bg-slate-800">
+                <div class="faq-question dark:text-white">
                     <span>Ist Leadbusiness DSGVO-konform?</span>
                 </div>
-                <div class="faq-answer text-gray-600">
+                <div class="faq-answer text-gray-600 dark:text-gray-300">
                     <p>Ja, zu 100%! Alle Daten werden in Deutschland gehostet, wir nutzen Double-Opt-In und stellen Ihnen alle nötigen Rechtstexte zur Verfügung.</p>
                 </div>
             </div>
@@ -670,7 +670,7 @@ require_once __DIR__ . '/../templates/marketing/header.php';
             Starten Sie noch heute und verwandeln Sie zufriedene Kunden in Ihre besten Verkäufer.
         </p>
         <div class="flex flex-col sm:flex-row gap-4 justify-center">
-            <a href="/onboarding" class="btn-primary btn-large bg-white text-primary-600 hover:bg-gray-100 inline-flex items-center justify-center gap-2">
+            <a href="/onboarding" class="btn-white btn-large inline-flex items-center justify-center gap-2">
                 <span>Jetzt 14 Tage kostenlos testen</span>
                 <i class="fas fa-arrow-right"></i>
             </a>
