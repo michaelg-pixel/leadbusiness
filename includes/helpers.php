@@ -161,7 +161,7 @@ function allInput(): array
  */
 function isPost(): bool
 {
-    return $_SERVER['REQUEST_METHOD'] === 'POST';
+    return ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST';
 }
 
 /**
@@ -209,7 +209,7 @@ function getClientIp(): string
 /**
  * Referral-Code generieren
  */
-function generateReferralCode(int $length = null): string
+function generateReferralCode(?int $length = null): string
 {
     $length = $length ?? config('settings.referral_code.length', 8);
     $charset = config('settings.referral_code.charset', 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789');
