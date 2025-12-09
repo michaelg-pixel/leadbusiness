@@ -1,0 +1,120 @@
+# LEADBUSINESS .htaccess
+# Apache Rewrite Rules für saubere URLs
+
+# Rewrite Engine aktivieren
+RewriteEngine On
+
+# HTTPS erzwingen (auskommentiert für lokale Entwicklung)
+# RewriteCond %{HTTPS} off
+# RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# Basis-Pfad setzen (anpassen falls in Unterordner)
+RewriteBase /
+
+# Verhindern von Directory Browsing
+Options -Indexes
+
+# Fehlerseiten
+ErrorDocument 404 /404.php
+
+# Bestehende Dateien und Verzeichnisse nicht umschreiben
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# PHP-Erweiterung entfernen (saubere URLs)
+# /impressum → /impressum.php
+RewriteCond %{REQUEST_FILENAME}.php -f
+RewriteRule ^([^/]+)/?$ $1.php [L]
+
+# Unterverzeichnisse mit sauberen URLs
+# /dashboard/stats → /dashboard/stats.php
+RewriteCond %{REQUEST_FILENAME}.php -f
+RewriteRule ^([^/]+)/([^/]+)/?$ $1/$2.php [L]
+
+# Tiefere Verzeichnisse
+# /api/tracking/click → /api/tracking/click.php
+RewriteCond %{REQUEST_FILENAME}.php -f
+RewriteRule ^([^/]+)/([^/]+)/([^/]+)/?$ $1/$2/$3.php [L]
+
+# Subdomain Routing für Empfehlungsseiten
+# *.empfohlen.de/ref/CODE → /r/index.php?ref=CODE
+RewriteCond %{REQUEST_URI} ^/r/([a-zA-Z0-9]+)/?$
+RewriteRule ^r/([a-zA-Z0-9]+)/?$ /r/index.php?ref=$1 [L,QSA]
+
+# Branchen-Seiten Routing
+# /branchen/zahnarzt → /branchen/index.php?branche=zahnarzt
+RewriteCond %{REQUEST_URI} ^/branchen/([a-zA-Z0-9-]+)/?$
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^branchen/([a-zA-Z0-9-]+)/?$ /branchen/index.php?branche=$1 [L,QSA]
+
+# Security: Zugriff auf sensible Dateien verhindern
+<FilesMatch "^\.">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Zugriff auf config-Dateien verhindern
+<FilesMatch "\.(ini|log|conf|env)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Caching für statische Ressourcen
+<IfModule mod_expires.c>
+    ExpiresActive On
+    
+    # Bilder
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType image/gif "access plus 1 year"
+    ExpiresByType image/svg+xml "access plus 1 year"
+    ExpiresByType image/webp "access plus 1 year"
+    ExpiresByType image/x-icon "access plus 1 year"
+    
+    # CSS und JavaScript
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+    ExpiresByType text/javascript "access plus 1 month"
+    
+    # Fonts
+    ExpiresByType font/woff "access plus 1 year"
+    ExpiresByType font/woff2 "access plus 1 year"
+    ExpiresByType application/font-woff "access plus 1 year"
+    ExpiresByType application/font-woff2 "access plus 1 year"
+</IfModule>
+
+# GZIP Komprimierung
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html
+    AddOutputFilterByType DEFLATE text/css
+    AddOutputFilterByType DEFLATE text/javascript
+    AddOutputFilterByType DEFLATE application/javascript
+    AddOutputFilterByType DEFLATE application/json
+    AddOutputFilterByType DEFLATE application/xml
+    AddOutputFilterByType DEFLATE text/xml
+    AddOutputFilterByType DEFLATE image/svg+xml
+</IfModule>
+
+# Security Headers
+<IfModule mod_headers.c>
+    # XSS Protection
+    Header always set X-XSS-Protection "1; mode=block"
+    
+    # Content Type Options
+    Header always set X-Content-Type-Options "nosniff"
+    
+    # Frame Options (Clickjacking Schutz)
+    Header always set X-Frame-Options "SAMEORIGIN"
+    
+    # Referrer Policy
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# PHP Einstellungen (falls erlaubt)
+<IfModule mod_php.c>
+    php_value upload_max_filesize 10M
+    php_value post_max_size 10M
+    php_value max_execution_time 60
+    php_value memory_limit 128M
+</IfModule>
