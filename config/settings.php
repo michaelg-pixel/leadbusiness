@@ -5,17 +5,18 @@
  * Plattform-Konfiguration und Plan-Limits.
  */
 
-return [
+// Globale Variable setzen für einfachen Zugriff
+$settings = [
     // Plattform
     'site_name' => 'Leadbusiness',
-    'site_url' => getenv('SITE_URL') ?: 'https://empfohlen.de',
-    'support_email' => 'support@empfohlen.de',
+    'site_url' => getenv('SITE_URL') ?: 'https://empfehlungen.cloud',
+    'support_email' => 'support@empfehlungen.cloud',
     'timezone' => 'Europe/Berlin',
     'locale' => 'de_DE',
     
     // Subdomain-System
     'subdomain' => [
-        'base_domain' => getenv('BASE_DOMAIN') ?: 'empfohlen.de',
+        'base_domain' => getenv('BASE_DOMAIN') ?: 'empfehlungen.cloud',
         'min_length' => 3,
         'max_length' => 50,
         'reserved' => ['www', 'api', 'admin', 'dashboard', 'app', 'mail', 'smtp', 'ftp', 'cdn', 'static', 'assets', 'img', 'images', 'js', 'css', 'test', 'dev', 'staging', 'demo']
@@ -137,19 +138,52 @@ return [
         ]
     ],
     
-    // Branchen
+    // Branchen mit Icons
     'industries' => [
-        'zahnarzt' => 'Zahnarzt / Zahnklinik',
-        'friseur' => 'Friseur / Beauty-Salon',
-        'handwerker' => 'Handwerker',
-        'coach' => 'Coach / Berater',
-        'restaurant' => 'Restaurant / Gastronomie',
-        'fitness' => 'Fitnessstudio / Sportstudio',
-        'onlineshop' => 'Online-Shop',
-        'onlinemarketing' => 'Online-Marketing / Kursanbieter',
-        'newsletter' => 'Newsletter / Content Creator',
-        'software' => 'Software / SaaS',
-        'allgemein' => 'Sonstige Branche'
+        'zahnarzt' => [
+            'name' => 'Zahnarzt / Zahnklinik',
+            'icon' => 'fas fa-tooth'
+        ],
+        'friseur' => [
+            'name' => 'Friseur / Beauty-Salon',
+            'icon' => 'fas fa-scissors'
+        ],
+        'handwerker' => [
+            'name' => 'Handwerker',
+            'icon' => 'fas fa-hammer'
+        ],
+        'coach' => [
+            'name' => 'Coach / Berater',
+            'icon' => 'fas fa-user-tie'
+        ],
+        'restaurant' => [
+            'name' => 'Restaurant / Gastronomie',
+            'icon' => 'fas fa-utensils'
+        ],
+        'fitness' => [
+            'name' => 'Fitnessstudio / Sportstudio',
+            'icon' => 'fas fa-dumbbell'
+        ],
+        'onlineshop' => [
+            'name' => 'Online-Shop',
+            'icon' => 'fas fa-shopping-cart'
+        ],
+        'onlinemarketing' => [
+            'name' => 'Online-Marketing / Kursanbieter',
+            'icon' => 'fas fa-laptop'
+        ],
+        'newsletter' => [
+            'name' => 'Newsletter / Content Creator',
+            'icon' => 'fas fa-envelope-open-text'
+        ],
+        'software' => [
+            'name' => 'Software / SaaS',
+            'icon' => 'fas fa-code'
+        ],
+        'allgemein' => [
+            'name' => 'Sonstige Branche',
+            'icon' => 'fas fa-briefcase'
+        ]
     ],
     
     // Share-Plattformen
@@ -173,3 +207,6 @@ return [
     // Wartungsmodus
     'maintenance_mode' => (bool)(getenv('MAINTENANCE_MODE') ?: false)
 ];
+
+// Auch als Return für alternative Verwendung
+return $settings;
