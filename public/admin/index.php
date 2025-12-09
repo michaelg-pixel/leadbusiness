@@ -68,11 +68,13 @@ $recentActivities = $db->fetchAll("
     LIMIT 10
 ");
 
-// Top Kunden
+// Top Kunden (mit korrektem JOIN über campaigns)
 $topCustomers = $db->fetchAll("
     SELECT c.*, 
            (SELECT COUNT(*) FROM leads WHERE customer_id = c.id) as lead_count,
-           (SELECT COUNT(*) FROM conversions WHERE customer_id = c.id AND status = 'confirmed') as conversion_count
+           (SELECT COUNT(*) FROM conversions cv 
+            JOIN campaigns camp ON cv.campaign_id = camp.id 
+            WHERE camp.customer_id = c.id AND cv.status = 'confirmed') as conversion_count
     FROM customers c
     ORDER BY lead_count DESC
     LIMIT 5
