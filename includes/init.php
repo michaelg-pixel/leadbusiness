@@ -6,9 +6,9 @@
  * Sie lädt alle notwendigen Klassen und stellt globale Funktionen bereit.
  */
 
-// Fehlerreporting für Entwicklung
+// Fehlerreporting
 error_reporting(E_ALL);
-ini_set('display_errors', 0); // In Produktion: 0
+ini_set('display_errors', 0);
 
 // Pfade bestimmen
 define('ROOT_PATH', dirname(__DIR__));
@@ -24,14 +24,12 @@ require_once CONFIG_PATH . '/settings.php';
 require_once INCLUDES_PATH . '/Database.php';
 require_once INCLUDES_PATH . '/helpers.php';
 
-// Use statement für einfacheren Zugriff
-use Leadbusiness\Database;
-
 /**
  * Datenbank-Instanz abrufen (Shortcut)
+ * Verwendet den vollständigen Namespace
  */
-function db(): Database {
-    return Database::getInstance();
+function db(): \Leadbusiness\Database {
+    return \Leadbusiness\Database::getInstance();
 }
 
 // Session starten falls noch nicht geschehen
