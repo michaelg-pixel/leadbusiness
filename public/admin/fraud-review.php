@@ -4,28 +4,23 @@
  * Leadbusiness - Empfehlungsprogramm
  */
 
-require_once __DIR__ . '/../../config/database.php';
-require_once __DIR__ . '/../../includes/Database.php';
-require_once __DIR__ . '/../../includes/helpers.php';
-
-session_start();
+require_once __DIR__ . '/../../includes/init.php';
 
 if (!isset($_SESSION['admin_id'])) {
     header('Location: /admin/login.php');
     exit;
 }
 
-$db = Database::getInstance();
+$db = db();
 $pageTitle = 'Fraud Review';
 
 // Aktionen verarbeiten
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if (isPost()) {
     $fraudId = intval($_POST['fraud_id'] ?? 0);
     $action = $_POST['action'] ?? '';
     $leadId = intval($_POST['lead_id'] ?? 0);
     
     if ($fraudId && in_array($action, ['approve', 'block', 'ignore'])) {
-        // Fraud Log aktualisieren
         $newAction = match($action) {
             'approve' => 'allowed',
             'block' => 'blocked',
@@ -37,7 +32,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             [$newAction, $_SESSION['admin_id'], $fraudId]
         );
         
-        // Lead-Status aktualisieren
         if ($leadId && $action === 'block') {
             $db->execute("UPDATE leads SET status = 'blocked' WHERE id = ?", [$leadId]);
         } elseif ($leadId && $action === 'approve') {
@@ -55,7 +49,6 @@ $filter = sanitize($_GET['filter'] ?? 'pending');
 $page = max(1, intval($_GET['page'] ?? 1));
 $perPage = 20;
 
-// Query
 $whereClause = match($filter) {
     'pending' => "WHERE action_taken = 'review' AND reviewed_at IS NULL",
     'approved' => "WHERE action_taken = 'allowed'",
@@ -88,10 +81,9 @@ $fraudCases = $db->fetchAll("
     LEFT JOIN leads r ON f.referrer_id = r.id
     $whereClause
     ORDER BY f.created_at DESC
-    LIMIT $perPage OFFSET $offset
-");
+    LIMIT ? OFFSET ?", [$perPage, $offset]
+);
 
-// Fraud Type Labels
 $fraudTypeLabels = [
     'fast_conversion' => ['label' => 'Schnelle Conversion', 'icon' => 'fa-bolt', 'color' => 'amber'],
     'same_ip' => ['label' => 'Gleiche IP', 'icon' => 'fa-network-wired', 'color' => 'red'],
@@ -113,8 +105,7 @@ include __DIR__ . '/../../includes/admin-header.php';
 
 <?php if (isset($_SESSION['flash_success'])): ?>
 <div class="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-300 px-4 py-3 rounded-lg mb-6">
-    <i class="fas fa-check-circle mr-2"></i>
-    <?= e($_SESSION['flash_success']) ?>
+    <i class="fas fa-check-circle mr-2"></i><?= e($_SESSION['flash_success']) ?>
 </div>
 <?php unset($_SESSION['flash_success']); endif; ?>
 
@@ -162,8 +153,7 @@ include __DIR__ . '/../../includes/admin-header.php';
 <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
     <div class="p-4 border-b border-slate-200 dark:border-slate-700">
         <h3 class="font-semibold text-slate-800 dark:text-white">
-            <i class="fas fa-shield-exclamation text-red-500 mr-2"></i>
-            Fraud-Fälle
+            <i class="fas fa-shield-exclamation text-red-500 mr-2"></i>Fraud-Fälle
             <?php if ($filter !== 'all'): ?>
             <span class="text-sm font-normal text-slate-500">
                 (<?= match($filter) { 'pending' => 'Offen', 'approved' => 'Freigegeben', 'blocked' => 'Blockiert', default => 'Alle' } ?>)
@@ -190,48 +180,36 @@ include __DIR__ . '/../../includes/admin-header.php';
         ?>
         <div class="p-4 hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-all">
             <div class="flex flex-col lg:flex-row lg:items-center gap-4">
-                <!-- Left: Info -->
                 <div class="flex-1">
                     <div class="flex items-center gap-3 mb-2">
-                        <!-- Score Badge -->
                         <span class="px-2.5 py-1 rounded-full text-xs font-bold 
                                      <?php if ($case['score'] >= 80): ?>bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300
                                      <?php elseif ($case['score'] >= 50): ?>bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300
                                      <?php else: ?>bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300<?php endif; ?>">
                             Score: <?= $case['score'] ?>
                         </span>
-                        
-                        <!-- Type Badge -->
-                        <span class="px-2.5 py-1 rounded-full text-xs font-medium bg-<?= $typeInfo['color'] ?>-100 text-<?= $typeInfo['color'] ?>-700 dark:bg-<?= $typeInfo['color'] ?>-900/30 dark:text-<?= $typeInfo['color'] ?>-300">
-                            <i class="fas <?= $typeInfo['icon'] ?> mr-1"></i>
-                            <?= $typeInfo['label'] ?>
+                        <span class="px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300">
+                            <i class="fas <?= $typeInfo['icon'] ?> mr-1"></i><?= $typeInfo['label'] ?>
                         </span>
-                        
-                        <!-- Status -->
                         <?php if ($case['reviewed_at']): ?>
                         <span class="px-2.5 py-1 rounded-full text-xs font-medium 
-                                     <?= $case['action_taken'] === 'allowed' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300' ?>">
+                                     <?= $case['action_taken'] === 'allowed' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' ?>">
                             <?= $case['action_taken'] === 'allowed' ? 'Freigegeben' : 'Blockiert' ?>
                         </span>
                         <?php endif; ?>
                     </div>
                     
-                    <!-- Lead Info -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
                         <div>
                             <span class="text-slate-500">Lead:</span>
-                            <span class="text-slate-800 dark:text-white font-medium">
-                                <?= e($case['lead_email'] ?? 'Unbekannt') ?>
-                            </span>
-                            <?php if ($case['lead_status'] === 'blocked'): ?>
+                            <span class="text-slate-800 dark:text-white font-medium"><?= e($case['lead_email'] ?? 'Unbekannt') ?></span>
+                            <?php if (($case['lead_status'] ?? '') === 'blocked'): ?>
                             <span class="text-red-500 text-xs">(blockiert)</span>
                             <?php endif; ?>
                         </div>
                         <div>
                             <span class="text-slate-500">Referrer:</span>
-                            <span class="text-slate-800 dark:text-white">
-                                <?= e($case['referrer_email'] ?? '-') ?>
-                            </span>
+                            <span class="text-slate-800 dark:text-white"><?= e($case['referrer_email'] ?? '-') ?></span>
                         </div>
                         <div>
                             <span class="text-slate-500">Kunde:</span>
@@ -241,13 +219,10 @@ include __DIR__ . '/../../includes/admin-header.php';
                         </div>
                         <div>
                             <span class="text-slate-500">Zeit:</span>
-                            <span class="text-slate-800 dark:text-white">
-                                <?= date('d.m.Y H:i', strtotime($case['created_at'])) ?>
-                            </span>
+                            <span class="text-slate-800 dark:text-white"><?= date('d.m.Y H:i', strtotime($case['created_at'])) ?></span>
                         </div>
                     </div>
                     
-                    <!-- Details -->
                     <?php if (!empty($details)): ?>
                     <div class="mt-2 text-xs text-slate-500">
                         <button onclick="this.nextElementSibling.classList.toggle('hidden')" class="hover:text-primary-600">
@@ -258,15 +233,13 @@ include __DIR__ . '/../../includes/admin-header.php';
                     <?php endif; ?>
                 </div>
                 
-                <!-- Right: Actions -->
                 <?php if (!$case['reviewed_at']): ?>
                 <div class="flex items-center gap-2">
                     <form method="POST" class="inline">
                         <input type="hidden" name="fraud_id" value="<?= $case['id'] ?>">
                         <input type="hidden" name="lead_id" value="<?= $case['lead_id'] ?>">
                         <input type="hidden" name="action" value="approve">
-                        <button type="submit" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm transition-all"
-                                onclick="return confirm('Lead freigeben?')">
+                        <button type="submit" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm" onclick="return confirm('Lead freigeben?')">
                             <i class="fas fa-check mr-1"></i>Freigeben
                         </button>
                     </form>
@@ -274,15 +247,14 @@ include __DIR__ . '/../../includes/admin-header.php';
                         <input type="hidden" name="fraud_id" value="<?= $case['id'] ?>">
                         <input type="hidden" name="lead_id" value="<?= $case['lead_id'] ?>">
                         <input type="hidden" name="action" value="block">
-                        <button type="submit" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm transition-all"
-                                onclick="return confirm('Lead blockieren?')">
+                        <button type="submit" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm" onclick="return confirm('Lead blockieren?')">
                             <i class="fas fa-ban mr-1"></i>Blockieren
                         </button>
                     </form>
                     <form method="POST" class="inline">
                         <input type="hidden" name="fraud_id" value="<?= $case['id'] ?>">
                         <input type="hidden" name="action" value="ignore">
-                        <button type="submit" class="px-4 py-2 bg-slate-200 dark:bg-slate-600 hover:bg-slate-300 dark:hover:bg-slate-500 text-slate-700 dark:text-slate-200 rounded-lg text-sm transition-all">
+                        <button type="submit" class="px-4 py-2 bg-slate-200 dark:bg-slate-600 hover:bg-slate-300 text-slate-700 dark:text-slate-200 rounded-lg text-sm">
                             <i class="fas fa-eye-slash mr-1"></i>Ignorieren
                         </button>
                     </form>
@@ -293,19 +265,15 @@ include __DIR__ . '/../../includes/admin-header.php';
         <?php endforeach; ?>
     </div>
     
-    <!-- Pagination -->
     <?php if ($totalPages > 1): ?>
     <div class="px-6 py-4 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between">
-        <p class="text-sm text-slate-500">
-            Seite <?= $page ?> von <?= $totalPages ?>
-        </p>
+        <p class="text-sm text-slate-500">Seite <?= $page ?> von <?= $totalPages ?></p>
         <div class="flex items-center gap-2">
             <?php if ($page > 1): ?>
             <a href="?filter=<?= $filter ?>&page=<?= $page - 1 ?>" class="px-3 py-1 border border-slate-200 dark:border-slate-600 rounded-lg text-sm hover:bg-slate-50 dark:hover:bg-slate-700">
                 <i class="fas fa-chevron-left"></i>
             </a>
             <?php endif; ?>
-            
             <?php if ($page < $totalPages): ?>
             <a href="?filter=<?= $filter ?>&page=<?= $page + 1 ?>" class="px-3 py-1 border border-slate-200 dark:border-slate-600 rounded-lg text-sm hover:bg-slate-50 dark:hover:bg-slate-700">
                 <i class="fas fa-chevron-right"></i>
