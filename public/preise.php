@@ -5,7 +5,7 @@
  */
 
 $pageTitle = 'Preise';
-$metaDescription = 'Transparente Preise für Ihr Empfehlungsprogramm: Starter ab 49€/Monat, Professional ab 99€/Monat. 14 Tage kostenlos testen.';
+$metaDescription = 'Transparente Preise für Ihr Empfehlungsprogramm: Starter ab 49€/Monat, Professional ab 99€/Monat. 7 Tage kostenlos testen.';
 $currentPage = 'preise';
 
 require_once __DIR__ . '/../templates/marketing/header.php';
@@ -249,7 +249,7 @@ require_once __DIR__ . '/../templates/marketing/header.php';
             </div>
             <div class="flex items-center gap-2 text-gray-500">
                 <i class="fas fa-undo text-blue-500"></i>
-                <span>14 Tage testen</span>
+                <span>7 Tage testen</span>
             </div>
             <div class="flex items-center gap-2 text-gray-500">
                 <i class="fas fa-credit-card text-purple-500"></i>
@@ -533,7 +533,7 @@ require_once __DIR__ . '/../templates/marketing/header.php';
 <section class="py-20 gradient-bg text-white">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <h2 class="text-3xl md:text-4xl font-extrabold mb-6">
-            14 Tage kostenlos testen
+            7 Tage kostenlos testen
         </h2>
         <p class="text-xl text-white/90 mb-8">
             Keine Kreditkarte erforderlich. Kein Risiko. Überzeugen Sie sich selbst.
