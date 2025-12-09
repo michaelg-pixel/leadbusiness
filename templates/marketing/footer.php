@@ -344,91 +344,155 @@
     <!-- JavaScript -->
     <script src="/assets/js/main.js"></script>
     
-    <!-- Cookie Consent Script v3 - DEBUG VERSION -->
+    <!-- Cookie Consent Script v4 - Uses REAL Cookies + localStorage -->
     <script>
-    console.log('[COOKIE] Script loaded - v3 DEBUG');
-    
-    var LB_CONSENT_KEY = 'lb_consent_accepted';
-    
-    function acceptAllCookies() {
-        console.log('[COOKIE] acceptAllCookies called');
-        try {
-            localStorage.setItem(LB_CONSENT_KEY, 'yes');
-            console.log('[COOKIE] Saved to localStorage:', localStorage.getItem(LB_CONSENT_KEY));
-        } catch(e) {
-            console.error('[COOKIE] localStorage error:', e);
-        }
-        document.getElementById('cookie-banner').classList.add('hidden');
-        var modal = document.getElementById('cookie-settings-modal');
-        if (modal) modal.classList.add('hidden');
-        console.log('[COOKIE] Banner hidden');
-    }
-    
-    function rejectAllCookies() {
-        console.log('[COOKIE] rejectAllCookies called');
-        try {
-            localStorage.setItem(LB_CONSENT_KEY, 'necessary');
-            console.log('[COOKIE] Saved to localStorage:', localStorage.getItem(LB_CONSENT_KEY));
-        } catch(e) {
-            console.error('[COOKIE] localStorage error:', e);
-        }
-        document.getElementById('cookie-banner').classList.add('hidden');
-        var modal = document.getElementById('cookie-settings-modal');
-        if (modal) modal.classList.add('hidden');
-    }
-    
-    function saveCustomCookies() {
-        console.log('[COOKIE] saveCustomCookies called');
-        try {
-            localStorage.setItem(LB_CONSENT_KEY, 'custom');
-            console.log('[COOKIE] Saved to localStorage:', localStorage.getItem(LB_CONSENT_KEY));
-        } catch(e) {
-            console.error('[COOKIE] localStorage error:', e);
-        }
-        document.getElementById('cookie-banner').classList.add('hidden');
-        var modal = document.getElementById('cookie-settings-modal');
-        if (modal) modal.classList.add('hidden');
-    }
-    
-    function openCookieSettings() {
-        console.log('[COOKIE] openCookieSettings called');
-        document.getElementById('cookie-banner').classList.add('hidden');
-        document.getElementById('cookie-settings-modal').classList.remove('hidden');
-    }
-    
-    function closeCookieSettings() {
-        document.getElementById('cookie-settings-modal').classList.add('hidden');
-    }
-    
-    // Check on page load
-    document.addEventListener('DOMContentLoaded', function() {
-        console.log('[COOKIE] DOM loaded, checking consent...');
+    (function() {
+        'use strict';
         
-        var consent = null;
-        try {
-            consent = localStorage.getItem(LB_CONSENT_KEY);
-            console.log('[COOKIE] Current consent value:', consent);
-        } catch(e) {
-            console.error('[COOKIE] Cannot read localStorage:', e);
+        var COOKIE_NAME = 'lb_cookie_consent';
+        var COOKIE_DAYS = 365;
+        
+        // ========== Cookie Helper Functions ==========
+        function setCookie(name, value, days) {
+            var expires = '';
+            if (days) {
+                var date = new Date();
+                date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+                expires = '; expires=' + date.toUTCString();
+            }
+            // SameSite=Lax für bessere Kompatibilität
+            document.cookie = name + '=' + encodeURIComponent(value) + expires + '; path=/; SameSite=Lax';
         }
         
-        if (!consent) {
-            console.log('[COOKIE] No consent found, showing banner in 500ms');
-            setTimeout(function() {
-                var banner = document.getElementById('cookie-banner');
-                if (banner) {
-                    banner.classList.remove('hidden');
-                    console.log('[COOKIE] Banner shown');
-                } else {
-                    console.error('[COOKIE] Banner element not found!');
+        function getCookie(name) {
+            var nameEQ = name + '=';
+            var ca = document.cookie.split(';');
+            for (var i = 0; i < ca.length; i++) {
+                var c = ca[i];
+                while (c.charAt(0) === ' ') c = c.substring(1);
+                if (c.indexOf(nameEQ) === 0) {
+                    return decodeURIComponent(c.substring(nameEQ.length, c.length));
                 }
-            }, 500);
-        } else {
-            console.log('[COOKIE] Consent exists, not showing banner');
+            }
+            return null;
         }
-    });
+        
+        // ========== Consent Check ==========
+        function hasConsent() {
+            // Prüfe zuerst echtes Cookie
+            var cookieConsent = getCookie(COOKIE_NAME);
+            if (cookieConsent) {
+                return true;
+            }
+            
+            // Fallback: Prüfe localStorage
+            try {
+                var localConsent = localStorage.getItem(COOKIE_NAME);
+                if (localConsent) {
+                    // Migriere zu echtem Cookie
+                    setCookie(COOKIE_NAME, localConsent, COOKIE_DAYS);
+                    return true;
+                }
+            } catch(e) {
+                // localStorage nicht verfügbar
+            }
+            
+            return false;
+        }
+        
+        // ========== Save Consent ==========
+        function saveConsent(value) {
+            // Speichere als echtes Cookie (primär)
+            setCookie(COOKIE_NAME, value, COOKIE_DAYS);
+            
+            // Speichere auch in localStorage als Backup
+            try {
+                localStorage.setItem(COOKIE_NAME, value);
+            } catch(e) {
+                // Ignorieren wenn localStorage nicht verfügbar
+            }
+        }
+        
+        // ========== Hide Banner ==========
+        function hideBanner() {
+            var banner = document.getElementById('cookie-banner');
+            var modal = document.getElementById('cookie-settings-modal');
+            if (banner) banner.classList.add('hidden');
+            if (modal) modal.classList.add('hidden');
+        }
+        
+        // ========== Show Banner ==========
+        function showBanner() {
+            var banner = document.getElementById('cookie-banner');
+            if (banner) {
+                banner.classList.remove('hidden');
+            }
+        }
+        
+        // ========== Public Functions ==========
+        window.acceptAllCookies = function() {
+            saveConsent('all');
+            hideBanner();
+        };
+        
+        window.rejectAllCookies = function() {
+            saveConsent('necessary');
+            hideBanner();
+        };
+        
+        window.saveCustomCookies = function() {
+            var stats = document.getElementById('cookie-statistics');
+            var marketing = document.getElementById('cookie-marketing');
+            
+            var consent = 'necessary';
+            if (stats && stats.checked && marketing && marketing.checked) {
+                consent = 'all';
+            } else if (stats && stats.checked) {
+                consent = 'statistics';
+            } else if (marketing && marketing.checked) {
+                consent = 'marketing';
+            }
+            
+            saveConsent(consent);
+            hideBanner();
+        };
+        
+        window.openCookieSettings = function() {
+            var banner = document.getElementById('cookie-banner');
+            var modal = document.getElementById('cookie-settings-modal');
+            if (banner) banner.classList.add('hidden');
+            if (modal) modal.classList.remove('hidden');
+        };
+        
+        window.closeCookieSettings = function() {
+            var modal = document.getElementById('cookie-settings-modal');
+            if (modal) modal.classList.add('hidden');
+            
+            // Zeige Banner wieder wenn keine Consent vorhanden
+            if (!hasConsent()) {
+                showBanner();
+            }
+        };
+        
+        // ========== Initialize on DOM Ready ==========
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+        
+        function init() {
+            // Kleine Verzögerung für bessere UX
+            setTimeout(function() {
+                if (!hasConsent()) {
+                    showBanner();
+                }
+            }, 300);
+        }
+        
+    })();
     
-    // Back to top
+    // Back to top button
     document.addEventListener('DOMContentLoaded', function() {
         var btn = document.getElementById('back-to-top');
         if (btn) {
