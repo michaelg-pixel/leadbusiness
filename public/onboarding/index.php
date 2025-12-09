@@ -1,0 +1,756 @@
+<?php
+/**
+ * Leadbusiness - Onboarding Wizard
+ * 
+ * 8-Schritt Wizard für neue Kunden
+ * 
+ * Schritte:
+ * 1. Branche wählen
+ * 2. Firmendaten
+ * 3. Kontaktdaten
+ * 4. Impressum
+ * 5. Belohnungen konfigurieren
+ * 6. Design wählen
+ * 7. Subdomain wählen
+ * 8. Fertig!
+ */
+
+require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/settings.php';
+require_once __DIR__ . '/../includes/Database.php';
+require_once __DIR__ . '/../includes/helpers.php';
+
+// Session starten
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+$db = Database::getInstance();
+
+// Token aus URL prüfen (von Digistore24 IPN)
+$token = $_GET['token'] ?? '';
+$customer = null;
+$plan = $_GET['plan'] ?? 'starter';
+
+if ($token) {
+    $customer = $db->fetch(
+        "SELECT * FROM customers WHERE onboarding_token = ?",
+        [$token]
+    );
+    
+    if ($customer) {
+        $plan = $customer['plan'];
+        $_SESSION['onboarding_customer_id'] = $customer['id'];
+        $_SESSION['onboarding_token'] = $token;
+    }
+}
+
+// Bereits eingeloggter Kunde?
+$customerId = $_SESSION['onboarding_customer_id'] ?? null;
+
+// Branchen aus Config laden
+global $settings;
+$industries = $settings['industries'] ?? [];
+
+// Hintergrundbilder laden
+$backgrounds = $db->fetchAll(
+    "SELECT * FROM background_images WHERE is_active = 1 ORDER BY industry, sort_order"
+);
+
+// Gruppen nach Branche
+$backgroundsByIndustry = [];
+foreach ($backgrounds as $bg) {
+    $backgroundsByIndustry[$bg['industry']][] = $bg;
+}
+
+$pageTitle = 'Empfehlungsprogramm einrichten';
+$bodyClass = 'bg-gray-50';
+?>
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?= htmlspecialchars($pageTitle) ?> | Leadbusiness</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0f4ff',
+                            100: '#e0e9ff',
+                            200: '#c7d6fe',
+                            300: '#a4bbfc',
+                            400: '#8098f9',
+                            500: '#667eea',
+                            600: '#5a67d8',
+                            700: '#4c51bf',
+                            800: '#434190',
+                            900: '#3c366b',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        
+        .step-item.active .step-circle {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .step-item.completed .step-circle {
+            background: #10b981;
+            color: white;
+        }
+        
+        .step-item.completed .step-circle i {
+            display: block;
+        }
+        
+        .step-item.completed .step-number {
+            display: none;
+        }
+        
+        .wizard-panel {
+            display: none;
+        }
+        
+        .wizard-panel.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .industry-card {
+            transition: all 0.2s ease;
+        }
+        
+        .industry-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .industry-card.selected {
+            border-color: #667eea;
+            background: linear-gradient(to bottom, #f0f4ff, white);
+        }
+        
+        .industry-card.selected .check-icon {
+            display: flex;
+        }
+        
+        .background-card {
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        
+        .background-card:hover {
+            transform: scale(1.02);
+        }
+        
+        .background-card.selected {
+            ring: 4px;
+            ring-color: #667eea;
+        }
+        
+        .background-card.selected::after {
+            content: '';
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 24px;
+            height: 24px;
+            background: #667eea;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .reward-level {
+            transition: all 0.2s ease;
+        }
+        
+        .reward-level:hover {
+            background: #f8fafc;
+        }
+    </style>
+</head>
+<body class="<?= $bodyClass ?>">
+    
+    <div class="min-h-screen flex flex-col">
+        
+        <!-- Header -->
+        <header class="bg-white border-b">
+            <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+                <a href="/" class="flex items-center gap-2">
+                    <div class="w-10 h-10 bg-gradient-to-br from-primary-500 to-purple-600 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-share-nodes text-white"></i>
+                    </div>
+                    <span class="text-xl font-bold text-gray-900">Leadbusiness</span>
+                </a>
+                
+                <div class="flex items-center gap-4">
+                    <span class="text-sm text-gray-500">
+                        <i class="fas fa-lock mr-1"></i>
+                        Sichere Verbindung
+                    </span>
+                </div>
+            </div>
+        </header>
+        
+        <!-- Main Content -->
+        <main class="flex-1 py-8">
+            <div class="max-w-4xl mx-auto px-4">
+                
+                <!-- Progress Steps -->
+                <div class="mb-8">
+                    <div class="flex items-center justify-between relative">
+                        <!-- Progress Line -->
+                        <div class="absolute top-5 left-0 right-0 h-0.5 bg-gray-200">
+                            <div id="progressBar" class="h-full bg-primary-500 transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                        
+                        <!-- Steps -->
+                        <div class="step-item active flex flex-col items-center relative z-10" data-step="1">
+                            <div class="step-circle w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-sm font-semibold">
+                                <span class="step-number">1</span>
+                                <i class="fas fa-check hidden"></i>
+                            </div>
+                            <span class="text-xs mt-2 text-gray-500 hidden sm:block">Branche</span>
+                        </div>
+                        
+                        <div class="step-item flex flex-col items-center relative z-10" data-step="2">
+                            <div class="step-circle w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-sm font-semibold">
+                                <span class="step-number">2</span>
+                                <i class="fas fa-check hidden"></i>
+                            </div>
+                            <span class="text-xs mt-2 text-gray-500 hidden sm:block">Firma</span>
+                        </div>
+                        
+                        <div class="step-item flex flex-col items-center relative z-10" data-step="3">
+                            <div class="step-circle w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-sm font-semibold">
+                                <span class="step-number">3</span>
+                                <i class="fas fa-check hidden"></i>
+                            </div>
+                            <span class="text-xs mt-2 text-gray-500 hidden sm:block">Kontakt</span>
+                        </div>
+                        
+                        <div class="step-item flex flex-col items-center relative z-10" data-step="4">
+                            <div class="step-circle w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-sm font-semibold">
+                                <span class="step-number">4</span>
+                                <i class="fas fa-check hidden"></i>
+                            </div>
+                            <span class="text-xs mt-2 text-gray-500 hidden sm:block">Impressum</span>
+                        </div>
+                        
+                        <div class="step-item flex flex-col items-center relative z-10" data-step="5">
+                            <div class="step-circle w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-sm font-semibold">
+                                <span class="step-number">5</span>
+                                <i class="fas fa-check hidden"></i>
+                            </div>
+                            <span class="text-xs mt-2 text-gray-500 hidden sm:block">Belohnungen</span>
+                        </div>
+                        
+                        <div class="step-item flex flex-col items-center relative z-10" data-step="6">
+                            <div class="step-circle w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-sm font-semibold">
+                                <span class="step-number">6</span>
+                                <i class="fas fa-check hidden"></i>
+                            </div>
+                            <span class="text-xs mt-2 text-gray-500 hidden sm:block">Design</span>
+                        </div>
+                        
+                        <div class="step-item flex flex-col items-center relative z-10" data-step="7">
+                            <div class="step-circle w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-sm font-semibold">
+                                <span class="step-number">7</span>
+                                <i class="fas fa-check hidden"></i>
+                            </div>
+                            <span class="text-xs mt-2 text-gray-500 hidden sm:block">Subdomain</span>
+                        </div>
+                        
+                        <div class="step-item flex flex-col items-center relative z-10" data-step="8">
+                            <div class="step-circle w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-sm font-semibold">
+                                <span class="step-number">8</span>
+                                <i class="fas fa-check hidden"></i>
+                            </div>
+                            <span class="text-xs mt-2 text-gray-500 hidden sm:block">Fertig!</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Wizard Form -->
+                <form id="onboardingForm" action="/onboarding/process.php" method="POST" enctype="multipart/form-data">
+                    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
+                    <input type="hidden" name="onboarding_token" value="<?= htmlspecialchars($token) ?>">
+                    <input type="hidden" name="plan" value="<?= htmlspecialchars($plan) ?>">
+                    
+                    <!-- Step 1: Branche -->
+                    <div class="wizard-panel active" data-panel="1">
+                        <div class="bg-white rounded-2xl shadow-lg p-8">
+                            <h2 class="text-2xl font-bold mb-2">In welcher Branche sind Sie tätig?</h2>
+                            <p class="text-gray-500 mb-8">Wir passen Ihr Empfehlungsprogramm an Ihre Branche an.</p>
+                            
+                            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                                <?php foreach ($industries as $key => $industry): ?>
+                                <label class="industry-card bg-white border-2 border-gray-200 rounded-xl p-4 cursor-pointer relative">
+                                    <input type="radio" name="industry" value="<?= htmlspecialchars($key) ?>" class="sr-only" required>
+                                    <div class="check-icon hidden absolute top-2 right-2 w-6 h-6 bg-primary-500 rounded-full items-center justify-center text-white">
+                                        <i class="fas fa-check text-xs"></i>
+                                    </div>
+                                    <div class="text-center">
+                                        <div class="w-12 h-12 mx-auto bg-primary-100 rounded-xl flex items-center justify-center text-primary-500 mb-3">
+                                            <i class="<?= htmlspecialchars($industry['icon']) ?> text-xl"></i>
+                                        </div>
+                                        <div class="font-semibold text-gray-900"><?= htmlspecialchars($industry['name']) ?></div>
+                                    </div>
+                                </label>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Step 2: Firmendaten -->
+                    <div class="wizard-panel" data-panel="2">
+                        <div class="bg-white rounded-2xl shadow-lg p-8">
+                            <h2 class="text-2xl font-bold mb-2">Erzählen Sie uns von Ihrem Unternehmen</h2>
+                            <p class="text-gray-500 mb-8">Diese Informationen erscheinen auf Ihrer Empfehlungsseite.</p>
+                            
+                            <div class="space-y-6">
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                        Firmenname *
+                                    </label>
+                                    <input type="text" name="company_name" required
+                                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                                        placeholder="z.B. Zahnarztpraxis Dr. Müller">
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                        Logo hochladen (optional)
+                                    </label>
+                                    <div class="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-primary-500 transition-colors cursor-pointer" id="logoDropzone">
+                                        <input type="file" name="logo" id="logoInput" accept="image/*" class="hidden">
+                                        <div id="logoPreview" class="hidden mb-4">
+                                            <img src="" alt="Logo Preview" class="max-h-24 mx-auto">
+                                        </div>
+                                        <div id="logoPlaceholder">
+                                            <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-3"></i>
+                                            <p class="text-gray-500">Klicken oder Bild hierher ziehen</p>
+                                            <p class="text-gray-400 text-sm mt-1">PNG, JPG bis 2MB</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                        Website (optional)
+                                    </label>
+                                    <input type="url" name="website"
+                                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                                        placeholder="https://www.ihre-website.de">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Step 3: Kontaktdaten -->
+                    <div class="wizard-panel" data-panel="3">
+                        <div class="bg-white rounded-2xl shadow-lg p-8">
+                            <h2 class="text-2xl font-bold mb-2">Wie können wir Sie erreichen?</h2>
+                            <p class="text-gray-500 mb-8">Diese Daten werden nicht öffentlich angezeigt.</p>
+                            
+                            <div class="space-y-6">
+                                <div class="grid md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                            Ansprechpartner *
+                                        </label>
+                                        <input type="text" name="contact_name" required
+                                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                                            placeholder="Max Mustermann"
+                                            value="<?= htmlspecialchars($customer['contact_name'] ?? '') ?>">
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                            E-Mail-Adresse *
+                                        </label>
+                                        <input type="email" name="email" required
+                                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                                            placeholder="max@firma.de"
+                                            value="<?= htmlspecialchars($customer['email'] ?? '') ?>"
+                                            <?= $customer ? 'readonly' : '' ?>>
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                        Telefon (optional)
+                                    </label>
+                                    <input type="tel" name="phone"
+                                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                                        placeholder="+49 123 456789">
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                        Passwort erstellen *
+                                    </label>
+                                    <input type="password" name="password" required minlength="8"
+                                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                                        placeholder="Mindestens 8 Zeichen">
+                                    <p class="text-sm text-gray-500 mt-1">Min. 8 Zeichen, mit Groß-/Kleinbuchstaben und Zahlen</p>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                        Passwort bestätigen *
+                                    </label>
+                                    <input type="password" name="password_confirm" required
+                                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                                        placeholder="Passwort wiederholen">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Step 4: Impressum -->
+                    <div class="wizard-panel" data-panel="4">
+                        <div class="bg-white rounded-2xl shadow-lg p-8">
+                            <h2 class="text-2xl font-bold mb-2">Impressumsangaben</h2>
+                            <p class="text-gray-500 mb-8">Gesetzlich vorgeschriebene Angaben für Ihre Empfehlungsseite.</p>
+                            
+                            <div class="space-y-6">
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                        Straße und Hausnummer *
+                                    </label>
+                                    <input type="text" name="address_street" required
+                                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                                        placeholder="Musterstraße 123">
+                                </div>
+                                
+                                <div class="grid md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                            PLZ *
+                                        </label>
+                                        <input type="text" name="address_zip" required pattern="[0-9]{5}"
+                                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                                            placeholder="12345">
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                            Stadt *
+                                        </label>
+                                        <input type="text" name="address_city" required
+                                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                                            placeholder="Berlin">
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                        USt-IdNr. (optional)
+                                    </label>
+                                    <input type="text" name="tax_id"
+                                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                                        placeholder="DE123456789">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Step 5: Belohnungen -->
+                    <div class="wizard-panel" data-panel="5">
+                        <div class="bg-white rounded-2xl shadow-lg p-8">
+                            <h2 class="text-2xl font-bold mb-2">Belohnungen für Empfehler</h2>
+                            <p class="text-gray-500 mb-8">Definieren Sie, was Ihre Empfehler für erfolgreiche Empfehlungen bekommen.</p>
+                            
+                            <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
+                                <div class="flex items-start gap-3">
+                                    <i class="fas fa-lightbulb text-blue-500 mt-1"></i>
+                                    <div>
+                                        <p class="text-sm text-blue-800">
+                                            <strong>Tipp:</strong> Wir haben Vorschläge basierend auf Ihrer Branche vorbereitet. 
+                                            Sie können diese jederzeit anpassen.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div id="rewardsContainer" class="space-y-4">
+                                <!-- Reward Level 1 -->
+                                <div class="reward-level border rounded-xl p-6">
+                                    <div class="flex items-center gap-4 mb-4">
+                                        <div class="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center text-primary-600 font-bold">
+                                            1
+                                        </div>
+                                        <div>
+                                            <h3 class="font-semibold">Stufe 1</h3>
+                                            <p class="text-sm text-gray-500">Nach <input type="number" name="reward_1_threshold" value="3" min="1" max="100" class="w-16 px-2 py-1 border rounded text-center"> erfolgreichen Empfehlungen</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="grid md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Belohnungstyp</label>
+                                            <select name="reward_1_type" class="w-full px-3 py-2 border rounded-lg">
+                                                <option value="discount">Rabatt (%)</option>
+                                                <option value="coupon_code">Gutschein-Code</option>
+                                                <option value="free_product">Gratis-Produkt</option>
+                                                <option value="free_service">Gratis-Service</option>
+                                                <option value="voucher">Wertgutschein (€)</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Beschreibung</label>
+                                            <input type="text" name="reward_1_description" 
+                                                class="w-full px-3 py-2 border rounded-lg"
+                                                placeholder="z.B. 10% Rabatt auf nächsten Einkauf">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Reward Level 2 -->
+                                <div class="reward-level border rounded-xl p-6">
+                                    <div class="flex items-center gap-4 mb-4">
+                                        <div class="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center text-primary-600 font-bold">
+                                            2
+                                        </div>
+                                        <div>
+                                            <h3 class="font-semibold">Stufe 2</h3>
+                                            <p class="text-sm text-gray-500">Nach <input type="number" name="reward_2_threshold" value="5" min="1" max="100" class="w-16 px-2 py-1 border rounded text-center"> erfolgreichen Empfehlungen</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="grid md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Belohnungstyp</label>
+                                            <select name="reward_2_type" class="w-full px-3 py-2 border rounded-lg">
+                                                <option value="discount">Rabatt (%)</option>
+                                                <option value="coupon_code">Gutschein-Code</option>
+                                                <option value="free_product">Gratis-Produkt</option>
+                                                <option value="free_service">Gratis-Service</option>
+                                                <option value="voucher" selected>Wertgutschein (€)</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Beschreibung</label>
+                                            <input type="text" name="reward_2_description" 
+                                                class="w-full px-3 py-2 border rounded-lg"
+                                                placeholder="z.B. 25€ Gutschein">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Reward Level 3 -->
+                                <div class="reward-level border rounded-xl p-6">
+                                    <div class="flex items-center gap-4 mb-4">
+                                        <div class="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center text-primary-600 font-bold">
+                                            3
+                                        </div>
+                                        <div>
+                                            <h3 class="font-semibold">Stufe 3</h3>
+                                            <p class="text-sm text-gray-500">Nach <input type="number" name="reward_3_threshold" value="10" min="1" max="100" class="w-16 px-2 py-1 border rounded text-center"> erfolgreichen Empfehlungen</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="grid md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Belohnungstyp</label>
+                                            <select name="reward_3_type" class="w-full px-3 py-2 border rounded-lg">
+                                                <option value="discount">Rabatt (%)</option>
+                                                <option value="coupon_code">Gutschein-Code</option>
+                                                <option value="free_product" selected>Gratis-Produkt</option>
+                                                <option value="free_service">Gratis-Service</option>
+                                                <option value="voucher">Wertgutschein (€)</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Beschreibung</label>
+                                            <input type="text" name="reward_3_description" 
+                                                class="w-full px-3 py-2 border rounded-lg"
+                                                placeholder="z.B. Gratis Premium-Produkt">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <?php if ($plan === 'professional'): ?>
+                            <button type="button" id="addRewardBtn" class="mt-4 text-primary-500 hover:text-primary-600 font-medium">
+                                <i class="fas fa-plus mr-2"></i>Weitere Stufe hinzufügen
+                            </button>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                    
+                    <!-- Step 6: Design -->
+                    <div class="wizard-panel" data-panel="6">
+                        <div class="bg-white rounded-2xl shadow-lg p-8">
+                            <h2 class="text-2xl font-bold mb-2">Design wählen</h2>
+                            <p class="text-gray-500 mb-8">Wählen Sie ein Hintergrundbild für Ihre Empfehlungsseite.</p>
+                            
+                            <div id="backgroundsContainer" class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+                                <!-- Backgrounds werden per JavaScript geladen basierend auf Branche -->
+                            </div>
+                            
+                            <input type="hidden" name="background_image_id" id="selectedBackground" value="">
+                            
+                            <div class="mt-6">
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                    Hauptfarbe
+                                </label>
+                                <div class="flex items-center gap-4">
+                                    <input type="color" name="primary_color" value="#667eea" 
+                                        class="w-16 h-10 rounded cursor-pointer">
+                                    <span class="text-gray-500">Diese Farbe wird für Buttons und Akzente verwendet</span>
+                                </div>
+                            </div>
+                            
+                            <?php if ($plan === 'professional'): ?>
+                            <div class="mt-6 p-4 bg-gray-50 rounded-xl">
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                    <i class="fas fa-crown text-yellow-500 mr-1"></i>
+                                    Eigenes Hintergrundbild (Pro)
+                                </label>
+                                <input type="file" name="custom_background" accept="image/*"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                                <p class="text-sm text-gray-500 mt-1">Empfohlen: 1920x1080px, max. 2MB</p>
+                            </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                    
+                    <!-- Step 7: Subdomain -->
+                    <div class="wizard-panel" data-panel="7">
+                        <div class="bg-white rounded-2xl shadow-lg p-8">
+                            <h2 class="text-2xl font-bold mb-2">Ihre Subdomain wählen</h2>
+                            <p class="text-gray-500 mb-8">Unter dieser Adresse ist Ihr Empfehlungsprogramm erreichbar.</p>
+                            
+                            <div class="space-y-6">
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                        Subdomain *
+                                    </label>
+                                    <div class="flex items-center">
+                                        <input type="text" name="subdomain" id="subdomainInput" required
+                                            pattern="[a-z0-9-]+"
+                                            class="flex-1 px-4 py-3 border border-gray-300 rounded-l-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                                            placeholder="ihre-firma">
+                                        <span class="bg-gray-100 px-4 py-3 border border-l-0 border-gray-300 rounded-r-xl text-gray-500">
+                                            .empfohlen.de
+                                        </span>
+                                    </div>
+                                    <p class="text-sm text-gray-500 mt-2">
+                                        Nur Kleinbuchstaben, Zahlen und Bindestriche erlaubt
+                                    </p>
+                                    <div id="subdomainStatus" class="mt-2 hidden">
+                                        <span class="text-sm"></span>
+                                    </div>
+                                </div>
+                                
+                                <div class="bg-gray-50 rounded-xl p-4">
+                                    <p class="text-sm text-gray-600">
+                                        <i class="fas fa-info-circle text-primary-500 mr-2"></i>
+                                        Ihre Empfehlungsseite wird unter 
+                                        <strong id="previewUrl">ihre-firma.empfohlen.de</strong> 
+                                        erreichbar sein.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Step 8: Fertig -->
+                    <div class="wizard-panel" data-panel="8">
+                        <div class="bg-white rounded-2xl shadow-lg p-8 text-center">
+                            <div class="w-20 h-20 mx-auto bg-green-100 rounded-full flex items-center justify-center mb-6">
+                                <i class="fas fa-check text-4xl text-green-500"></i>
+                            </div>
+                            
+                            <h2 class="text-2xl font-bold mb-2">Fast geschafft!</h2>
+                            <p class="text-gray-500 mb-8">Prüfen Sie Ihre Angaben und klicken Sie auf "Einrichtung starten".</p>
+                            
+                            <div id="summaryContainer" class="text-left bg-gray-50 rounded-xl p-6 mb-8">
+                                <!-- Summary wird per JavaScript generiert -->
+                            </div>
+                            
+                            <div class="flex items-start gap-3 text-left mb-6">
+                                <input type="checkbox" name="accept_terms" id="acceptTerms" required
+                                    class="mt-1 w-5 h-5 text-primary-500 rounded border-gray-300 focus:ring-primary-500">
+                                <label for="acceptTerms" class="text-sm text-gray-600">
+                                    Ich akzeptiere die <a href="/agb" target="_blank" class="text-primary-500 hover:underline">AGB</a> 
+                                    und habe die <a href="/datenschutz" target="_blank" class="text-primary-500 hover:underline">Datenschutzerklärung</a> gelesen.
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Navigation Buttons -->
+                    <div class="flex justify-between mt-8">
+                        <button type="button" id="prevBtn" class="px-6 py-3 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 hidden">
+                            <i class="fas fa-arrow-left mr-2"></i>
+                            Zurück
+                        </button>
+                        
+                        <button type="button" id="nextBtn" class="ml-auto px-8 py-3 bg-gradient-to-r from-primary-500 to-purple-600 text-white rounded-xl hover:shadow-lg transition-shadow">
+                            Weiter
+                            <i class="fas fa-arrow-right ml-2"></i>
+                        </button>
+                        
+                        <button type="submit" id="submitBtn" class="ml-auto px-8 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl hover:shadow-lg transition-shadow hidden">
+                            <i class="fas fa-rocket mr-2"></i>
+                            Einrichtung starten
+                        </button>
+                    </div>
+                </form>
+                
+            </div>
+        </main>
+        
+        <!-- Footer -->
+        <footer class="bg-white border-t py-6">
+            <div class="max-w-6xl mx-auto px-4 text-center text-sm text-gray-500">
+                <p>&copy; <?= date('Y') ?> Leadbusiness. Alle Rechte vorbehalten.</p>
+                <div class="mt-2 space-x-4">
+                    <a href="/impressum" class="hover:text-gray-700">Impressum</a>
+                    <a href="/datenschutz" class="hover:text-gray-700">Datenschutz</a>
+                    <a href="/agb" class="hover:text-gray-700">AGB</a>
+                </div>
+            </div>
+        </footer>
+        
+    </div>
+    
+    <!-- Background Images Data -->
+    <script>
+        const backgroundsByIndustry = <?= json_encode($backgroundsByIndustry) ?>;
+    </script>
+    
+    <!-- Onboarding JavaScript -->
+    <script src="/assets/js/onboarding.js"></script>
+    
+</body>
+</html>
