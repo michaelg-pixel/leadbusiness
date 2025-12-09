@@ -114,6 +114,47 @@ $theme = $_COOKIE['site_theme'] ?? 'light';
         .dark .nav-link.active {
             color: #a5b4fc !important;
         }
+        
+        /* Header CTA Button */
+        .header-cta {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 0.5rem 1.25rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            font-size: 0.875rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+        }
+        .header-cta:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        
+        /* Header Login Button - Light Mode */
+        .header-login {
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            font-size: 0.875rem;
+            transition: all 0.2s ease;
+            color: #4b5563;
+            background-color: #f3f4f6;
+        }
+        .header-login:hover {
+            background-color: #e5e7eb;
+            color: #1f2937;
+        }
+        
+        /* Header Login Button - Dark Mode */
+        .dark .header-login {
+            color: #e2e8f0;
+            background-color: #334155;
+        }
+        .dark .header-login:hover {
+            background-color: #475569;
+            color: #fff;
+        }
     </style>
     
     <?php if (isset($additionalHead)): ?>
@@ -123,7 +164,7 @@ $theme = $_COOKIE['site_theme'] ?? 'light';
 <body class="font-sans antialiased text-gray-900 dark:text-gray-100 bg-white dark:bg-slate-900 transition-colors duration-300">
     
     <!-- Header -->
-    <header id="header" class="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-slate-800 border-b border-transparent dark:border-slate-700 transition-all duration-300">
+    <header id="header" class="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700 transition-all duration-300">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-20">
                 
@@ -151,8 +192,8 @@ $theme = $_COOKIE['site_theme'] ?? 'light';
                     </a>
                 </nav>
                 
-                <!-- Right Side: Theme Toggle + Login -->
-                <div class="hidden md:flex items-center space-x-4">
+                <!-- Right Side: Theme Toggle + Login + CTA -->
+                <div class="hidden md:flex items-center space-x-3">
                     <!-- Dark Mode Toggle -->
                     <button onclick="toggleTheme()" 
                             class="p-2 rounded-lg bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-yellow-400 hover:bg-gray-200 dark:hover:bg-slate-600 transition-all"
@@ -161,8 +202,15 @@ $theme = $_COOKIE['site_theme'] ?? 'light';
                         <i class="fas fa-sun hidden dark:inline"></i>
                     </button>
                     
-                    <a href="/admin/login.php" class="nav-link font-medium transition-colors text-gray-600 dark:text-gray-200 hover:text-primary-500 dark:hover:text-primary-400">
-                        Login
+                    <!-- Login Button -->
+                    <a href="/admin/login.php" class="header-login">
+                        <i class="fas fa-user mr-1.5"></i>Login
+                    </a>
+                    
+                    <!-- CTA Button -->
+                    <a href="/onboarding" class="header-cta inline-flex items-center gap-1.5">
+                        <span>Kostenlos starten</span>
+                        <i class="fas fa-arrow-right text-xs"></i>
                     </a>
                 </div>
                 
@@ -220,9 +268,12 @@ $theme = $_COOKIE['site_theme'] ?? 'light';
                     </a>
                 </div>
                 
-                <div class="border-t dark:border-slate-700 mt-6 pt-6 space-y-4">
+                <div class="border-t dark:border-slate-700 mt-6 pt-6 space-y-3">
                     <a href="/admin/login.php" class="block py-3 px-4 rounded-lg bg-gray-100 dark:bg-slate-800 text-center font-semibold text-gray-800 dark:text-gray-100">
-                        Login
+                        <i class="fas fa-user mr-2"></i>Login
+                    </a>
+                    <a href="/onboarding" class="block py-3 px-4 rounded-xl header-cta text-center">
+                        <i class="fas fa-rocket mr-2"></i>Kostenlos starten
                     </a>
                 </div>
             </nav>
