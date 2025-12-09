@@ -15,14 +15,20 @@
  * 8. Fertig!
  */
 
-require_once __DIR__ . '/../config/database.php';
-require_once __DIR__ . '/../config/settings.php';
-require_once __DIR__ . '/../includes/Database.php';
-require_once __DIR__ . '/../includes/helpers.php';
+// KORRIGIERTE PFADE - von /public/onboarding/ zwei Ebenen hoch
+require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../../config/settings.php';
+require_once __DIR__ . '/../../includes/Database.php';
+require_once __DIR__ . '/../../includes/helpers.php';
 
 // Session starten
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
+}
+
+// CSRF Token generieren falls nicht vorhanden
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
 
 $db = Database::getInstance();
@@ -140,22 +146,27 @@ $bodyClass = 'bg-gray-50';
             to { opacity: 1; transform: translateY(0); }
         }
         
+        /* Industry Cards - Mobile First */
         .industry-card {
             transition: all 0.2s ease;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
         }
         
-        .industry-card:hover {
+        .industry-card:hover,
+        .industry-card:active {
             transform: translateY(-2px);
             box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
         }
         
         .industry-card.selected {
-            border-color: #667eea;
+            border-color: #667eea !important;
             background: linear-gradient(to bottom, #f0f4ff, white);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
         }
         
         .industry-card.selected .check-icon {
-            display: flex;
+            display: flex !important;
         }
         
         .background-card {
@@ -193,6 +204,28 @@ $bodyClass = 'bg-gray-50';
         .reward-level:hover {
             background: #f8fafc;
         }
+        
+        /* Mobile Responsive Fixes */
+        @media (max-width: 640px) {
+            .industry-card {
+                padding: 0.75rem;
+            }
+            
+            .industry-card .w-12 {
+                width: 2.5rem;
+                height: 2.5rem;
+            }
+            
+            .industry-card .text-xl {
+                font-size: 1rem;
+            }
+            
+            .step-circle {
+                width: 2rem !important;
+                height: 2rem !important;
+                font-size: 0.75rem;
+            }
+        }
     </style>
 </head>
 <body class="<?= $bodyClass ?>">
@@ -210,7 +243,7 @@ $bodyClass = 'bg-gray-50';
                 </a>
                 
                 <div class="flex items-center gap-4">
-                    <span class="text-sm text-gray-500">
+                    <span class="text-sm text-gray-500 hidden sm:inline">
                         <i class="fas fa-lock mr-1"></i>
                         Sichere Verbindung
                     </span>
@@ -219,20 +252,20 @@ $bodyClass = 'bg-gray-50';
         </header>
         
         <!-- Main Content -->
-        <main class="flex-1 py-8">
+        <main class="flex-1 py-4 sm:py-8">
             <div class="max-w-4xl mx-auto px-4">
                 
                 <!-- Progress Steps -->
-                <div class="mb-8">
-                    <div class="flex items-center justify-between relative">
+                <div class="mb-6 sm:mb-8 overflow-x-auto">
+                    <div class="flex items-center justify-between relative min-w-max sm:min-w-0 px-2">
                         <!-- Progress Line -->
-                        <div class="absolute top-5 left-0 right-0 h-0.5 bg-gray-200">
+                        <div class="absolute top-4 sm:top-5 left-0 right-0 h-0.5 bg-gray-200">
                             <div id="progressBar" class="h-full bg-primary-500 transition-all duration-300" style="width: 0%"></div>
                         </div>
                         
                         <!-- Steps -->
                         <div class="step-item active flex flex-col items-center relative z-10" data-step="1">
-                            <div class="step-circle w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-sm font-semibold">
+                            <div class="step-circle w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gray-200 flex items-center justify-center text-xs sm:text-sm font-semibold">
                                 <span class="step-number">1</span>
                                 <i class="fas fa-check hidden"></i>
                             </div>
@@ -240,7 +273,7 @@ $bodyClass = 'bg-gray-50';
                         </div>
                         
                         <div class="step-item flex flex-col items-center relative z-10" data-step="2">
-                            <div class="step-circle w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-sm font-semibold">
+                            <div class="step-circle w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gray-200 flex items-center justify-center text-xs sm:text-sm font-semibold">
                                 <span class="step-number">2</span>
                                 <i class="fas fa-check hidden"></i>
                             </div>
@@ -248,7 +281,7 @@ $bodyClass = 'bg-gray-50';
                         </div>
                         
                         <div class="step-item flex flex-col items-center relative z-10" data-step="3">
-                            <div class="step-circle w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-sm font-semibold">
+                            <div class="step-circle w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gray-200 flex items-center justify-center text-xs sm:text-sm font-semibold">
                                 <span class="step-number">3</span>
                                 <i class="fas fa-check hidden"></i>
                             </div>
@@ -256,7 +289,7 @@ $bodyClass = 'bg-gray-50';
                         </div>
                         
                         <div class="step-item flex flex-col items-center relative z-10" data-step="4">
-                            <div class="step-circle w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-sm font-semibold">
+                            <div class="step-circle w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gray-200 flex items-center justify-center text-xs sm:text-sm font-semibold">
                                 <span class="step-number">4</span>
                                 <i class="fas fa-check hidden"></i>
                             </div>
@@ -264,7 +297,7 @@ $bodyClass = 'bg-gray-50';
                         </div>
                         
                         <div class="step-item flex flex-col items-center relative z-10" data-step="5">
-                            <div class="step-circle w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-sm font-semibold">
+                            <div class="step-circle w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gray-200 flex items-center justify-center text-xs sm:text-sm font-semibold">
                                 <span class="step-number">5</span>
                                 <i class="fas fa-check hidden"></i>
                             </div>
@@ -272,7 +305,7 @@ $bodyClass = 'bg-gray-50';
                         </div>
                         
                         <div class="step-item flex flex-col items-center relative z-10" data-step="6">
-                            <div class="step-circle w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-sm font-semibold">
+                            <div class="step-circle w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gray-200 flex items-center justify-center text-xs sm:text-sm font-semibold">
                                 <span class="step-number">6</span>
                                 <i class="fas fa-check hidden"></i>
                             </div>
@@ -280,7 +313,7 @@ $bodyClass = 'bg-gray-50';
                         </div>
                         
                         <div class="step-item flex flex-col items-center relative z-10" data-step="7">
-                            <div class="step-circle w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-sm font-semibold">
+                            <div class="step-circle w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gray-200 flex items-center justify-center text-xs sm:text-sm font-semibold">
                                 <span class="step-number">7</span>
                                 <i class="fas fa-check hidden"></i>
                             </div>
@@ -288,7 +321,7 @@ $bodyClass = 'bg-gray-50';
                         </div>
                         
                         <div class="step-item flex flex-col items-center relative z-10" data-step="8">
-                            <div class="step-circle w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-sm font-semibold">
+                            <div class="step-circle w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gray-200 flex items-center justify-center text-xs sm:text-sm font-semibold">
                                 <span class="step-number">8</span>
                                 <i class="fas fa-check hidden"></i>
                             </div>
@@ -305,24 +338,24 @@ $bodyClass = 'bg-gray-50';
                     
                     <!-- Step 1: Branche -->
                     <div class="wizard-panel active" data-panel="1">
-                        <div class="bg-white rounded-2xl shadow-lg p-8">
-                            <h2 class="text-2xl font-bold mb-2">In welcher Branche sind Sie tätig?</h2>
-                            <p class="text-gray-500 mb-8">Wir passen Ihr Empfehlungsprogramm an Ihre Branche an.</p>
+                        <div class="bg-white rounded-2xl shadow-lg p-4 sm:p-8">
+                            <h2 class="text-xl sm:text-2xl font-bold mb-2">In welcher Branche sind Sie tätig?</h2>
+                            <p class="text-gray-500 mb-6 sm:mb-8 text-sm sm:text-base">Wir passen Ihr Empfehlungsprogramm an Ihre Branche an.</p>
                             
-                            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4" id="industryGrid">
                                 <?php foreach ($industries as $key => $industry): ?>
-                                <label class="industry-card bg-white border-2 border-gray-200 rounded-xl p-4 cursor-pointer relative">
-                                    <input type="radio" name="industry" value="<?= htmlspecialchars($key) ?>" class="sr-only" required>
-                                    <div class="check-icon hidden absolute top-2 right-2 w-6 h-6 bg-primary-500 rounded-full items-center justify-center text-white">
+                                <div class="industry-card bg-white border-2 border-gray-200 rounded-xl p-3 sm:p-4 relative" data-industry="<?= htmlspecialchars($key) ?>">
+                                    <input type="radio" name="industry" value="<?= htmlspecialchars($key) ?>" class="sr-only industry-radio" required>
+                                    <div class="check-icon hidden absolute top-2 right-2 w-5 h-5 sm:w-6 sm:h-6 bg-primary-500 rounded-full items-center justify-center text-white">
                                         <i class="fas fa-check text-xs"></i>
                                     </div>
                                     <div class="text-center">
-                                        <div class="w-12 h-12 mx-auto bg-primary-100 rounded-xl flex items-center justify-center text-primary-500 mb-3">
-                                            <i class="<?= htmlspecialchars($industry['icon']) ?> text-xl"></i>
+                                        <div class="w-10 h-10 sm:w-12 sm:h-12 mx-auto bg-primary-100 rounded-xl flex items-center justify-center text-primary-500 mb-2 sm:mb-3">
+                                            <i class="<?= htmlspecialchars($industry['icon']) ?> text-lg sm:text-xl"></i>
                                         </div>
-                                        <div class="font-semibold text-gray-900"><?= htmlspecialchars($industry['name']) ?></div>
+                                        <div class="font-semibold text-gray-900 text-sm sm:text-base"><?= htmlspecialchars($industry['name']) ?></div>
                                     </div>
-                                </label>
+                                </div>
                                 <?php endforeach; ?>
                             </div>
                         </div>
@@ -330,9 +363,9 @@ $bodyClass = 'bg-gray-50';
                     
                     <!-- Step 2: Firmendaten -->
                     <div class="wizard-panel" data-panel="2">
-                        <div class="bg-white rounded-2xl shadow-lg p-8">
-                            <h2 class="text-2xl font-bold mb-2">Erzählen Sie uns von Ihrem Unternehmen</h2>
-                            <p class="text-gray-500 mb-8">Diese Informationen erscheinen auf Ihrer Empfehlungsseite.</p>
+                        <div class="bg-white rounded-2xl shadow-lg p-4 sm:p-8">
+                            <h2 class="text-xl sm:text-2xl font-bold mb-2">Erzählen Sie uns von Ihrem Unternehmen</h2>
+                            <p class="text-gray-500 mb-6 sm:mb-8 text-sm sm:text-base">Diese Informationen erscheinen auf Ihrer Empfehlungsseite.</p>
                             
                             <div class="space-y-6">
                                 <div>
@@ -348,15 +381,15 @@ $bodyClass = 'bg-gray-50';
                                     <label class="block text-sm font-semibold text-gray-700 mb-2">
                                         Logo hochladen (optional)
                                     </label>
-                                    <div class="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-primary-500 transition-colors cursor-pointer" id="logoDropzone">
+                                    <div class="border-2 border-dashed border-gray-300 rounded-xl p-6 sm:p-8 text-center hover:border-primary-500 transition-colors cursor-pointer" id="logoDropzone">
                                         <input type="file" name="logo" id="logoInput" accept="image/*" class="hidden">
                                         <div id="logoPreview" class="hidden mb-4">
                                             <img src="" alt="Logo Preview" class="max-h-24 mx-auto">
                                         </div>
                                         <div id="logoPlaceholder">
-                                            <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-3"></i>
-                                            <p class="text-gray-500">Klicken oder Bild hierher ziehen</p>
-                                            <p class="text-gray-400 text-sm mt-1">PNG, JPG bis 2MB</p>
+                                            <i class="fas fa-cloud-upload-alt text-3xl sm:text-4xl text-gray-400 mb-3"></i>
+                                            <p class="text-gray-500 text-sm sm:text-base">Klicken oder Bild hierher ziehen</p>
+                                            <p class="text-gray-400 text-xs sm:text-sm mt-1">PNG, JPG bis 2MB</p>
                                         </div>
                                     </div>
                                 </div>
@@ -375,12 +408,12 @@ $bodyClass = 'bg-gray-50';
                     
                     <!-- Step 3: Kontaktdaten -->
                     <div class="wizard-panel" data-panel="3">
-                        <div class="bg-white rounded-2xl shadow-lg p-8">
-                            <h2 class="text-2xl font-bold mb-2">Wie können wir Sie erreichen?</h2>
-                            <p class="text-gray-500 mb-8">Diese Daten werden nicht öffentlich angezeigt.</p>
+                        <div class="bg-white rounded-2xl shadow-lg p-4 sm:p-8">
+                            <h2 class="text-xl sm:text-2xl font-bold mb-2">Wie können wir Sie erreichen?</h2>
+                            <p class="text-gray-500 mb-6 sm:mb-8 text-sm sm:text-base">Diese Daten werden nicht öffentlich angezeigt.</p>
                             
                             <div class="space-y-6">
-                                <div class="grid md:grid-cols-2 gap-6">
+                                <div class="grid sm:grid-cols-2 gap-4 sm:gap-6">
                                     <div>
                                         <label class="block text-sm font-semibold text-gray-700 mb-2">
                                             Ansprechpartner *
@@ -419,7 +452,7 @@ $bodyClass = 'bg-gray-50';
                                     <input type="password" name="password" required minlength="8"
                                         class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                                         placeholder="Mindestens 8 Zeichen">
-                                    <p class="text-sm text-gray-500 mt-1">Min. 8 Zeichen, mit Groß-/Kleinbuchstaben und Zahlen</p>
+                                    <p class="text-xs sm:text-sm text-gray-500 mt-1">Min. 8 Zeichen, mit Groß-/Kleinbuchstaben und Zahlen</p>
                                 </div>
                                 
                                 <div>
@@ -436,9 +469,9 @@ $bodyClass = 'bg-gray-50';
                     
                     <!-- Step 4: Impressum -->
                     <div class="wizard-panel" data-panel="4">
-                        <div class="bg-white rounded-2xl shadow-lg p-8">
-                            <h2 class="text-2xl font-bold mb-2">Impressumsangaben</h2>
-                            <p class="text-gray-500 mb-8">Gesetzlich vorgeschriebene Angaben für Ihre Empfehlungsseite.</p>
+                        <div class="bg-white rounded-2xl shadow-lg p-4 sm:p-8">
+                            <h2 class="text-xl sm:text-2xl font-bold mb-2">Impressumsangaben</h2>
+                            <p class="text-gray-500 mb-6 sm:mb-8 text-sm sm:text-base">Gesetzlich vorgeschriebene Angaben für Ihre Empfehlungsseite.</p>
                             
                             <div class="space-y-6">
                                 <div>
@@ -450,7 +483,7 @@ $bodyClass = 'bg-gray-50';
                                         placeholder="Musterstraße 123">
                                 </div>
                                 
-                                <div class="grid md:grid-cols-2 gap-6">
+                                <div class="grid grid-cols-2 sm:grid-cols-2 gap-4 sm:gap-6">
                                     <div>
                                         <label class="block text-sm font-semibold text-gray-700 mb-2">
                                             PLZ *
@@ -484,9 +517,9 @@ $bodyClass = 'bg-gray-50';
                     
                     <!-- Step 5: Belohnungen -->
                     <div class="wizard-panel" data-panel="5">
-                        <div class="bg-white rounded-2xl shadow-lg p-8">
-                            <h2 class="text-2xl font-bold mb-2">Belohnungen für Empfehler</h2>
-                            <p class="text-gray-500 mb-8">Definieren Sie, was Ihre Empfehler für erfolgreiche Empfehlungen bekommen.</p>
+                        <div class="bg-white rounded-2xl shadow-lg p-4 sm:p-8">
+                            <h2 class="text-xl sm:text-2xl font-bold mb-2">Belohnungen für Empfehler</h2>
+                            <p class="text-gray-500 mb-6 sm:mb-8 text-sm sm:text-base">Definieren Sie, was Ihre Empfehler für erfolgreiche Empfehlungen bekommen.</p>
                             
                             <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
                                 <div class="flex items-start gap-3">
@@ -502,21 +535,21 @@ $bodyClass = 'bg-gray-50';
                             
                             <div id="rewardsContainer" class="space-y-4">
                                 <!-- Reward Level 1 -->
-                                <div class="reward-level border rounded-xl p-6">
-                                    <div class="flex items-center gap-4 mb-4">
-                                        <div class="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center text-primary-600 font-bold">
+                                <div class="reward-level border rounded-xl p-4 sm:p-6">
+                                    <div class="flex items-center gap-3 sm:gap-4 mb-4">
+                                        <div class="w-8 h-8 sm:w-10 sm:h-10 bg-primary-100 rounded-full flex items-center justify-center text-primary-600 font-bold text-sm sm:text-base">
                                             1
                                         </div>
                                         <div>
-                                            <h3 class="font-semibold">Stufe 1</h3>
-                                            <p class="text-sm text-gray-500">Nach <input type="number" name="reward_1_threshold" value="3" min="1" max="100" class="w-16 px-2 py-1 border rounded text-center"> erfolgreichen Empfehlungen</p>
+                                            <h3 class="font-semibold text-sm sm:text-base">Stufe 1</h3>
+                                            <p class="text-xs sm:text-sm text-gray-500">Nach <input type="number" name="reward_1_threshold" value="3" min="1" max="100" class="w-12 sm:w-16 px-2 py-1 border rounded text-center text-sm"> erfolgreichen Empfehlungen</p>
                                         </div>
                                     </div>
                                     
-                                    <div class="grid md:grid-cols-2 gap-4">
+                                    <div class="grid sm:grid-cols-2 gap-4">
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Belohnungstyp</label>
-                                            <select name="reward_1_type" class="w-full px-3 py-2 border rounded-lg">
+                                            <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Belohnungstyp</label>
+                                            <select name="reward_1_type" class="w-full px-3 py-2 border rounded-lg text-sm">
                                                 <option value="discount">Rabatt (%)</option>
                                                 <option value="coupon_code">Gutschein-Code</option>
                                                 <option value="free_product">Gratis-Produkt</option>
@@ -525,30 +558,30 @@ $bodyClass = 'bg-gray-50';
                                             </select>
                                         </div>
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Beschreibung</label>
+                                            <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Beschreibung</label>
                                             <input type="text" name="reward_1_description" 
-                                                class="w-full px-3 py-2 border rounded-lg"
+                                                class="w-full px-3 py-2 border rounded-lg text-sm"
                                                 placeholder="z.B. 10% Rabatt auf nächsten Einkauf">
                                         </div>
                                     </div>
                                 </div>
                                 
                                 <!-- Reward Level 2 -->
-                                <div class="reward-level border rounded-xl p-6">
-                                    <div class="flex items-center gap-4 mb-4">
-                                        <div class="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center text-primary-600 font-bold">
+                                <div class="reward-level border rounded-xl p-4 sm:p-6">
+                                    <div class="flex items-center gap-3 sm:gap-4 mb-4">
+                                        <div class="w-8 h-8 sm:w-10 sm:h-10 bg-primary-100 rounded-full flex items-center justify-center text-primary-600 font-bold text-sm sm:text-base">
                                             2
                                         </div>
                                         <div>
-                                            <h3 class="font-semibold">Stufe 2</h3>
-                                            <p class="text-sm text-gray-500">Nach <input type="number" name="reward_2_threshold" value="5" min="1" max="100" class="w-16 px-2 py-1 border rounded text-center"> erfolgreichen Empfehlungen</p>
+                                            <h3 class="font-semibold text-sm sm:text-base">Stufe 2</h3>
+                                            <p class="text-xs sm:text-sm text-gray-500">Nach <input type="number" name="reward_2_threshold" value="5" min="1" max="100" class="w-12 sm:w-16 px-2 py-1 border rounded text-center text-sm"> erfolgreichen Empfehlungen</p>
                                         </div>
                                     </div>
                                     
-                                    <div class="grid md:grid-cols-2 gap-4">
+                                    <div class="grid sm:grid-cols-2 gap-4">
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Belohnungstyp</label>
-                                            <select name="reward_2_type" class="w-full px-3 py-2 border rounded-lg">
+                                            <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Belohnungstyp</label>
+                                            <select name="reward_2_type" class="w-full px-3 py-2 border rounded-lg text-sm">
                                                 <option value="discount">Rabatt (%)</option>
                                                 <option value="coupon_code">Gutschein-Code</option>
                                                 <option value="free_product">Gratis-Produkt</option>
@@ -557,30 +590,30 @@ $bodyClass = 'bg-gray-50';
                                             </select>
                                         </div>
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Beschreibung</label>
+                                            <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Beschreibung</label>
                                             <input type="text" name="reward_2_description" 
-                                                class="w-full px-3 py-2 border rounded-lg"
+                                                class="w-full px-3 py-2 border rounded-lg text-sm"
                                                 placeholder="z.B. 25€ Gutschein">
                                         </div>
                                     </div>
                                 </div>
                                 
                                 <!-- Reward Level 3 -->
-                                <div class="reward-level border rounded-xl p-6">
-                                    <div class="flex items-center gap-4 mb-4">
-                                        <div class="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center text-primary-600 font-bold">
+                                <div class="reward-level border rounded-xl p-4 sm:p-6">
+                                    <div class="flex items-center gap-3 sm:gap-4 mb-4">
+                                        <div class="w-8 h-8 sm:w-10 sm:h-10 bg-primary-100 rounded-full flex items-center justify-center text-primary-600 font-bold text-sm sm:text-base">
                                             3
                                         </div>
                                         <div>
-                                            <h3 class="font-semibold">Stufe 3</h3>
-                                            <p class="text-sm text-gray-500">Nach <input type="number" name="reward_3_threshold" value="10" min="1" max="100" class="w-16 px-2 py-1 border rounded text-center"> erfolgreichen Empfehlungen</p>
+                                            <h3 class="font-semibold text-sm sm:text-base">Stufe 3</h3>
+                                            <p class="text-xs sm:text-sm text-gray-500">Nach <input type="number" name="reward_3_threshold" value="10" min="1" max="100" class="w-12 sm:w-16 px-2 py-1 border rounded text-center text-sm"> erfolgreichen Empfehlungen</p>
                                         </div>
                                     </div>
                                     
-                                    <div class="grid md:grid-cols-2 gap-4">
+                                    <div class="grid sm:grid-cols-2 gap-4">
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Belohnungstyp</label>
-                                            <select name="reward_3_type" class="w-full px-3 py-2 border rounded-lg">
+                                            <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Belohnungstyp</label>
+                                            <select name="reward_3_type" class="w-full px-3 py-2 border rounded-lg text-sm">
                                                 <option value="discount">Rabatt (%)</option>
                                                 <option value="coupon_code">Gutschein-Code</option>
                                                 <option value="free_product" selected>Gratis-Produkt</option>
@@ -589,9 +622,9 @@ $bodyClass = 'bg-gray-50';
                                             </select>
                                         </div>
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Beschreibung</label>
+                                            <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Beschreibung</label>
                                             <input type="text" name="reward_3_description" 
-                                                class="w-full px-3 py-2 border rounded-lg"
+                                                class="w-full px-3 py-2 border rounded-lg text-sm"
                                                 placeholder="z.B. Gratis Premium-Produkt">
                                         </div>
                                     </div>
@@ -599,7 +632,7 @@ $bodyClass = 'bg-gray-50';
                             </div>
                             
                             <?php if ($plan === 'professional'): ?>
-                            <button type="button" id="addRewardBtn" class="mt-4 text-primary-500 hover:text-primary-600 font-medium">
+                            <button type="button" id="addRewardBtn" class="mt-4 text-primary-500 hover:text-primary-600 font-medium text-sm sm:text-base">
                                 <i class="fas fa-plus mr-2"></i>Weitere Stufe hinzufügen
                             </button>
                             <?php endif; ?>
@@ -608,11 +641,11 @@ $bodyClass = 'bg-gray-50';
                     
                     <!-- Step 6: Design -->
                     <div class="wizard-panel" data-panel="6">
-                        <div class="bg-white rounded-2xl shadow-lg p-8">
-                            <h2 class="text-2xl font-bold mb-2">Design wählen</h2>
-                            <p class="text-gray-500 mb-8">Wählen Sie ein Hintergrundbild für Ihre Empfehlungsseite.</p>
+                        <div class="bg-white rounded-2xl shadow-lg p-4 sm:p-8">
+                            <h2 class="text-xl sm:text-2xl font-bold mb-2">Design wählen</h2>
+                            <p class="text-gray-500 mb-6 sm:mb-8 text-sm sm:text-base">Wählen Sie ein Hintergrundbild für Ihre Empfehlungsseite.</p>
                             
-                            <div id="backgroundsContainer" class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+                            <div id="backgroundsContainer" class="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 mb-6">
                                 <!-- Backgrounds werden per JavaScript geladen basierend auf Branche -->
                             </div>
                             
@@ -624,8 +657,8 @@ $bodyClass = 'bg-gray-50';
                                 </label>
                                 <div class="flex items-center gap-4">
                                     <input type="color" name="primary_color" value="#667eea" 
-                                        class="w-16 h-10 rounded cursor-pointer">
-                                    <span class="text-gray-500">Diese Farbe wird für Buttons und Akzente verwendet</span>
+                                        class="w-12 h-10 sm:w-16 rounded cursor-pointer">
+                                    <span class="text-gray-500 text-xs sm:text-sm">Diese Farbe wird für Buttons und Akzente verwendet</span>
                                 </div>
                             </div>
                             
@@ -636,8 +669,8 @@ $bodyClass = 'bg-gray-50';
                                     Eigenes Hintergrundbild (Pro)
                                 </label>
                                 <input type="file" name="custom_background" accept="image/*"
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg">
-                                <p class="text-sm text-gray-500 mt-1">Empfohlen: 1920x1080px, max. 2MB</p>
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm">
+                                <p class="text-xs sm:text-sm text-gray-500 mt-1">Empfohlen: 1920x1080px, max. 2MB</p>
                             </div>
                             <?php endif; ?>
                         </div>
@@ -645,25 +678,25 @@ $bodyClass = 'bg-gray-50';
                     
                     <!-- Step 7: Subdomain -->
                     <div class="wizard-panel" data-panel="7">
-                        <div class="bg-white rounded-2xl shadow-lg p-8">
-                            <h2 class="text-2xl font-bold mb-2">Ihre Subdomain wählen</h2>
-                            <p class="text-gray-500 mb-8">Unter dieser Adresse ist Ihr Empfehlungsprogramm erreichbar.</p>
+                        <div class="bg-white rounded-2xl shadow-lg p-4 sm:p-8">
+                            <h2 class="text-xl sm:text-2xl font-bold mb-2">Ihre Subdomain wählen</h2>
+                            <p class="text-gray-500 mb-6 sm:mb-8 text-sm sm:text-base">Unter dieser Adresse ist Ihr Empfehlungsprogramm erreichbar.</p>
                             
                             <div class="space-y-6">
                                 <div>
                                     <label class="block text-sm font-semibold text-gray-700 mb-2">
                                         Subdomain *
                                     </label>
-                                    <div class="flex items-center">
+                                    <div class="flex flex-col sm:flex-row">
                                         <input type="text" name="subdomain" id="subdomainInput" required
                                             pattern="[a-z0-9-]+"
-                                            class="flex-1 px-4 py-3 border border-gray-300 rounded-l-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                                            class="flex-1 px-4 py-3 border border-gray-300 rounded-xl sm:rounded-r-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                                             placeholder="ihre-firma">
-                                        <span class="bg-gray-100 px-4 py-3 border border-l-0 border-gray-300 rounded-r-xl text-gray-500">
+                                        <span class="bg-gray-100 px-4 py-3 border border-gray-300 sm:border-l-0 rounded-xl sm:rounded-l-none text-gray-500 text-center sm:text-left mt-2 sm:mt-0">
                                             .empfohlen.de
                                         </span>
                                     </div>
-                                    <p class="text-sm text-gray-500 mt-2">
+                                    <p class="text-xs sm:text-sm text-gray-500 mt-2">
                                         Nur Kleinbuchstaben, Zahlen und Bindestriche erlaubt
                                     </p>
                                     <div id="subdomainStatus" class="mt-2 hidden">
@@ -672,7 +705,7 @@ $bodyClass = 'bg-gray-50';
                                 </div>
                                 
                                 <div class="bg-gray-50 rounded-xl p-4">
-                                    <p class="text-sm text-gray-600">
+                                    <p class="text-xs sm:text-sm text-gray-600">
                                         <i class="fas fa-info-circle text-primary-500 mr-2"></i>
                                         Ihre Empfehlungsseite wird unter 
                                         <strong id="previewUrl">ihre-firma.empfohlen.de</strong> 
@@ -685,22 +718,22 @@ $bodyClass = 'bg-gray-50';
                     
                     <!-- Step 8: Fertig -->
                     <div class="wizard-panel" data-panel="8">
-                        <div class="bg-white rounded-2xl shadow-lg p-8 text-center">
-                            <div class="w-20 h-20 mx-auto bg-green-100 rounded-full flex items-center justify-center mb-6">
-                                <i class="fas fa-check text-4xl text-green-500"></i>
+                        <div class="bg-white rounded-2xl shadow-lg p-4 sm:p-8 text-center">
+                            <div class="w-16 h-16 sm:w-20 sm:h-20 mx-auto bg-green-100 rounded-full flex items-center justify-center mb-6">
+                                <i class="fas fa-check text-3xl sm:text-4xl text-green-500"></i>
                             </div>
                             
-                            <h2 class="text-2xl font-bold mb-2">Fast geschafft!</h2>
-                            <p class="text-gray-500 mb-8">Prüfen Sie Ihre Angaben und klicken Sie auf "Einrichtung starten".</p>
+                            <h2 class="text-xl sm:text-2xl font-bold mb-2">Fast geschafft!</h2>
+                            <p class="text-gray-500 mb-6 sm:mb-8 text-sm sm:text-base">Prüfen Sie Ihre Angaben und klicken Sie auf "Einrichtung starten".</p>
                             
-                            <div id="summaryContainer" class="text-left bg-gray-50 rounded-xl p-6 mb-8">
+                            <div id="summaryContainer" class="text-left bg-gray-50 rounded-xl p-4 sm:p-6 mb-6 sm:mb-8">
                                 <!-- Summary wird per JavaScript generiert -->
                             </div>
                             
                             <div class="flex items-start gap-3 text-left mb-6">
                                 <input type="checkbox" name="accept_terms" id="acceptTerms" required
                                     class="mt-1 w-5 h-5 text-primary-500 rounded border-gray-300 focus:ring-primary-500">
-                                <label for="acceptTerms" class="text-sm text-gray-600">
+                                <label for="acceptTerms" class="text-xs sm:text-sm text-gray-600">
                                     Ich akzeptiere die <a href="/agb" target="_blank" class="text-primary-500 hover:underline">AGB</a> 
                                     und habe die <a href="/datenschutz" target="_blank" class="text-primary-500 hover:underline">Datenschutzerklärung</a> gelesen.
                                 </label>
@@ -709,20 +742,20 @@ $bodyClass = 'bg-gray-50';
                     </div>
                     
                     <!-- Navigation Buttons -->
-                    <div class="flex justify-between mt-8">
-                        <button type="button" id="prevBtn" class="px-6 py-3 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 hidden">
+                    <div class="flex justify-between mt-6 sm:mt-8">
+                        <button type="button" id="prevBtn" class="px-4 sm:px-6 py-3 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 hidden text-sm sm:text-base">
                             <i class="fas fa-arrow-left mr-2"></i>
-                            Zurück
+                            <span class="hidden sm:inline">Zurück</span>
                         </button>
                         
-                        <button type="button" id="nextBtn" class="ml-auto px-8 py-3 bg-gradient-to-r from-primary-500 to-purple-600 text-white rounded-xl hover:shadow-lg transition-shadow">
+                        <button type="button" id="nextBtn" class="ml-auto px-6 sm:px-8 py-3 bg-gradient-to-r from-primary-500 to-purple-600 text-white rounded-xl hover:shadow-lg transition-shadow text-sm sm:text-base">
                             Weiter
                             <i class="fas fa-arrow-right ml-2"></i>
                         </button>
                         
-                        <button type="submit" id="submitBtn" class="ml-auto px-8 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl hover:shadow-lg transition-shadow hidden">
+                        <button type="submit" id="submitBtn" class="ml-auto px-6 sm:px-8 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl hover:shadow-lg transition-shadow hidden text-sm sm:text-base">
                             <i class="fas fa-rocket mr-2"></i>
-                            Einrichtung starten
+                            <span class="hidden sm:inline">Einrichtung </span>starten
                         </button>
                     </div>
                 </form>
@@ -731,8 +764,8 @@ $bodyClass = 'bg-gray-50';
         </main>
         
         <!-- Footer -->
-        <footer class="bg-white border-t py-6">
-            <div class="max-w-6xl mx-auto px-4 text-center text-sm text-gray-500">
+        <footer class="bg-white border-t py-4 sm:py-6">
+            <div class="max-w-6xl mx-auto px-4 text-center text-xs sm:text-sm text-gray-500">
                 <p>&copy; <?= date('Y') ?> Leadbusiness. Alle Rechte vorbehalten.</p>
                 <div class="mt-2 space-x-4">
                     <a href="/impressum" class="hover:text-gray-700">Impressum</a>
