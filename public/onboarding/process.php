@@ -5,17 +5,7 @@
  * Verarbeitet das Onboarding-Formular und richtet den Kunden-Account ein
  */
 
-// KORRIGIERTE PFADE - von /public/onboarding/ zwei Ebenen hoch
-require_once __DIR__ . '/../../config/database.php';
-require_once __DIR__ . '/../../config/settings.php';
-require_once __DIR__ . '/../../includes/Database.php';
-require_once __DIR__ . '/../../includes/Auth.php';
-require_once __DIR__ . '/../../includes/helpers.php';
-
-// Session starten
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+require_once __DIR__ . '/../../includes/init.php';
 
 header('Content-Type: application/json');
 
@@ -25,7 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 try {
-    $db = Database::getInstance();
+    $db = db();
     
     // Formulardaten sammeln
     $data = [
@@ -65,7 +55,7 @@ try {
         jsonError('Diese Subdomain ist bereits vergeben.', 400);
     }
     
-    // Prüfen ob E-Mail bereits existiert (ohne Token)
+    // Prüfen ob E-Mail bereits existiert
     $existingEmail = $db->fetch(
         "SELECT id, onboarding_token FROM customers WHERE email = ?",
         [$data['email']]
@@ -110,17 +100,15 @@ try {
         'subscription_ends_at' => date('Y-m-d H:i:s', strtotime('+35 days')),
         'email_sender_name' => $data['company_name'],
         'onboarding_completed_at' => date('Y-m-d H:i:s'),
-        'onboarding_token' => null, // Token löschen
+        'onboarding_token' => null,
         'updated_at' => date('Y-m-d H:i:s')
     ];
     
     // Kunde aktualisieren oder erstellen
     if ($existingEmail && $existingEmail['onboarding_token'] === $data['token']) {
-        // Bestehenden Kunden aktualisieren (kam von Digistore24)
         $customerId = $existingEmail['id'];
         $db->update('customers', $customerData, 'id = ?', [$customerId]);
     } else if (!$existingEmail) {
-        // Neuen Kunden erstellen (direktes Onboarding)
         $customerData['created_at'] = date('Y-m-d H:i:s');
         $customerId = $db->insert('customers', $customerData);
     } else {
@@ -172,7 +160,6 @@ try {
     $_SESSION['customer_email'] = $data['email'];
     $_SESSION['user_type'] = 'customer';
     
-    // Erfolg
     jsonSuccess([
         'customer_id' => $customerId,
         'subdomain' => $data['subdomain'],
@@ -184,13 +171,9 @@ try {
     jsonError('Ein Fehler ist aufgetreten: ' . $e->getMessage(), 500);
 }
 
-/**
- * Validierung der Onboarding-Daten
- */
 function validateOnboardingData($data) {
     $errors = [];
     
-    // Pflichtfelder
     if (empty($data['industry'])) $errors[] = 'Branche ist erforderlich';
     if (empty($data['company_name'])) $errors[] = 'Firmenname ist erforderlich';
     if (empty($data['contact_name'])) $errors[] = 'Ansprechpartner ist erforderlich';
@@ -202,40 +185,27 @@ function validateOnboardingData($data) {
     if (empty($data['subdomain'])) $errors[] = 'Subdomain ist erforderlich';
     if (!$data['accept_terms']) $errors[] = 'Sie müssen die AGB akzeptieren';
     
-    // E-Mail Format
     if (!empty($data['email']) && !filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
         $errors[] = 'Ungültige E-Mail-Adresse';
     }
     
-    // Passwort
     if (!empty($data['password'])) {
-        if (strlen($data['password']) < 8) {
-            $errors[] = 'Passwort muss mindestens 8 Zeichen lang sein';
-        }
-        if ($data['password'] !== $data['password_confirm']) {
-            $errors[] = 'Passwörter stimmen nicht überein';
-        }
+        if (strlen($data['password']) < 8) $errors[] = 'Passwort muss mindestens 8 Zeichen lang sein';
+        if ($data['password'] !== $data['password_confirm']) $errors[] = 'Passwörter stimmen nicht überein';
     }
     
-    // Subdomain Format
     if (!empty($data['subdomain'])) {
         if (!preg_match('/^[a-z0-9-]{3,50}$/', $data['subdomain'])) {
             $errors[] = 'Subdomain darf nur Kleinbuchstaben, Zahlen und Bindestriche enthalten (3-50 Zeichen)';
         }
-        
-        // Reservierte Subdomains
         $reserved = ['www', 'admin', 'api', 'app', 'dashboard', 'mail', 'smtp', 'ftp', 'test', 'dev', 'staging'];
-        if (in_array($data['subdomain'], $reserved)) {
-            $errors[] = 'Diese Subdomain ist reserviert';
-        }
+        if (in_array($data['subdomain'], $reserved)) $errors[] = 'Diese Subdomain ist reserviert';
     }
     
-    // PLZ Format (Deutschland)
     if (!empty($data['address_zip']) && !preg_match('/^[0-9]{5}$/', $data['address_zip'])) {
         $errors[] = 'Ungültige PLZ (5 Ziffern)';
     }
     
-    // Plan
     if (!in_array($data['plan'], ['starter', 'professional', 'enterprise'])) {
         $errors[] = 'Ungültiger Tarif';
     }
@@ -243,75 +213,42 @@ function validateOnboardingData($data) {
     return $errors;
 }
 
-/**
- * Logo hochladen
- * KORRIGIERTER PFAD: Von /public/onboarding/ eine Ebene hoch zu /public/uploads/
- */
 function handleLogoUpload($file, $subdomain) {
     $uploadDir = __DIR__ . '/../uploads/logos/';
+    if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
     
-    if (!is_dir($uploadDir)) {
-        mkdir($uploadDir, 0755, true);
-    }
-    
-    // Validierung
     $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-    if (!in_array($file['type'], $allowedTypes)) {
-        throw new Exception('Ungültiges Bildformat. Erlaubt: JPG, PNG, GIF, WebP');
-    }
+    if (!in_array($file['type'], $allowedTypes)) throw new Exception('Ungültiges Bildformat');
+    if ($file['size'] > 2 * 1024 * 1024) throw new Exception('Logo zu groß. Maximal 2MB.');
     
-    if ($file['size'] > 2 * 1024 * 1024) {
-        throw new Exception('Logo zu groß. Maximal 2MB erlaubt.');
-    }
-    
-    // Dateiname generieren
     $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
     $filename = $subdomain . '-logo-' . time() . '.' . $extension;
-    $filepath = $uploadDir . $filename;
     
-    if (!move_uploaded_file($file['tmp_name'], $filepath)) {
+    if (!move_uploaded_file($file['tmp_name'], $uploadDir . $filename)) {
         throw new Exception('Fehler beim Hochladen des Logos');
     }
     
     return '/uploads/logos/' . $filename;
 }
 
-/**
- * Custom Background hochladen
- * KORRIGIERTER PFAD: Von /public/onboarding/ eine Ebene hoch zu /public/uploads/
- */
 function handleBackgroundUpload($file, $subdomain) {
     $uploadDir = __DIR__ . '/../uploads/backgrounds/';
+    if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
     
-    if (!is_dir($uploadDir)) {
-        mkdir($uploadDir, 0755, true);
-    }
-    
-    // Validierung
     $allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
-    if (!in_array($file['type'], $allowedTypes)) {
-        throw new Exception('Ungültiges Bildformat. Erlaubt: JPG, PNG, WebP');
-    }
+    if (!in_array($file['type'], $allowedTypes)) throw new Exception('Ungültiges Bildformat');
+    if ($file['size'] > 5 * 1024 * 1024) throw new Exception('Hintergrundbild zu groß. Maximal 5MB.');
     
-    if ($file['size'] > 5 * 1024 * 1024) {
-        throw new Exception('Hintergrundbild zu groß. Maximal 5MB erlaubt.');
-    }
-    
-    // Dateiname generieren
     $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
     $filename = $subdomain . '-background-' . time() . '.' . $extension;
-    $filepath = $uploadDir . $filename;
     
-    if (!move_uploaded_file($file['tmp_name'], $filepath)) {
+    if (!move_uploaded_file($file['tmp_name'], $uploadDir . $filename)) {
         throw new Exception('Fehler beim Hochladen des Hintergrundbildes');
     }
     
     return '/uploads/backgrounds/' . $filename;
 }
 
-/**
- * Belohnungen aus Formular erstellen
- */
 function createRewardsFromForm($db, $customerId, $campaignId, $formData) {
     for ($i = 1; $i <= 5; $i++) {
         $threshold = intval($formData["reward_{$i}_threshold"] ?? 0);
@@ -334,15 +271,6 @@ function createRewardsFromForm($db, $customerId, $campaignId, $formData) {
     }
 }
 
-/**
- * E-Mail-Sequenzen für Kunden aktivieren
- */
 function activateEmailSequences($db, $customerId) {
-    // Standard-Sequenzen kopieren und aktivieren
-    $sequences = $db->fetchAll(
-        "SELECT * FROM email_sequences WHERE is_default = 1 AND is_active = 1"
-    );
-    
-    // Hier könnten kundenspezifische Sequenzen erstellt werden
-    // Für jetzt nutzen wir die globalen Standard-Sequenzen
+    // Standard-Sequenzen nutzen
 }
