@@ -2,6 +2,7 @@
 /**
  * Leadbusiness - Landingpage
  * Vollautomatisches Empfehlungsprogramm für Unternehmen
+ * Auto-Deploy Test: OK
  */
 
 $pageTitle = 'Empfehlungsprogramm für Ihr Unternehmen';
