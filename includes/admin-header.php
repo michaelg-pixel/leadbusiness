@@ -11,8 +11,7 @@ $theme = $_COOKIE['admin_theme'] ?? 'light';
 $currentPage = basename($_SERVER['PHP_SELF'], '.php');
 
 // Benachrichtigungen zählen (z.B. Fraud Reviews)
-$db = Database::getInstance();
-$pendingFraudCount = $db->fetchColumn(
+$pendingFraudCount = db()->fetchColumn(
     "SELECT COUNT(*) FROM fraud_log WHERE action_taken = 'review' AND reviewed_at IS NULL"
 ) ?? 0;
 ?>
@@ -49,7 +48,6 @@ $pendingFraudCount = $db->fetchColumn(
         .sidebar-item:hover:not(.active) {
             background: rgba(255, 255, 255, 0.05);
         }
-        /* Custom scrollbar */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
