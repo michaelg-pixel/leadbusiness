@@ -315,19 +315,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // =====================================================
-    // Cookie Consent
+    // NOTE: Cookie Consent is handled in footer.php
+    // DO NOT add cookie banner code here!
     // =====================================================
-    const cookieBanner = document.getElementById('cookie-banner');
-    const cookieAccept = document.getElementById('cookie-accept');
-    
-    if (cookieBanner && !localStorage.getItem('cookies-accepted')) {
-        cookieBanner.classList.remove('hidden');
-        
-        cookieAccept?.addEventListener('click', () => {
-            localStorage.setItem('cookies-accepted', 'true');
-            cookieBanner.classList.add('hidden');
-        });
-    }
     
     // =====================================================
     // Industry Selector (Onboarding)
