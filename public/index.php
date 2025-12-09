@@ -59,7 +59,7 @@ require_once __DIR__ . '/../templates/marketing/header.php';
                     </div>
                     <div class="flex items-center gap-2">
                         <i class="fas fa-check-circle text-green-400"></i>
-                        <span>14 Tage testen</span>
+                        <span>7 Tage testen</span>
                     </div>
                 </div>
             </div>
@@ -642,7 +642,7 @@ require_once __DIR__ . '/../templates/marketing/header.php';
         
         <p class="text-center text-gray-500 dark:text-gray-400 mt-8">
             <i class="fas fa-info-circle mr-1"></i>
-            Einmalige Einrichtungsgebühr: 499€ · 14 Tage kostenlos testen
+            Einmalige Einrichtungsgebühr: 499€ · 7 Tage kostenlos testen
         </p>
         
         <div class="text-center mt-6">
@@ -820,7 +820,7 @@ require_once __DIR__ . '/../templates/marketing/header.php';
         </p>
         <div class="flex flex-col sm:flex-row gap-4 justify-center">
             <a href="/onboarding" class="btn-white btn-large inline-flex items-center justify-center gap-2">
-                <span>Jetzt 14 Tage kostenlos testen</span>
+                <span>Jetzt 7 Tage kostenlos testen</span>
                 <i class="fas fa-arrow-right"></i>
             </a>
         </div>
