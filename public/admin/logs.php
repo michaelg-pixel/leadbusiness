@@ -4,18 +4,14 @@
  * Leadbusiness - Empfehlungsprogramm
  */
 
-require_once __DIR__ . '/../../config/database.php';
-require_once __DIR__ . '/../../includes/Database.php';
-require_once __DIR__ . '/../../includes/helpers.php';
-
-session_start();
+require_once __DIR__ . '/../../includes/init.php';
 
 if (!isset($_SESSION['admin_id'])) {
     header('Location: /admin/login.php');
     exit;
 }
 
-$db = Database::getInstance();
+$db = db();
 $pageTitle = 'System Logs';
 
 // Filter
@@ -36,6 +32,7 @@ $logTypes = [
 // Daten laden basierend auf Typ
 $logs = [];
 $totalCount = 0;
+$offset = ($page - 1) * $perPage;
 
 switch ($logType) {
     case 'email':
@@ -45,7 +42,7 @@ switch ($logType) {
             FROM email_queue eq
             LEFT JOIN customers c ON eq.customer_id = c.id
             ORDER BY eq.created_at DESC
-            LIMIT $perPage OFFSET " . (($page - 1) * $perPage)
+            LIMIT ? OFFSET ?", [$perPage, $offset]
         );
         break;
         
@@ -57,7 +54,7 @@ switch ($logType) {
             LEFT JOIN customers c ON fl.customer_id = c.id
             LEFT JOIN leads l ON fl.lead_id = l.id
             ORDER BY fl.created_at DESC
-            LIMIT $perPage OFFSET " . (($page - 1) * $perPage)
+            LIMIT ? OFFSET ?", [$perPage, $offset]
         );
         break;
         
@@ -66,7 +63,7 @@ switch ($logType) {
         $logs = $db->fetchAll("
             SELECT * FROM bot_detection_log
             ORDER BY created_at DESC
-            LIMIT $perPage OFFSET " . (($page - 1) * $perPage)
+            LIMIT ? OFFSET ?", [$perPage, $offset]
         );
         break;
         
@@ -75,7 +72,7 @@ switch ($logType) {
         $logs = $db->fetchAll("
             SELECT * FROM rate_limit_log
             ORDER BY created_at DESC
-            LIMIT $perPage OFFSET " . (($page - 1) * $perPage)
+            LIMIT ? OFFSET ?", [$perPage, $offset]
         );
         break;
         
@@ -84,7 +81,7 @@ switch ($logType) {
         $logs = $db->fetchAll("
             SELECT * FROM blocked_ips
             ORDER BY created_at DESC
-            LIMIT $perPage OFFSET " . (($page - 1) * $perPage)
+            LIMIT ? OFFSET ?", [$perPage, $offset]
         );
         break;
         
@@ -162,7 +159,6 @@ include __DIR__ . '/../../includes/admin-header.php';
     <!-- Log Table -->
     <div class="overflow-x-auto">
         <?php if ($logType === 'email'): ?>
-        <!-- E-Mail Logs -->
         <table class="w-full">
             <thead class="bg-slate-50 dark:bg-slate-700/50">
                 <tr>
@@ -198,7 +194,6 @@ include __DIR__ . '/../../includes/admin-header.php';
         </table>
         
         <?php elseif ($logType === 'fraud'): ?>
-        <!-- Fraud Logs -->
         <table class="w-full">
             <thead class="bg-slate-50 dark:bg-slate-700/50">
                 <tr>
@@ -244,7 +239,6 @@ include __DIR__ . '/../../includes/admin-header.php';
         </table>
         
         <?php elseif ($logType === 'bot'): ?>
-        <!-- Bot Detection Logs -->
         <table class="w-full">
             <thead class="bg-slate-50 dark:bg-slate-700/50">
                 <tr>
@@ -292,7 +286,6 @@ include __DIR__ . '/../../includes/admin-header.php';
         </table>
         
         <?php elseif ($logType === 'blocked_ips'): ?>
-        <!-- Blocked IPs -->
         <table class="w-full">
             <thead class="bg-slate-50 dark:bg-slate-700/50">
                 <tr>
@@ -319,7 +312,6 @@ include __DIR__ . '/../../includes/admin-header.php';
         </table>
         
         <?php else: ?>
-        <!-- Alle Logs -->
         <table class="w-full">
             <thead class="bg-slate-50 dark:bg-slate-700/50">
                 <tr>
@@ -356,7 +348,6 @@ include __DIR__ . '/../../includes/admin-header.php';
         <?php endif; ?>
     </div>
     
-    <!-- Pagination -->
     <?php if ($totalPages > 1 && $logType !== 'all'): ?>
     <div class="px-6 py-4 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between">
         <p class="text-sm text-slate-500">Seite <?= $page ?> von <?= $totalPages ?></p>
