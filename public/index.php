@@ -504,6 +504,217 @@ require_once __DIR__ . '/../templates/marketing/header.php';
     </div>
 </section>
 
+<!-- ========================================== -->
+<!-- 💰 COST CALCULATOR SECTION -->
+<!-- ========================================== -->
+<section id="kostenrechner" class="py-20 bg-slate-900 dark:bg-black relative overflow-hidden">
+    <!-- Animated Background -->
+    <div class="absolute inset-0 opacity-30">
+        <div class="absolute inset-0" style="background: radial-gradient(ellipse at 20% 50%, rgba(102, 126, 234, 0.15) 0%, transparent 50%), radial-gradient(ellipse at 80% 50%, rgba(118, 75, 162, 0.15) 0%, transparent 50%);"></div>
+    </div>
+    
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <!-- Header -->
+        <div class="text-center mb-12">
+            <span class="inline-block px-4 py-1 rounded-full bg-primary-500/20 text-primary-400 text-sm font-semibold mb-4">
+                <i class="fas fa-calculator mr-2"></i>Kostenvergleich
+            </span>
+            <h2 class="text-3xl md:text-4xl lg:text-5xl font-extrabold text-white mb-4">
+                <span class="bg-gradient-to-r from-primary-400 via-cyan-400 to-primary-400 bg-clip-text text-transparent bg-[length:200%_auto] animate-pulse">
+                    Leadbusiness vs. Werbeplattformen
+                </span>
+            </h2>
+            <p class="text-lg text-gray-400 max-w-2xl mx-auto">
+                Entdecken Sie, wie viel Sie mit Empfehlungsmarketing im Vergleich zu herkömmlichen Werbeplattformen sparen können.
+            </p>
+        </div>
+        
+        <!-- Slider Box -->
+        <div class="bg-white/5 backdrop-blur-xl rounded-2xl p-6 md:p-10 border border-white/10 mb-10">
+            <label class="block text-xl font-semibold text-white text-center mb-6">
+                <i class="fas fa-users mr-2 text-primary-400"></i>
+                Erwartete Leads pro Monat:
+            </label>
+            
+            <div class="relative mb-6">
+                <input 
+                    type="range" 
+                    id="leadCalcSlider" 
+                    min="10" 
+                    max="1000" 
+                    value="250"
+                    class="w-full h-3 rounded-full appearance-none cursor-pointer bg-white/20"
+                    style="accent-color: #667eea;"
+                    oninput="updateCostCalculator(this.value)"
+                >
+            </div>
+            
+            <div id="leadCalcCount" class="text-center text-3xl md:text-4xl font-bold text-primary-400 p-4 rounded-xl bg-primary-500/10 border-2 border-primary-500/50">
+                250 Leads
+            </div>
+        </div>
+        
+        <!-- Cost Table -->
+        <div class="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 overflow-hidden mb-8">
+            <div class="overflow-x-auto">
+                <table class="w-full min-w-[600px]">
+                    <thead>
+                        <tr class="bg-white/10">
+                            <th class="px-4 md:px-6 py-4 text-left text-sm font-bold text-white uppercase tracking-wide">Anbieter</th>
+                            <th class="px-4 md:px-6 py-4 text-left text-sm font-bold text-white uppercase tracking-wide">Grundgebühr</th>
+                            <th class="px-4 md:px-6 py-4 text-left text-sm font-bold text-white uppercase tracking-wide">Kosten/Lead</th>
+                            <th class="px-4 md:px-6 py-4 text-left text-sm font-bold text-white uppercase tracking-wide">Gesamt/Monat</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-white/10">
+                        <!-- Google Ads -->
+                        <tr class="hover:bg-white/5 transition-colors border-l-4 border-red-500/50 bg-red-500/5">
+                            <td class="px-4 md:px-6 py-4 font-semibold text-red-300">
+                                <i class="fab fa-google mr-2"></i>Google Ads
+                            </td>
+                            <td class="px-4 md:px-6 py-4 text-gray-400">0,00 €</td>
+                            <td class="px-4 md:px-6 py-4 text-gray-400">12,50 €</td>
+                            <td class="px-4 md:px-6 py-4 text-red-400 font-bold" id="costGoogle">3.125,00 €</td>
+                        </tr>
+                        <!-- Meta Ads -->
+                        <tr class="hover:bg-white/5 transition-colors border-l-4 border-red-500/50 bg-red-500/5">
+                            <td class="px-4 md:px-6 py-4 font-semibold text-red-300">
+                                <i class="fab fa-meta mr-2"></i>Meta Ads
+                            </td>
+                            <td class="px-4 md:px-6 py-4 text-gray-400">0,00 €</td>
+                            <td class="px-4 md:px-6 py-4 text-gray-400">11,80 €</td>
+                            <td class="px-4 md:px-6 py-4 text-red-400 font-bold" id="costMeta">2.950,00 €</td>
+                        </tr>
+                        <!-- YouTube Ads -->
+                        <tr class="hover:bg-white/5 transition-colors border-l-4 border-red-500/50 bg-red-500/5">
+                            <td class="px-4 md:px-6 py-4 font-semibold text-red-300">
+                                <i class="fab fa-youtube mr-2"></i>YouTube Ads
+                            </td>
+                            <td class="px-4 md:px-6 py-4 text-gray-400">0,00 €</td>
+                            <td class="px-4 md:px-6 py-4 text-gray-400">5,00 €</td>
+                            <td class="px-4 md:px-6 py-4 text-red-400 font-bold" id="costYouTube">1.250,00 €</td>
+                        </tr>
+                        <!-- TikTok Ads -->
+                        <tr class="hover:bg-white/5 transition-colors border-l-4 border-red-500/50 bg-red-500/5">
+                            <td class="px-4 md:px-6 py-4 font-semibold text-red-300">
+                                <i class="fab fa-tiktok mr-2"></i>TikTok Ads
+                            </td>
+                            <td class="px-4 md:px-6 py-4 text-gray-400">0,00 €</td>
+                            <td class="px-4 md:px-6 py-4 text-gray-400">8,75 €</td>
+                            <td class="px-4 md:px-6 py-4 text-red-400 font-bold" id="costTikTok">2.187,50 €</td>
+                        </tr>
+                        <!-- LinkedIn Ads -->
+                        <tr class="hover:bg-white/5 transition-colors border-l-4 border-red-500/50 bg-red-500/5">
+                            <td class="px-4 md:px-6 py-4 font-semibold text-red-300">
+                                <i class="fab fa-linkedin mr-2"></i>LinkedIn Ads
+                            </td>
+                            <td class="px-4 md:px-6 py-4 text-gray-400">0,00 €</td>
+                            <td class="px-4 md:px-6 py-4 text-gray-400">45,00 €</td>
+                            <td class="px-4 md:px-6 py-4 text-red-400 font-bold" id="costLinkedIn">11.250,00 €</td>
+                        </tr>
+                        <!-- Other Tools -->
+                        <tr class="hover:bg-white/5 transition-colors border-l-4 border-yellow-500/50 bg-yellow-500/5">
+                            <td class="px-4 md:px-6 py-4 font-semibold text-yellow-300">
+                                <i class="fas fa-tools mr-2"></i>Andere Lead-Tools
+                            </td>
+                            <td class="px-4 md:px-6 py-4 text-gray-400">199,00 €</td>
+                            <td class="px-4 md:px-6 py-4 text-gray-400">1,50 €</td>
+                            <td class="px-4 md:px-6 py-4 text-yellow-400 font-bold" id="costOther">574,00 €</td>
+                        </tr>
+                        <!-- Leadbusiness (Highlighted) -->
+                        <tr class="bg-gradient-to-r from-green-500/20 to-green-500/10 border-l-4 border-green-500 hover:from-green-500/30 hover:to-green-500/20 transition-all">
+                            <td class="px-4 md:px-6 py-5 font-bold text-white text-lg">
+                                <i class="fas fa-rocket mr-2 text-green-400"></i>Leadbusiness
+                            </td>
+                            <td class="px-4 md:px-6 py-5 text-green-300 font-semibold">49,00 €</td>
+                            <td class="px-4 md:px-6 py-5 text-green-300 font-semibold">~1,00 €</td>
+                            <td class="px-4 md:px-6 py-5 text-green-400 font-bold text-xl" id="costLeadbusiness">299,00 €</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Savings Box -->
+        <div class="bg-gradient-to-br from-green-500/20 to-green-500/10 rounded-2xl p-6 md:p-8 border-2 border-green-500/50 text-center mb-8">
+            <h3 class="text-xl md:text-2xl font-bold text-white mb-4">
+                <i class="fas fa-piggy-bank mr-2 text-green-400"></i>
+                Ihre monatliche Ersparnis mit Leadbusiness:
+            </h3>
+            <div id="savingsDisplay" class="text-lg md:text-xl text-green-300 space-y-2">
+                <p>Gegenüber anderen Tools: <span class="inline-block px-3 py-1 bg-white/10 rounded-lg font-bold text-green-400" id="savingsTools">275,00 €</span></p>
+                <p>Gegenüber Werbeplattformen: <span class="inline-block px-3 py-1 bg-white/10 rounded-lg font-bold text-green-400" id="savingsAds">3.853,50 €</span></p>
+            </div>
+        </div>
+        
+        <!-- Disclaimer -->
+        <div class="bg-white/5 rounded-xl p-4 md:p-6 border border-white/10 text-center">
+            <p class="text-sm text-gray-500 leading-relaxed">
+                <strong class="text-gray-400">Hinweis:</strong> Die hier dargestellten Kosten pro Lead beruhen auf branchenüblichen Durchschnittswerten aus öffentlich zugänglichen Quellen und Erfahrungswerten. Die tatsächlichen Kosten können je nach Kampagne, Zielgruppe und Plattform variieren. Die Leads bei Leadbusiness basieren auf unserem Empfehlungsmodell und sind nicht direkt mit klassischen Werbekampagnen vergleichbar.
+            </p>
+        </div>
+        
+        <!-- CTA -->
+        <div class="text-center mt-10">
+            <a href="/onboarding" class="btn-success btn-large inline-flex items-center gap-2">
+                <i class="fas fa-rocket"></i>
+                <span>Jetzt Kosten sparen</span>
+                <i class="fas fa-arrow-right"></i>
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Calculator JavaScript -->
+<script>
+function updateCostCalculator(leads) {
+    const leadCount = parseInt(leads);
+    
+    // Update display
+    document.getElementById('leadCalcCount').textContent = leadCount + ' Leads';
+    
+    // Calculate costs (Cost per Lead * Leads)
+    const costs = {
+        google: 12.50 * leadCount,
+        meta: 11.80 * leadCount,
+        youtube: 5.00 * leadCount,
+        tiktok: 8.75 * leadCount,
+        linkedin: 45.00 * leadCount,
+        other: 199 + (1.50 * leadCount),
+        leadbusiness: 49 + (1.00 * leadCount)
+    };
+    
+    // Format currency
+    const formatCurrency = (amount) => {
+        return amount.toLocaleString('de-DE', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' €';
+    };
+    
+    // Update table
+    document.getElementById('costGoogle').textContent = formatCurrency(costs.google);
+    document.getElementById('costMeta').textContent = formatCurrency(costs.meta);
+    document.getElementById('costYouTube').textContent = formatCurrency(costs.youtube);
+    document.getElementById('costTikTok').textContent = formatCurrency(costs.tiktok);
+    document.getElementById('costLinkedIn').textContent = formatCurrency(costs.linkedin);
+    document.getElementById('costOther').textContent = formatCurrency(costs.other);
+    document.getElementById('costLeadbusiness').textContent = formatCurrency(costs.leadbusiness);
+    
+    // Calculate savings
+    const avgAdsCost = (costs.google + costs.meta + costs.youtube + costs.tiktok + costs.linkedin) / 5;
+    const savingsVsTools = costs.other - costs.leadbusiness;
+    const savingsVsAds = avgAdsCost - costs.leadbusiness;
+    
+    // Update savings display
+    document.getElementById('savingsTools').textContent = formatCurrency(Math.max(0, savingsVsTools));
+    document.getElementById('savingsAds').textContent = formatCurrency(Math.max(0, savingsVsAds));
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    updateCostCalculator(250);
+});
+</script>
+<!-- END COST CALCULATOR SECTION -->
+
 <!-- Testimonials Section -->
 <section class="py-20 bg-gray-50 dark:bg-slate-800">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
