@@ -34,6 +34,10 @@ html {
     background: #f1f1f1;
 }
 
+.dark ::-webkit-scrollbar-track {
+    background: #1e293b;
+}
+
 ::-webkit-scrollbar-thumb {
     background: var(--primary);
     border-radius: 5px;
@@ -78,10 +82,18 @@ html {
     box-shadow: 0 20px 40px rgba(102, 126, 234, 0.2);
 }
 
-/* Button Styles */
+.dark .card-hover:hover {
+    box-shadow: 0 20px 40px rgba(102, 126, 234, 0.4);
+}
+
+/* =====================================================
+   BUTTON STYLES - Light & Dark Mode
+   ===================================================== */
+
+/* Primary Button (Gradient) */
 .btn-primary {
     background: var(--gradient-primary);
-    color: white;
+    color: white !important;
     padding: 0.75rem 2rem;
     border-radius: 9999px;
     font-weight: 600;
@@ -95,11 +107,22 @@ html {
 .btn-primary:hover {
     transform: translateY(-2px);
     box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+    color: white !important;
 }
 
+.dark .btn-primary {
+    color: white !important;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.dark .btn-primary:hover {
+    box-shadow: 0 10px 25px rgba(102, 126, 234, 0.5);
+}
+
+/* Secondary Button (Outline) */
 .btn-secondary {
     background: white;
-    color: var(--primary);
+    color: var(--primary) !important;
     padding: 0.75rem 2rem;
     border-radius: 9999px;
     font-weight: 600;
@@ -112,13 +135,70 @@ html {
 
 .btn-secondary:hover {
     background: var(--primary);
-    color: white;
+    color: white !important;
 }
 
+.dark .btn-secondary {
+    background: transparent;
+    color: #a5b4fc !important;
+    border-color: #a5b4fc;
+}
+
+.dark .btn-secondary:hover {
+    background: #667eea;
+    color: white !important;
+    border-color: #667eea;
+}
+
+/* Large Button Variant */
 .btn-large {
     padding: 1rem 3rem;
     font-size: 1.125rem;
 }
+
+/* White Button (for dark backgrounds like Hero) */
+.btn-white {
+    background: white !important;
+    color: #667eea !important;
+    padding: 0.75rem 2rem;
+    border-radius: 9999px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    display: inline-block;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-white:hover {
+    background: #f1f5f9 !important;
+    color: #5a67d8 !important;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* Ghost Button (transparent with white border, for Hero) */
+.btn-ghost {
+    background: transparent;
+    color: white !important;
+    padding: 0.75rem 2rem;
+    border-radius: 9999px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    display: inline-block;
+    text-decoration: none;
+    border: 2px solid white;
+    cursor: pointer;
+}
+
+.btn-ghost:hover {
+    background: white;
+    color: #667eea !important;
+}
+
+/* =====================================================
+   END BUTTON STYLES
+   ===================================================== */
 
 /* Hero Section */
 .hero-pattern {
@@ -200,6 +280,16 @@ html {
     transform: rotate(45deg);
 }
 
+/* Dark Mode: Pricing Cards */
+.dark .pricing-card {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+.dark .pricing-card.popular {
+    border-color: #667eea;
+}
+
 /* Testimonial Card */
 .testimonial-card {
     position: relative;
@@ -217,9 +307,17 @@ html {
     line-height: 1;
 }
 
+.dark .testimonial-card {
+    background: #1e293b;
+}
+
 /* FAQ Accordion */
 .faq-item {
     border-bottom: 1px solid #e2e8f0;
+}
+
+.dark .faq-item {
+    border-bottom-color: #334155;
 }
 
 .faq-question {
@@ -283,10 +381,20 @@ html {
     font-size: 1rem;
 }
 
+.dark .form-input {
+    background: #1e293b;
+    border-color: #475569;
+    color: #e2e8f0;
+}
+
 .form-input:focus {
     outline: none;
     border-color: var(--primary);
     box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.dark .form-input:focus {
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
 }
 
 .form-label {
@@ -294,6 +402,10 @@ html {
     margin-bottom: 0.5rem;
     font-weight: 600;
     color: var(--dark);
+}
+
+.dark .form-label {
+    color: #e2e8f0;
 }
 
 /* Checkbox Custom */
@@ -305,6 +417,11 @@ html {
     border-radius: 4px;
     cursor: pointer;
     transition: all 0.3s ease;
+}
+
+.dark .checkbox-custom {
+    border-color: #475569;
+    background: #1e293b;
 }
 
 .checkbox-custom:checked {
@@ -329,6 +446,11 @@ html {
     border-top-color: var(--primary);
     border-radius: 50%;
     animation: spin 1s linear infinite;
+}
+
+.dark .spinner {
+    border-color: #475569;
+    border-top-color: var(--primary);
 }
 
 @keyframes spin {
@@ -365,9 +487,17 @@ html {
     background: linear-gradient(to bottom right, transparent 49%, white 50%);
 }
 
+.dark .section-divider {
+    background: linear-gradient(to bottom right, transparent 49%, #0f172a 50%);
+}
+
 .section-divider-reverse {
     height: 100px;
     background: linear-gradient(to top left, transparent 49%, white 50%);
+}
+
+.dark .section-divider-reverse {
+    background: linear-gradient(to top left, transparent 49%, #0f172a 50%);
 }
 
 /* Industry Icons Background */
@@ -411,6 +541,11 @@ html {
     color: #4a5568;
 }
 
+.dark .trust-badge {
+    background: #334155;
+    color: #cbd5e1;
+}
+
 /* CTA Section */
 .cta-section {
     position: relative;
@@ -432,7 +567,46 @@ html {
     to { transform: rotate(360deg); }
 }
 
-/* Responsive Utilities */
+/* =====================================================
+   DARK MODE SPECIFIC OVERRIDES
+   ===================================================== */
+
+/* Text colors in dark mode */
+.dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6 {
+    color: #f1f5f9;
+}
+
+/* Links in dark mode */
+.dark a:not(.btn-primary):not(.btn-secondary):not(.btn-white):not(.btn-ghost) {
+    color: inherit;
+}
+
+/* Borders in dark mode */
+.dark .border {
+    border-color: #334155;
+}
+
+.dark .border-gray-200 {
+    border-color: #334155;
+}
+
+/* Shadows in dark mode */
+.dark .shadow-lg {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+}
+
+.dark .shadow-xl {
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
+}
+
+.dark .shadow-2xl {
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+/* =====================================================
+   RESPONSIVE UTILITIES
+   ===================================================== */
+
 @media (max-width: 768px) {
     .stat-number {
         font-size: 2rem;
