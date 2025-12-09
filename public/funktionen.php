@@ -521,7 +521,7 @@ require_once __DIR__ . '/../templates/marketing/header.php';
             Überzeugt? Starten Sie jetzt!
         </h2>
         <p class="text-lg md:text-xl text-white/90 mb-6 md:mb-8">
-            14 Tage kostenlos testen – keine Kreditkarte erforderlich.
+            7 Tage kostenlos testen – keine Kreditkarte erforderlich.
         </p>
         <a href="/onboarding" class="btn-primary btn-large bg-white text-primary-600 hover:bg-gray-100 inline-flex items-center gap-2">
             <span>Jetzt starten</span>
