@@ -2,13 +2,17 @@
 /**
  * Header Template
  * Gemeinsamer Header für alle Marketing-Seiten
+ * Mit Dark Mode Toggle
  */
 
 // Aktuelle Seite für Navigation
 $currentPage = $currentPage ?? '';
+
+// Theme aus Cookie
+$theme = $_COOKIE['site_theme'] ?? 'light';
 ?>
 <!DOCTYPE html>
-<html lang="de">
+<html lang="de" class="<?= $theme === 'dark' ? 'dark' : '' ?>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -21,8 +25,8 @@ $currentPage = $currentPage ?? '';
     <meta property="og:title" content="<?= htmlspecialchars($pageTitle ?? 'Leadbusiness - Empfehlungsprogramm') ?>">
     <meta property="og:description" content="<?= htmlspecialchars($metaDescription ?? 'Vollautomatisches Empfehlungsprogramm für Ihr Unternehmen.') ?>">
     <meta property="og:type" content="website">
-    <meta property="og:url" content="<?= htmlspecialchars($canonicalUrl ?? 'https://leadbusiness.de') ?>">
-    <meta property="og:image" content="<?= htmlspecialchars($ogImage ?? 'https://leadbusiness.de/assets/images/og-image.jpg') ?>">
+    <meta property="og:url" content="<?= htmlspecialchars($canonicalUrl ?? 'https://empfehlungen.cloud') ?>">
+    <meta property="og:image" content="<?= htmlspecialchars($ogImage ?? 'https://empfehlungen.cloud/assets/images/og-image.jpg') ?>">
     <meta property="og:locale" content="de_DE">
     
     <!-- Twitter Card -->
@@ -36,7 +40,7 @@ $currentPage = $currentPage ?? '';
     <link rel="apple-touch-icon" href="/assets/images/apple-touch-icon.png">
     
     <!-- Canonical URL -->
-    <link rel="canonical" href="<?= htmlspecialchars($canonicalUrl ?? 'https://leadbusiness.de') ?>">
+    <link rel="canonical" href="<?= htmlspecialchars($canonicalUrl ?? 'https://empfehlungen.cloud') ?>">
     
     <title><?= htmlspecialchars($pageTitle ?? 'Leadbusiness') ?> | Empfehlungsprogramm</title>
     
@@ -44,6 +48,7 @@ $currentPage = $currentPage ?? '';
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
+            darkMode: 'class',
             theme: {
                 extend: {
                     colors: {
@@ -81,14 +86,33 @@ $currentPage = $currentPage ?? '';
     <!-- Custom CSS -->
     <link rel="stylesheet" href="/assets/css/style.css">
     
+    <style>
+        /* Dark Mode Styles */
+        .dark body { background-color: #0f172a; color: #e2e8f0; }
+        .dark .bg-white { background-color: #1e293b; }
+        .dark .bg-gray-50 { background-color: #0f172a; }
+        .dark .bg-gray-100 { background-color: #1e293b; }
+        .dark .text-gray-900 { color: #f1f5f9; }
+        .dark .text-gray-800 { color: #e2e8f0; }
+        .dark .text-gray-700 { color: #cbd5e1; }
+        .dark .text-gray-600 { color: #94a3b8; }
+        .dark .text-gray-500 { color: #64748b; }
+        .dark .border-gray-200 { border-color: #334155; }
+        .dark .border-gray-300 { border-color: #475569; }
+        .dark .hover\:bg-gray-100:hover { background-color: #334155; }
+        .dark .hover\:bg-gray-50:hover { background-color: #1e293b; }
+        .dark #header { background-color: #1e293b; border-color: #334155; }
+        .dark .shadow-lg { box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3); }
+    </style>
+    
     <?php if (isset($additionalHead)): ?>
         <?= $additionalHead ?>
     <?php endif; ?>
 </head>
-<body class="font-sans antialiased text-gray-900 bg-white">
+<body class="font-sans antialiased text-gray-900 dark:text-gray-100 bg-white dark:bg-slate-900 transition-colors duration-300">
     
     <!-- Header -->
-    <header id="header" class="fixed top-0 left-0 right-0 z-50 bg-white transition-all duration-300">
+    <header id="header" class="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-slate-800 border-b border-transparent dark:border-slate-700 transition-all duration-300">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-20">
                 
@@ -97,90 +121,118 @@ $currentPage = $currentPage ?? '';
                     <div class="w-10 h-10 gradient-bg rounded-xl flex items-center justify-center">
                         <i class="fas fa-paper-plane text-white text-lg"></i>
                     </div>
-                    <span class="text-xl font-bold text-gray-900">Lead<span class="text-primary-500">business</span></span>
+                    <span class="text-xl font-bold text-gray-900 dark:text-white">Lead<span class="text-primary-500">business</span></span>
                 </a>
                 
                 <!-- Desktop Navigation -->
                 <nav class="hidden md:flex items-center space-x-8">
-                    <a href="/funktionen" class="text-gray-600 hover:text-primary-500 font-medium transition-colors <?= $currentPage === 'funktionen' ? 'text-primary-500' : '' ?>">
+                    <a href="/funktionen" class="text-gray-600 dark:text-gray-300 hover:text-primary-500 font-medium transition-colors <?= $currentPage === 'funktionen' ? 'text-primary-500' : '' ?>">
                         Funktionen
                     </a>
-                    <a href="/preise" class="text-gray-600 hover:text-primary-500 font-medium transition-colors <?= $currentPage === 'preise' ? 'text-primary-500' : '' ?>">
+                    <a href="/preise" class="text-gray-600 dark:text-gray-300 hover:text-primary-500 font-medium transition-colors <?= $currentPage === 'preise' ? 'text-primary-500' : '' ?>">
                         Preise
                     </a>
-                    <a href="/faq" class="text-gray-600 hover:text-primary-500 font-medium transition-colors <?= $currentPage === 'faq' ? 'text-primary-500' : '' ?>">
+                    <a href="/faq" class="text-gray-600 dark:text-gray-300 hover:text-primary-500 font-medium transition-colors <?= $currentPage === 'faq' ? 'text-primary-500' : '' ?>">
                         FAQ
                     </a>
-                    <a href="/kontakt" class="text-gray-600 hover:text-primary-500 font-medium transition-colors <?= $currentPage === 'kontakt' ? 'text-primary-500' : '' ?>">
+                    <a href="/kontakt" class="text-gray-600 dark:text-gray-300 hover:text-primary-500 font-medium transition-colors <?= $currentPage === 'kontakt' ? 'text-primary-500' : '' ?>">
                         Kontakt
                     </a>
                 </nav>
                 
-                <!-- CTA Buttons -->
+                <!-- Right Side: Theme Toggle + Login -->
                 <div class="hidden md:flex items-center space-x-4">
-                    <a href="/dashboard/login" class="text-gray-600 hover:text-primary-500 font-medium transition-colors">
+                    <!-- Dark Mode Toggle -->
+                    <button onclick="toggleTheme()" 
+                            class="p-2 rounded-lg bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-600 transition-all"
+                            title="Design wechseln">
+                        <i class="fas fa-moon dark:hidden"></i>
+                        <i class="fas fa-sun hidden dark:inline"></i>
+                    </button>
+                    
+                    <a href="/admin/login.php" class="text-gray-600 dark:text-gray-300 hover:text-primary-500 font-medium transition-colors">
                         Login
-                    </a>
-                    <a href="/onboarding" class="btn-primary">
-                        Jetzt starten
                     </a>
                 </div>
                 
                 <!-- Mobile Menu Button -->
-                <button id="mobile-menu-btn" class="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors">
-                    <i class="fas fa-bars text-2xl text-gray-700"></i>
-                </button>
+                <div class="flex items-center gap-2 md:hidden">
+                    <!-- Mobile Dark Mode Toggle -->
+                    <button onclick="toggleTheme()" 
+                            class="p-2 rounded-lg bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-300"
+                            title="Design wechseln">
+                        <i class="fas fa-moon dark:hidden"></i>
+                        <i class="fas fa-sun hidden dark:inline"></i>
+                    </button>
+                    
+                    <button id="mobile-menu-btn" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors">
+                        <i class="fas fa-bars text-2xl text-gray-700 dark:text-gray-300"></i>
+                    </button>
+                </div>
             </div>
         </div>
     </header>
     
     <!-- Mobile Menu -->
-    <div id="mobile-menu" class="mobile-menu fixed inset-0 z-50 bg-white">
+    <div id="mobile-menu" class="mobile-menu fixed inset-0 z-50 bg-white dark:bg-slate-900">
         <div class="flex flex-col h-full">
             <!-- Mobile Header -->
-            <div class="flex justify-between items-center h-20 px-4 border-b">
+            <div class="flex justify-between items-center h-20 px-4 border-b dark:border-slate-700">
                 <a href="/" class="flex items-center space-x-3">
                     <div class="w-10 h-10 gradient-bg rounded-xl flex items-center justify-center">
                         <i class="fas fa-paper-plane text-white text-lg"></i>
                     </div>
-                    <span class="text-xl font-bold">Lead<span class="text-primary-500">business</span></span>
+                    <span class="text-xl font-bold dark:text-white">Lead<span class="text-primary-500">business</span></span>
                 </a>
-                <button id="mobile-menu-close" class="p-2 rounded-lg hover:bg-gray-100">
-                    <i class="fas fa-times text-2xl text-gray-700"></i>
+                <button id="mobile-menu-close" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700">
+                    <i class="fas fa-times text-2xl text-gray-700 dark:text-gray-300"></i>
                 </button>
             </div>
             
             <!-- Mobile Navigation -->
             <nav class="flex-1 overflow-y-auto py-6 px-4">
                 <div class="space-y-2">
-                    <a href="/" class="block py-3 px-4 rounded-lg hover:bg-gray-50 font-medium text-lg">
+                    <a href="/" class="block py-3 px-4 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 font-medium text-lg dark:text-white">
                         <i class="fas fa-home w-8 text-primary-500"></i> Startseite
                     </a>
-                    <a href="/funktionen" class="block py-3 px-4 rounded-lg hover:bg-gray-50 font-medium text-lg">
+                    <a href="/funktionen" class="block py-3 px-4 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 font-medium text-lg dark:text-white">
                         <i class="fas fa-star w-8 text-primary-500"></i> Funktionen
                     </a>
-                    <a href="/preise" class="block py-3 px-4 rounded-lg hover:bg-gray-50 font-medium text-lg">
+                    <a href="/preise" class="block py-3 px-4 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 font-medium text-lg dark:text-white">
                         <i class="fas fa-tags w-8 text-primary-500"></i> Preise
                     </a>
-                    <a href="/faq" class="block py-3 px-4 rounded-lg hover:bg-gray-50 font-medium text-lg">
+                    <a href="/faq" class="block py-3 px-4 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 font-medium text-lg dark:text-white">
                         <i class="fas fa-question-circle w-8 text-primary-500"></i> FAQ
                     </a>
-                    <a href="/kontakt" class="block py-3 px-4 rounded-lg hover:bg-gray-50 font-medium text-lg">
+                    <a href="/kontakt" class="block py-3 px-4 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 font-medium text-lg dark:text-white">
                         <i class="fas fa-envelope w-8 text-primary-500"></i> Kontakt
                     </a>
                 </div>
                 
-                <div class="border-t mt-6 pt-6 space-y-4">
-                    <a href="/dashboard/login" class="block py-3 px-4 rounded-lg bg-gray-100 text-center font-semibold">
+                <div class="border-t dark:border-slate-700 mt-6 pt-6 space-y-4">
+                    <a href="/admin/login.php" class="block py-3 px-4 rounded-lg bg-gray-100 dark:bg-slate-800 text-center font-semibold dark:text-white">
                         Login
-                    </a>
-                    <a href="/onboarding" class="block py-3 px-4 rounded-lg gradient-bg text-white text-center font-semibold">
-                        Jetzt starten
                     </a>
                 </div>
             </nav>
         </div>
     </div>
+    
+    <!-- Theme Toggle Script -->
+    <script>
+        function toggleTheme() {
+            const html = document.documentElement;
+            const isDark = html.classList.contains('dark');
+            
+            if (isDark) {
+                html.classList.remove('dark');
+                document.cookie = 'site_theme=light;path=/;max-age=31536000';
+            } else {
+                html.classList.add('dark');
+                document.cookie = 'site_theme=dark;path=/;max-age=31536000';
+            }
+        }
+    </script>
     
     <!-- Main Content -->
     <main class="pt-20">
