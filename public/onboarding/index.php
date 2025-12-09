@@ -188,6 +188,15 @@ $pageTitle = 'Empfehlungsprogramm einrichten';
             background: rgba(51, 65, 85, 0.5);
         }
         
+        .reward-extra-fields {
+            display: none;
+            animation: fadeIn 0.2s ease;
+        }
+        
+        .reward-extra-fields.active {
+            display: block;
+        }
+        
         @media (max-width: 640px) {
             .industry-card { padding: 0.75rem; }
             .industry-card .w-12 { width: 2.5rem; height: 2.5rem; }
@@ -391,37 +400,120 @@ $pageTitle = 'Empfehlungsprogramm einrichten';
                             <div class="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-xl p-4 mb-6">
                                 <div class="flex items-start gap-3">
                                     <i class="fas fa-lightbulb text-blue-500 dark:text-blue-400 mt-1"></i>
-                                    <p class="text-sm text-blue-800 dark:text-blue-300"><strong>Tipp:</strong> Wir haben Vorschläge basierend auf Ihrer Branche vorbereitet.</p>
+                                    <p class="text-sm text-blue-800 dark:text-blue-300"><strong>Tipp:</strong> Je nach Belohnungstyp erscheinen zusätzliche Felder für Gutschein-Codes, Download-Links oder Beträge.</p>
                                 </div>
                             </div>
                             
-                            <div id="rewardsContainer" class="space-y-4">
+                            <div id="rewardsContainer" class="space-y-6">
                                 <?php for ($i = 1; $i <= 3; $i++): 
-                                    $defaults = [1 => [3, 'discount'], 2 => [5, 'voucher'], 3 => [10, 'free_product']];
+                                    $defaults = [1 => [3, 'discount'], 2 => [5, 'coupon_code'], 3 => [10, 'free_product']];
                                 ?>
-                                <div class="reward-level border border-gray-200 dark:border-slate-600 rounded-xl p-4 sm:p-6 bg-white dark:bg-slate-800">
+                                <div class="reward-level border border-gray-200 dark:border-slate-600 rounded-xl p-4 sm:p-6 bg-white dark:bg-slate-800" data-reward-level="<?= $i ?>">
                                     <div class="flex items-center gap-3 sm:gap-4 mb-4">
                                         <div class="w-8 h-8 sm:w-10 sm:h-10 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold"><?= $i ?></div>
                                         <div>
                                             <h3 class="font-semibold text-sm sm:text-base text-gray-900 dark:text-white">Stufe <?= $i ?></h3>
-                                            <p class="text-xs sm:text-sm text-gray-500 dark:text-slate-400">Nach <input type="number" name="reward_<?= $i ?>_threshold" value="<?= $defaults[$i][0] ?>" min="1" max="100" class="w-12 sm:w-16 px-2 py-1 border border-gray-300 dark:border-slate-600 rounded text-center text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white"> erfolgreichen Empfehlungen</p>
+                                            <p class="text-xs sm:text-sm text-gray-500 dark:text-slate-400">
+                                                Nach 
+                                                <input type="number" name="reward_<?= $i ?>_threshold" value="<?= $defaults[$i][0] ?>" min="1" max="100" class="w-12 sm:w-16 px-2 py-1 border border-gray-300 dark:border-slate-600 rounded text-center text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white"> 
+                                                erfolgreichen Empfehlungen
+                                            </p>
                                         </div>
                                     </div>
-                                    <div class="grid sm:grid-cols-2 gap-4">
+                                    
+                                    <!-- Basis-Felder -->
+                                    <div class="grid sm:grid-cols-2 gap-4 mb-4">
                                         <div>
                                             <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Belohnungstyp</label>
-                                            <select name="reward_<?= $i ?>_type" class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white">
+                                            <select name="reward_<?= $i ?>_type" class="reward-type-select w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white" data-level="<?= $i ?>">
                                                 <option value="discount" <?= $defaults[$i][1] === 'discount' ? 'selected' : '' ?>>Rabatt (%)</option>
-                                                <option value="coupon_code">Gutschein-Code</option>
+                                                <option value="coupon_code" <?= $defaults[$i][1] === 'coupon_code' ? 'selected' : '' ?>>Gutschein-Code</option>
                                                 <option value="free_product" <?= $defaults[$i][1] === 'free_product' ? 'selected' : '' ?>>Gratis-Produkt</option>
                                                 <option value="free_service">Gratis-Service</option>
-                                                <option value="voucher" <?= $defaults[$i][1] === 'voucher' ? 'selected' : '' ?>>Wertgutschein (€)</option>
+                                                <option value="digital_download">Digital-Download (URL)</option>
+                                                <option value="voucher">Wertgutschein (€)</option>
                                             </select>
                                         </div>
                                         <div>
-                                            <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Beschreibung</label>
-                                            <input type="text" name="reward_<?= $i ?>_description" class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-500" placeholder="z.B. 10% Rabatt">
+                                            <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Titel / Beschreibung *</label>
+                                            <input type="text" name="reward_<?= $i ?>_description" required class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-500" placeholder="z.B. 10% Rabatt auf alle Leistungen">
                                         </div>
+                                    </div>
+                                    
+                                    <!-- Dynamische Zusatzfelder je nach Typ -->
+                                    <div class="reward-extra-fields" id="reward_<?= $i ?>_extras">
+                                        
+                                        <!-- Rabatt (%) -->
+                                        <div class="extra-field extra-discount <?= $defaults[$i][1] === 'discount' ? 'active' : '' ?> bg-gray-50 dark:bg-slate-700/50 rounded-lg p-4 mt-4">
+                                            <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+                                                <i class="fas fa-percent text-primary-500 mr-1"></i>Rabatt in Prozent
+                                            </label>
+                                            <div class="flex items-center gap-2">
+                                                <input type="number" name="reward_<?= $i ?>_discount_percent" min="1" max="100" class="w-24 px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white" placeholder="10">
+                                                <span class="text-gray-500 dark:text-slate-400">%</span>
+                                            </div>
+                                            <p class="text-xs text-gray-500 dark:text-slate-400 mt-1">Wird in der E-Mail als {{rabatt_prozent}} eingefügt</p>
+                                        </div>
+                                        
+                                        <!-- Gutschein-Code -->
+                                        <div class="extra-field extra-coupon_code <?= $defaults[$i][1] === 'coupon_code' ? 'active' : '' ?> bg-gray-50 dark:bg-slate-700/50 rounded-lg p-4 mt-4">
+                                            <div class="grid sm:grid-cols-2 gap-4">
+                                                <div>
+                                                    <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+                                                        <i class="fas fa-ticket text-primary-500 mr-1"></i>Gutschein-Code
+                                                    </label>
+                                                    <input type="text" name="reward_<?= $i ?>_coupon_code" class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white font-mono" placeholder="EMPFEHLUNG10">
+                                                </div>
+                                                <div>
+                                                    <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+                                                        <i class="fas fa-calendar text-primary-500 mr-1"></i>Gültigkeit (Tage)
+                                                    </label>
+                                                    <input type="number" name="reward_<?= $i ?>_coupon_validity" min="1" max="365" class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white" placeholder="30">
+                                                </div>
+                                            </div>
+                                            <p class="text-xs text-gray-500 dark:text-slate-400 mt-2">Der Code wird als {{gutschein_code}} in die E-Mail eingefügt</p>
+                                        </div>
+                                        
+                                        <!-- Digital Download -->
+                                        <div class="extra-field extra-digital_download bg-gray-50 dark:bg-slate-700/50 rounded-lg p-4 mt-4">
+                                            <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+                                                <i class="fas fa-link text-primary-500 mr-1"></i>Download-URL
+                                            </label>
+                                            <input type="url" name="reward_<?= $i ?>_download_url" class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white" placeholder="https://ihre-seite.de/downloads/bonus.pdf">
+                                            <p class="text-xs text-gray-500 dark:text-slate-400 mt-1">Link zu Ihrer Download-Datei (PDF, E-Book, etc.) - wird als {{download_link}} eingefügt</p>
+                                        </div>
+                                        
+                                        <!-- Wertgutschein -->
+                                        <div class="extra-field extra-voucher bg-gray-50 dark:bg-slate-700/50 rounded-lg p-4 mt-4">
+                                            <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+                                                <i class="fas fa-euro-sign text-primary-500 mr-1"></i>Gutscheinwert in Euro
+                                            </label>
+                                            <div class="flex items-center gap-2">
+                                                <input type="number" name="reward_<?= $i ?>_voucher_amount" min="1" step="0.01" class="w-32 px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white" placeholder="50.00">
+                                                <span class="text-gray-500 dark:text-slate-400">€</span>
+                                            </div>
+                                            <p class="text-xs text-gray-500 dark:text-slate-400 mt-1">Wird in der E-Mail als {{gutschein_wert}} eingefügt</p>
+                                        </div>
+                                        
+                                        <!-- Gratis-Produkt / Service -->
+                                        <div class="extra-field extra-free_product <?= $defaults[$i][1] === 'free_product' ? 'active' : '' ?> bg-gray-50 dark:bg-slate-700/50 rounded-lg p-4 mt-4">
+                                            <div class="flex items-start gap-3">
+                                                <input type="checkbox" name="reward_<?= $i ?>_requires_address" value="1" class="mt-1 w-4 h-4 text-primary-500 rounded border-gray-300 dark:border-slate-600 focus:ring-primary-500 bg-white dark:bg-slate-700">
+                                                <div>
+                                                    <label class="text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300">Adresse abfragen</label>
+                                                    <p class="text-xs text-gray-500 dark:text-slate-400">Aktivieren, wenn das Produkt versendet werden muss</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Gratis-Service (gleiche Optionen wie Produkt) -->
+                                        <div class="extra-field extra-free_service bg-gray-50 dark:bg-slate-700/50 rounded-lg p-4 mt-4">
+                                            <p class="text-xs text-gray-500 dark:text-slate-400">
+                                                <i class="fas fa-info-circle text-blue-500 mr-1"></i>
+                                                Der Empfehler erhält eine E-Mail mit der Beschreibung. Sie können ihn dann manuell kontaktieren.
+                                            </p>
+                                        </div>
+                                        
                                     </div>
                                 </div>
                                 <?php endfor; ?>
@@ -565,6 +657,47 @@ $pageTitle = 'Empfehlungsprogramm einrichten';
                 document.cookie = 'onboarding_theme=dark;path=/;max-age=31536000';
             }
         }
+        
+        // Reward Type Change Handler - Zeigt/versteckt dynamische Felder
+        function initRewardTypeHandlers() {
+            document.querySelectorAll('.reward-type-select').forEach(select => {
+                select.addEventListener('change', function() {
+                    const level = this.dataset.level;
+                    const type = this.value;
+                    updateRewardExtraFields(level, type);
+                });
+                
+                // Initial: richtige Felder anzeigen
+                const level = select.dataset.level;
+                const type = select.value;
+                updateRewardExtraFields(level, type);
+            });
+        }
+        
+        function updateRewardExtraFields(level, type) {
+            const container = document.getElementById(`reward_${level}_extras`);
+            if (!container) return;
+            
+            // Alle extra-fields verstecken
+            container.querySelectorAll('.extra-field').forEach(field => {
+                field.classList.remove('active');
+            });
+            
+            // Passendes Feld anzeigen
+            const targetField = container.querySelector(`.extra-${type}`);
+            if (targetField) {
+                targetField.classList.add('active');
+            }
+            
+            // Container anzeigen wenn ein Feld aktiv
+            const hasActiveField = container.querySelector('.extra-field.active');
+            container.style.display = hasActiveField ? 'block' : 'none';
+        }
+        
+        // Initialize on DOM ready
+        document.addEventListener('DOMContentLoaded', function() {
+            initRewardTypeHandlers();
+        });
     </script>
     <script src="/assets/js/onboarding.js"></script>
     
