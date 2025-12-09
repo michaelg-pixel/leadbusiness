@@ -506,39 +506,55 @@ require_once __DIR__ . '/../templates/marketing/header.php';
     </div>
 </section>
 
-<!-- Industries Section -->
+<!-- Industries Section - UPDATED with 8 industries including Handwerker & Online-Marketing -->
 <section class="py-20 bg-gray-50 dark:bg-slate-800">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-16">
             <span class="text-primary-500 font-semibold uppercase tracking-wide">Branchen</span>
             <h2 class="text-3xl md:text-4xl font-bold mt-3 dark:text-white">Perfekt für jede Branche</h2>
+            <p class="text-gray-600 dark:text-gray-400 mt-4 max-w-2xl mx-auto">
+                Entdecken Sie, wie Unternehmen aus verschiedenen Branchen Leadbusiness nutzen
+            </p>
         </div>
         
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
             <?php
             $industriesList = [
-                ['icon' => 'fa-tooth', 'name' => 'Zahnärzte', 'color' => 'blue'],
-                ['icon' => 'fa-cut', 'name' => 'Friseure', 'color' => 'pink'],
-                ['icon' => 'fa-dumbbell', 'name' => 'Fitness', 'color' => 'green'],
-                ['icon' => 'fa-utensils', 'name' => 'Restaurants', 'color' => 'orange'],
-                ['icon' => 'fa-shopping-bag', 'name' => 'Online-Shops', 'color' => 'purple'],
-                ['icon' => 'fa-lightbulb', 'name' => 'Coaches', 'color' => 'yellow'],
+                ['icon' => 'fa-tooth', 'name' => 'Zahnärzte', 'link' => '/branchen/zahnarzt', 'color' => 'blue', 'gradient' => 'from-blue-500 to-blue-600'],
+                ['icon' => 'fa-cut', 'name' => 'Friseure', 'link' => '/branchen/friseur', 'color' => 'pink', 'gradient' => 'from-pink-500 to-pink-600'],
+                ['icon' => 'fa-dumbbell', 'name' => 'Fitness', 'link' => '/branchen/fitness', 'color' => 'green', 'gradient' => 'from-green-500 to-green-600'],
+                ['icon' => 'fa-utensils', 'name' => 'Restaurants', 'link' => '/branchen/restaurant', 'color' => 'orange', 'gradient' => 'from-orange-500 to-orange-600'],
+                ['icon' => 'fa-shopping-bag', 'name' => 'Online-Shops', 'link' => '/branchen/onlineshop', 'color' => 'purple', 'gradient' => 'from-purple-500 to-purple-600'],
+                ['icon' => 'fa-lightbulb', 'name' => 'Coaches', 'link' => '/branchen/coach', 'color' => 'yellow', 'gradient' => 'from-yellow-500 to-yellow-600'],
+                ['icon' => 'fa-hammer', 'name' => 'Handwerker', 'link' => '/branchen/handwerker', 'color' => 'amber', 'gradient' => 'from-amber-500 to-orange-600'],
+                ['icon' => 'fa-bullhorn', 'name' => 'Online-Marketing', 'link' => '/branchen/onlinemarketing', 'color' => 'indigo', 'gradient' => 'from-indigo-500 to-violet-600'],
             ];
             
             foreach ($industriesList as $industry):
             ?>
-            <div class="bg-white dark:bg-slate-700 rounded-2xl p-6 text-center shadow-sm hover:shadow-lg transition-shadow cursor-pointer group">
-                <div class="industry-icon mx-auto group-hover:scale-110 transition-transform">
-                    <i class="fas <?= $industry['icon'] ?>"></i>
+            <a href="<?= $industry['link'] ?>" class="group block">
+                <div class="bg-white dark:bg-slate-700 rounded-2xl p-4 md:p-6 text-center shadow-sm hover:shadow-xl transition-all duration-300 h-full border-2 border-transparent hover:border-<?= $industry['color'] ?>-500 dark:hover:border-<?= $industry['color'] ?>-400">
+                    <div class="w-14 h-14 md:w-16 md:h-16 mx-auto mb-3 md:mb-4 rounded-2xl bg-gradient-to-br <?= $industry['gradient'] ?> flex items-center justify-center text-white transform group-hover:scale-110 transition-transform duration-300 shadow-lg">
+                        <i class="fas <?= $industry['icon'] ?> text-xl md:text-2xl"></i>
+                    </div>
+                    <h3 class="font-semibold text-gray-900 dark:text-white text-sm md:text-base group-hover:text-<?= $industry['color'] ?>-600 dark:group-hover:text-<?= $industry['color'] ?>-400 transition-colors"><?= $industry['name'] ?></h3>
+                    <span class="inline-flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        Mehr erfahren <i class="fas fa-arrow-right"></i>
+                    </span>
                 </div>
-                <h3 class="font-semibold text-gray-900 dark:text-white"><?= $industry['name'] ?></h3>
-            </div>
+            </a>
             <?php endforeach; ?>
         </div>
         
-        <p class="text-center text-gray-500 dark:text-gray-400 mt-8">
-            Und viele weitere: Handwerker, Therapeuten, SaaS, Newsletter, Agenturen...
-        </p>
+        <div class="text-center mt-10">
+            <a href="/branchen" class="inline-flex items-center gap-2 text-primary-500 font-semibold hover:underline">
+                <span>Alle Branchen ansehen</span>
+                <i class="fas fa-arrow-right"></i>
+            </a>
+            <p class="text-gray-500 dark:text-gray-400 mt-3 text-sm">
+                Und viele weitere: Therapeuten, SaaS, Newsletter, Agenturen, Ärzte...
+            </p>
+        </div>
     </div>
 </section>
 
