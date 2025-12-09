@@ -159,6 +159,13 @@
         </div>
     </footer>
     
+    <!-- DEBUG BOX - Wird oben links angezeigt -->
+    <div id="debug-box" style="position:fixed; top:10px; left:10px; background:#1a1a2e; color:#0f0; padding:15px; border-radius:8px; font-family:monospace; font-size:12px; z-index:99999; max-width:350px; box-shadow: 0 4px 20px rgba(0,0,0,0.5);">
+        <div style="color:#fff; font-weight:bold; margin-bottom:10px; border-bottom:1px solid #333; padding-bottom:5px;">🔧 Cookie Debug v5</div>
+        <div id="debug-content">Lade...</div>
+        <button onclick="document.getElementById('debug-box').style.display='none'" style="margin-top:10px; padding:5px 10px; background:#333; color:#fff; border:none; border-radius:4px; cursor:pointer;">Schließen</button>
+    </div>
+    
     <!-- Cookie Banner -->
     <div id="cookie-banner" style="display:none;" class="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center">
         <!-- Backdrop -->
@@ -344,38 +351,52 @@
     <!-- JavaScript -->
     <script src="/assets/js/main.js"></script>
     
-    <!-- Cookie Consent Script v5 DEBUG -->
+    <!-- Cookie Consent Script v5 with Visual Debug -->
     <script>
-    // DEBUG: Zeige alle Cookies in Console
-    console.log('=== COOKIE DEBUG v5 ===');
-    console.log('All cookies:', document.cookie);
-    console.log('localStorage lb_cookie_consent:', localStorage.getItem('lb_cookie_consent'));
-    
     var COOKIE_NAME = 'lb_cookie_consent';
+    var debugLog = [];
+    
+    function log(msg) {
+        debugLog.push(msg);
+        updateDebugBox();
+    }
+    
+    function updateDebugBox() {
+        var el = document.getElementById('debug-content');
+        if (el) {
+            var cookieVal = getCookie(COOKIE_NAME);
+            var localVal = null;
+            try { localVal = localStorage.getItem(COOKIE_NAME); } catch(e) { localVal = 'ERROR'; }
+            
+            var html = '<div style="margin-bottom:8px;"><span style="color:#888;">Cookie:</span> <span style="color:' + (cookieVal ? '#0f0' : '#f00') + ';">' + (cookieVal || 'LEER') + '</span></div>';
+            html += '<div style="margin-bottom:8px;"><span style="color:#888;">localStorage:</span> <span style="color:' + (localVal ? '#0f0' : '#f00') + ';">' + (localVal || 'LEER') + '</span></div>';
+            html += '<div style="margin-bottom:8px;"><span style="color:#888;">Alle Cookies:</span><br><span style="color:#ff0; word-break:break-all; font-size:10px;">' + (document.cookie || 'keine') + '</span></div>';
+            html += '<div style="border-top:1px solid #333; padding-top:8px; margin-top:8px;"><span style="color:#888;">Log:</span></div>';
+            debugLog.slice(-5).forEach(function(m) {
+                html += '<div style="color:#0ff; font-size:10px;">• ' + m + '</div>';
+            });
+            el.innerHTML = html;
+        }
+    }
     
     function setCookie(name, value, days) {
         var d = new Date();
         d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
         var expires = 'expires=' + d.toUTCString();
         var cookieStr = name + '=' + value + ';' + expires + ';path=/;SameSite=Lax';
-        console.log('Setting cookie:', cookieStr);
         document.cookie = cookieStr;
-        console.log('After setCookie, all cookies:', document.cookie);
+        log('Cookie gesetzt: ' + value);
     }
     
     function getCookie(name) {
         var cname = name + '=';
-        var decodedCookie = document.cookie;
-        var ca = decodedCookie.split(';');
+        var ca = document.cookie.split(';');
         for(var i = 0; i < ca.length; i++) {
             var c = ca[i].trim();
             if (c.indexOf(cname) === 0) {
-                var val = c.substring(cname.length, c.length);
-                console.log('getCookie(' + name + ') =', val);
-                return val;
+                return c.substring(cname.length, c.length);
             }
         }
-        console.log('getCookie(' + name + ') = null');
         return null;
     }
     
@@ -383,52 +404,46 @@
         var cookie = getCookie(COOKIE_NAME);
         var local = null;
         try { local = localStorage.getItem(COOKIE_NAME); } catch(e) {}
-        console.log('hasConsent check - cookie:', cookie, 'localStorage:', local);
         return cookie || local;
     }
     
     function saveConsent(value) {
-        console.log('saveConsent called with:', value);
         setCookie(COOKIE_NAME, value, 365);
         try { 
             localStorage.setItem(COOKIE_NAME, value);
-            console.log('localStorage set to:', value);
+            log('localStorage gesetzt: ' + value);
         } catch(e) {
-            console.log('localStorage error:', e);
+            log('localStorage FEHLER!');
         }
+        updateDebugBox();
     }
     
     function hideBanner() {
-        console.log('hideBanner called');
         document.getElementById('cookie-banner').style.display = 'none';
         var modal = document.getElementById('cookie-settings-modal');
         if (modal) modal.style.display = 'none';
+        log('Banner versteckt');
     }
     
     function showBanner() {
-        console.log('showBanner called');
         document.getElementById('cookie-banner').style.display = 'flex';
+        log('Banner angezeigt');
     }
     
     function acceptAllCookies() {
-        console.log('acceptAllCookies clicked');
+        log('Klick: Alle akzeptieren');
         saveConsent('all');
         hideBanner();
-        // Verify
-        setTimeout(function() {
-            console.log('After accept - cookies:', document.cookie);
-            console.log('After accept - localStorage:', localStorage.getItem(COOKIE_NAME));
-        }, 100);
     }
     
     function rejectAllCookies() {
-        console.log('rejectAllCookies clicked');
+        log('Klick: Nur notwendige');
         saveConsent('necessary');
         hideBanner();
     }
     
     function saveCustomCookies() {
-        console.log('saveCustomCookies clicked');
+        log('Klick: Auswahl speichern');
         saveConsent('custom');
         hideBanner();
     }
@@ -444,13 +459,15 @@
     }
     
     // Init
-    console.log('Checking consent on page load...');
-    if (!hasConsent()) {
-        console.log('No consent found, showing banner');
+    log('Seite geladen');
+    var consent = hasConsent();
+    log('Consent vorhanden: ' + (consent ? 'JA' : 'NEIN'));
+    
+    if (!consent) {
         showBanner();
-    } else {
-        console.log('Consent exists, NOT showing banner');
     }
+    
+    updateDebugBox();
     
     // Back to top
     document.addEventListener('DOMContentLoaded', function() {
