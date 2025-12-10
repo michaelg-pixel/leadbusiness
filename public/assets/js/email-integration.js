@@ -84,11 +84,17 @@ const EmailToolIntegration = {
         this.connectionTested = false;
         
         // Update hidden field
-        document.getElementById('selectedEmailTool').value = tool;
+        const hiddenField = document.getElementById('selectedEmailTool');
+        if (hiddenField) {
+            hiddenField.value = tool;
+        }
         
         // Handle skip option
         if (tool === 'skip') {
-            document.getElementById('emailToolCredentials').classList.add('hidden');
+            const credentialsDiv = document.getElementById('emailToolCredentials');
+            if (credentialsDiv) {
+                credentialsDiv.classList.add('hidden');
+            }
             return;
         }
         
@@ -106,6 +112,8 @@ const EmailToolIntegration = {
         const container = document.getElementById('emailToolCredentials');
         const fieldsContainer = document.getElementById('credentialsFields');
         const title = document.getElementById('toolCredentialsTitle');
+        
+        if (!container || !fieldsContainer || !title) return;
         
         // Update title
         title.textContent = `${config.name} verbinden`;
@@ -129,6 +137,7 @@ const EmailToolIntegration = {
         // Add input fields
         config.fields.forEach(field => {
             const fieldDiv = document.createElement('div');
+            fieldDiv.className = 'mb-4';
             fieldDiv.innerHTML = `
                 <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">${field.label} ${field.required ? '*' : ''}</label>
                 <input type="${field.type}" 
@@ -144,8 +153,10 @@ const EmailToolIntegration = {
         container.classList.remove('hidden');
         
         // Hide tag selection and connection status
-        document.getElementById('tagSelection').classList.add('hidden');
-        document.getElementById('connectionStatus').classList.add('hidden');
+        const tagSelection = document.getElementById('tagSelection');
+        const connectionStatus = document.getElementById('connectionStatus');
+        if (tagSelection) tagSelection.classList.add('hidden');
+        if (connectionStatus) connectionStatus.classList.add('hidden');
     },
     
     /**
@@ -160,7 +171,9 @@ const EmailToolIntegration = {
         const testBtn = document.getElementById('testConnectionBtn');
         
         // Collect credentials
-        const credentials = {};
+        const credentials = {
+            tool: tool
+        };
         config.fields.forEach(field => {
             const input = document.getElementById(`emailTool_${field.name}`);
             if (input) {
@@ -177,34 +190,39 @@ const EmailToolIntegration = {
         }
         
         // Show loading state
-        testBtn.disabled = true;
-        testBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Teste...';
-        statusDiv.classList.remove('hidden');
+        if (testBtn) {
+            testBtn.disabled = true;
+            testBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Teste...';
+        }
+        if (statusDiv) {
+            statusDiv.classList.remove('hidden');
+        }
         this.showStatus('loading', 'Verbindung wird getestet...');
         
         try {
-            const response = await fetch('/api/email-integration.php', {
+            // Send request with action in URL
+            const response = await fetch('/api/email-integration.php?action=test_connection', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({
-                    action: 'test_connection',
-                    tool: tool,
-                    ...credentials
-                })
+                body: JSON.stringify(credentials)
             });
             
             const result = await response.json();
             
             if (result.success) {
                 this.connectionTested = true;
-                this.showStatus('success', 'Verbindung erfolgreich!');
+                this.showStatus('success', result.message || 'Verbindung erfolgreich!');
                 
                 // Store credentials in hidden fields
-                document.getElementById('emailToolApiKey').value = credentials.api_key || '';
-                document.getElementById('emailToolApiSecret').value = credentials.api_secret || '';
-                document.getElementById('emailToolApiUrl').value = credentials.api_url || '';
+                const apiKeyField = document.getElementById('emailToolApiKey');
+                const apiSecretField = document.getElementById('emailToolApiSecret');
+                const apiUrlField = document.getElementById('emailToolApiUrl');
+                
+                if (apiKeyField) apiKeyField.value = credentials.api_key || '';
+                if (apiSecretField) apiSecretField.value = credentials.api_secret || '';
+                if (apiUrlField) apiUrlField.value = credentials.api_url || '';
                 
                 // Load tags
                 this.loadTags(tool, credentials);
@@ -217,8 +235,10 @@ const EmailToolIntegration = {
         }
         
         // Reset button
-        testBtn.disabled = false;
-        testBtn.innerHTML = '<i class="fas fa-plug mr-2"></i>Verbindung testen';
+        if (testBtn) {
+            testBtn.disabled = false;
+            testBtn.innerHTML = '<i class="fas fa-plug mr-2"></i>Verbindung testen';
+        }
     },
     
     /**
@@ -226,15 +246,16 @@ const EmailToolIntegration = {
      */
     loadTags: async function(tool, credentials) {
         try {
-            const response = await fetch('/api/email-integration.php', {
+            const response = await fetch('/api/email-integration.php?action=get_tags', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    action: 'get_tags',
                     tool: tool,
-                    ...credentials
+                    api_key: credentials.api_key,
+                    api_secret: credentials.api_secret,
+                    api_url: credentials.api_url
                 })
             });
             
@@ -256,6 +277,8 @@ const EmailToolIntegration = {
         const container = document.getElementById('tagSelection');
         const select = document.getElementById('tagSelect');
         
+        if (!container || !select) return;
+        
         // Clear existing options (except first)
         while (select.options.length > 1) {
             select.remove(1);
@@ -272,7 +295,10 @@ const EmailToolIntegration = {
         // Bind change event
         select.addEventListener('change', () => {
             const selectedOption = select.options[select.selectedIndex];
-            document.getElementById('emailToolTagName').value = selectedOption.text !== '-- Kein Tag --' ? selectedOption.text : '';
+            const tagNameField = document.getElementById('emailToolTagName');
+            if (tagNameField) {
+                tagNameField.value = selectedOption.text !== '-- Kein Tag --' ? selectedOption.text : '';
+            }
         });
         
         // Show container if tags available
@@ -286,6 +312,7 @@ const EmailToolIntegration = {
      */
     showStatus: function(type, message) {
         const statusDiv = document.getElementById('connectionStatus');
+        if (!statusDiv) return;
         
         let bgClass, textClass, icon;
         switch (type) {
@@ -304,6 +331,10 @@ const EmailToolIntegration = {
                 textClass = 'text-blue-700 dark:text-blue-300';
                 icon = 'fas fa-spinner fa-spin';
                 break;
+            default:
+                bgClass = 'bg-gray-50 dark:bg-slate-700 border-gray-200 dark:border-slate-600';
+                textClass = 'text-gray-700 dark:text-slate-300';
+                icon = 'fas fa-info-circle';
         }
         
         statusDiv.className = `mt-4 p-3 rounded-lg border ${bgClass}`;
@@ -324,13 +355,19 @@ const EmailToolIntegration = {
             return null;
         }
         
+        const apiKeyField = document.getElementById('emailToolApiKey');
+        const apiSecretField = document.getElementById('emailToolApiSecret');
+        const apiUrlField = document.getElementById('emailToolApiUrl');
+        const tagSelect = document.getElementById('tagSelect');
+        const tagNameField = document.getElementById('emailToolTagName');
+        
         return {
             tool: this.selectedTool,
-            api_key: document.getElementById('emailToolApiKey').value,
-            api_secret: document.getElementById('emailToolApiSecret').value,
-            api_url: document.getElementById('emailToolApiUrl').value,
-            tag_id: document.getElementById('tagSelect')?.value || '',
-            tag_name: document.getElementById('emailToolTagName').value
+            api_key: apiKeyField?.value || '',
+            api_secret: apiSecretField?.value || '',
+            api_url: apiUrlField?.value || '',
+            tag_id: tagSelect?.value || '',
+            tag_name: tagNameField?.value || ''
         };
     },
     
@@ -339,8 +376,14 @@ const EmailToolIntegration = {
      */
     skip: function() {
         this.selectedTool = 'skip';
-        document.getElementById('selectedEmailTool').value = 'skip';
-        document.getElementById('emailToolCredentials').classList.add('hidden');
+        const hiddenField = document.getElementById('selectedEmailTool');
+        if (hiddenField) {
+            hiddenField.value = 'skip';
+        }
+        const credentialsDiv = document.getElementById('emailToolCredentials');
+        if (credentialsDiv) {
+            credentialsDiv.classList.add('hidden');
+        }
     }
 };
 
