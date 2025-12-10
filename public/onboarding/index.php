@@ -427,7 +427,7 @@ $isProfessional = ($plan === 'professional');
                                 <div class="flex items-start gap-3">
                                     <i class="fas fa-lightbulb text-blue-500 dark:text-blue-400 mt-1"></i>
                                     <div>
-                                        <p class="text-sm text-blue-800 dark:text-blue-300"><strong>Tipp:</strong> Je nach Belohnungstyp erscheinen automatisch die passenden Eingabefelder für URL, Gutschein-Code, Betrag oder andere Details.</p>
+                                        <p class="text-sm text-blue-800 dark:text-blue-300"><strong>Tipp:</strong> Je nach Belohnungstyp erscheinen automatisch die passenden Eingabefelder für URL, Gutschein-Code, Betrag oder andere Details. Die URL wird später als klickbarer Link in der Belohnungsmail eingefügt.</p>
                                         <?php if (!$isProfessional): ?>
                                         <p class="text-xs text-blue-600 dark:text-blue-400 mt-2">
                                             <i class="fas fa-crown text-yellow-500 mr-1"></i>
@@ -491,75 +491,124 @@ $isProfessional = ($plan === 'professional');
                                     <!-- Dynamische Zusatzfelder je nach Typ -->
                                     <div class="reward-extra-fields" id="reward_<?= $i ?>_extras">
                                         
-                                        <!-- Rabatt (%) -->
+                                        <!-- Rabatt (%) - MIT EINLÖSE-URL -->
                                         <div class="extra-field extra-discount <?= $defaults[$i][1] === 'discount' ? 'active' : '' ?> bg-gray-50 dark:bg-slate-700/50 rounded-lg p-4 mt-4">
-                                            <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
-                                                <i class="fas fa-percent text-primary-500 mr-1"></i>Rabatt in Prozent
-                                            </label>
-                                            <div class="flex items-center gap-2">
-                                                <input type="number" name="reward_<?= $i ?>_discount_percent" min="1" max="100" class="w-24 px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white" placeholder="10">
-                                                <span class="text-gray-500 dark:text-slate-400">%</span>
+                                            <div class="space-y-4">
+                                                <div>
+                                                    <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+                                                        <i class="fas fa-percent text-primary-500 mr-1"></i>Rabatt in Prozent
+                                                    </label>
+                                                    <div class="flex items-center gap-2">
+                                                        <input type="number" name="reward_<?= $i ?>_discount_percent" min="1" max="100" class="w-24 px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white" placeholder="10">
+                                                        <span class="text-gray-500 dark:text-slate-400">%</span>
+                                                    </div>
+                                                    <p class="text-xs text-gray-500 dark:text-slate-400 mt-1">Wird in der E-Mail als {{rabatt_prozent}} eingefügt</p>
+                                                </div>
+                                                <div>
+                                                    <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+                                                        <i class="fas fa-link text-primary-500 mr-1"></i>Einlöse-URL (optional)
+                                                    </label>
+                                                    <input type="url" name="reward_<?= $i ?>_discount_url" class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white" placeholder="https://ihre-website.de/shop">
+                                                    <p class="text-xs text-gray-500 dark:text-slate-400 mt-1">Link zur Seite wo der Rabatt eingelöst wird - wird als {{einloese_link}} eingefügt</p>
+                                                </div>
                                             </div>
-                                            <p class="text-xs text-gray-500 dark:text-slate-400 mt-1">Wird in der E-Mail als {{rabatt_prozent}} eingefügt</p>
                                         </div>
                                         
-                                        <!-- Gutschein-Code -->
+                                        <!-- Gutschein-Code - MIT EINLÖSE-URL -->
                                         <div class="extra-field extra-coupon_code <?= $defaults[$i][1] === 'coupon_code' ? 'active' : '' ?> bg-gray-50 dark:bg-slate-700/50 rounded-lg p-4 mt-4">
-                                            <div class="grid sm:grid-cols-2 gap-4">
-                                                <div>
-                                                    <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
-                                                        <i class="fas fa-ticket text-primary-500 mr-1"></i>Gutschein-Code
-                                                    </label>
-                                                    <input type="text" name="reward_<?= $i ?>_coupon_code" class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white font-mono" placeholder="EMPFEHLUNG10">
+                                            <div class="space-y-4">
+                                                <div class="grid sm:grid-cols-2 gap-4">
+                                                    <div>
+                                                        <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+                                                            <i class="fas fa-ticket text-primary-500 mr-1"></i>Gutschein-Code
+                                                        </label>
+                                                        <input type="text" name="reward_<?= $i ?>_coupon_code" class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white font-mono" placeholder="EMPFEHLUNG10">
+                                                    </div>
+                                                    <div>
+                                                        <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+                                                            <i class="fas fa-calendar text-primary-500 mr-1"></i>Gültigkeit (Tage)
+                                                        </label>
+                                                        <input type="number" name="reward_<?= $i ?>_coupon_validity" min="1" max="365" class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white" placeholder="30">
+                                                    </div>
                                                 </div>
                                                 <div>
                                                     <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
-                                                        <i class="fas fa-calendar text-primary-500 mr-1"></i>Gültigkeit (Tage)
+                                                        <i class="fas fa-link text-primary-500 mr-1"></i>Einlöse-URL (optional)
                                                     </label>
-                                                    <input type="number" name="reward_<?= $i ?>_coupon_validity" min="1" max="365" class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white" placeholder="30">
+                                                    <input type="url" name="reward_<?= $i ?>_coupon_url" class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white" placeholder="https://ihre-website.de/shop/checkout">
+                                                    <p class="text-xs text-gray-500 dark:text-slate-400 mt-1">Link zur Seite wo der Gutschein-Code eingelöst wird - wird als {{einloese_link}} eingefügt</p>
                                                 </div>
+                                                <p class="text-xs text-gray-500 dark:text-slate-400">Der Code wird als {{gutschein_code}} in die E-Mail eingefügt</p>
                                             </div>
-                                            <p class="text-xs text-gray-500 dark:text-slate-400 mt-2">Der Code wird als {{gutschein_code}} in die E-Mail eingefügt</p>
                                         </div>
                                         
                                         <!-- Digital Download -->
                                         <div class="extra-field extra-digital_download bg-gray-50 dark:bg-slate-700/50 rounded-lg p-4 mt-4">
                                             <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
-                                                <i class="fas fa-download text-primary-500 mr-1"></i>Download-URL
+                                                <i class="fas fa-download text-primary-500 mr-1"></i>Download-URL *
                                             </label>
                                             <input type="url" name="reward_<?= $i ?>_download_url" class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white" placeholder="https://ihre-seite.de/downloads/bonus.pdf">
                                             <p class="text-xs text-gray-500 dark:text-slate-400 mt-1">Link zu Ihrer Download-Datei (PDF, E-Book, etc.) - wird als {{download_link}} eingefügt</p>
                                         </div>
                                         
-                                        <!-- Wertgutschein -->
+                                        <!-- Wertgutschein - MIT EINLÖSE-URL -->
                                         <div class="extra-field extra-voucher bg-gray-50 dark:bg-slate-700/50 rounded-lg p-4 mt-4">
-                                            <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
-                                                <i class="fas fa-euro-sign text-primary-500 mr-1"></i>Gutscheinwert in Euro
-                                            </label>
-                                            <div class="flex items-center gap-2">
-                                                <input type="number" name="reward_<?= $i ?>_voucher_amount" min="1" step="0.01" class="w-32 px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white" placeholder="50.00">
-                                                <span class="text-gray-500 dark:text-slate-400">€</span>
-                                            </div>
-                                            <p class="text-xs text-gray-500 dark:text-slate-400 mt-1">Wird in der E-Mail als {{gutschein_wert}} eingefügt</p>
-                                        </div>
-                                        
-                                        <!-- Gratis-Produkt -->
-                                        <div class="extra-field extra-free_product <?= $defaults[$i][1] === 'free_product' ? 'active' : '' ?> bg-gray-50 dark:bg-slate-700/50 rounded-lg p-4 mt-4">
-                                            <div class="flex items-start gap-3">
-                                                <input type="checkbox" name="reward_<?= $i ?>_requires_address" value="1" class="mt-1 w-4 h-4 text-primary-500 rounded border-gray-300 dark:border-slate-600 focus:ring-primary-500 bg-white dark:bg-slate-700">
+                                            <div class="space-y-4">
                                                 <div>
-                                                    <label class="text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300">Adresse abfragen</label>
-                                                    <p class="text-xs text-gray-500 dark:text-slate-400">Aktivieren, wenn das Produkt versendet werden muss</p>
+                                                    <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+                                                        <i class="fas fa-euro-sign text-primary-500 mr-1"></i>Gutscheinwert in Euro
+                                                    </label>
+                                                    <div class="flex items-center gap-2">
+                                                        <input type="number" name="reward_<?= $i ?>_voucher_amount" min="1" step="0.01" class="w-32 px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white" placeholder="50.00">
+                                                        <span class="text-gray-500 dark:text-slate-400">€</span>
+                                                    </div>
+                                                    <p class="text-xs text-gray-500 dark:text-slate-400 mt-1">Wird in der E-Mail als {{gutschein_wert}} eingefügt</p>
+                                                </div>
+                                                <div>
+                                                    <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+                                                        <i class="fas fa-link text-primary-500 mr-1"></i>Einlöse-URL (optional)
+                                                    </label>
+                                                    <input type="url" name="reward_<?= $i ?>_voucher_url" class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white" placeholder="https://ihre-website.de/shop">
+                                                    <p class="text-xs text-gray-500 dark:text-slate-400 mt-1">Link zur Seite wo der Wertgutschein eingelöst wird - wird als {{einloese_link}} eingefügt</p>
                                                 </div>
                                             </div>
                                         </div>
                                         
-                                        <!-- Gratis-Service -->
+                                        <!-- Gratis-Produkt - MIT BESTELL-URL -->
+                                        <div class="extra-field extra-free_product <?= $defaults[$i][1] === 'free_product' ? 'active' : '' ?> bg-gray-50 dark:bg-slate-700/50 rounded-lg p-4 mt-4">
+                                            <div class="space-y-4">
+                                                <div class="flex items-start gap-3">
+                                                    <input type="checkbox" name="reward_<?= $i ?>_requires_address" value="1" class="mt-1 w-4 h-4 text-primary-500 rounded border-gray-300 dark:border-slate-600 focus:ring-primary-500 bg-white dark:bg-slate-700">
+                                                    <div>
+                                                        <label class="text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300">Adresse abfragen</label>
+                                                        <p class="text-xs text-gray-500 dark:text-slate-400">Aktivieren, wenn das Produkt versendet werden muss</p>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+                                                        <i class="fas fa-shopping-cart text-primary-500 mr-1"></i>Bestell-/Produktseite URL (optional)
+                                                    </label>
+                                                    <input type="url" name="reward_<?= $i ?>_product_url" class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white" placeholder="https://ihre-website.de/produkt">
+                                                    <p class="text-xs text-gray-500 dark:text-slate-400 mt-1">Link zur Produktseite oder Bestellung - wird als {{bestell_link}} eingefügt</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Gratis-Service - MIT BUCHUNGS-URL -->
                                         <div class="extra-field extra-free_service bg-gray-50 dark:bg-slate-700/50 rounded-lg p-4 mt-4">
-                                            <p class="text-xs text-gray-500 dark:text-slate-400">
-                                                <i class="fas fa-info-circle text-blue-500 mr-1"></i>
-                                                Der Empfehler erhält eine E-Mail mit der Beschreibung. Sie können ihn dann manuell kontaktieren.
-                                            </p>
+                                            <div class="space-y-4">
+                                                <p class="text-xs text-gray-500 dark:text-slate-400">
+                                                    <i class="fas fa-info-circle text-blue-500 mr-1"></i>
+                                                    Der Empfehler erhält eine E-Mail mit der Beschreibung. Sie können ihn dann manuell kontaktieren.
+                                                </p>
+                                                <div>
+                                                    <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+                                                        <i class="fas fa-calendar-check text-primary-500 mr-1"></i>Buchungs-/Kontakt-URL (optional)
+                                                    </label>
+                                                    <input type="url" name="reward_<?= $i ?>_service_url" class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white" placeholder="https://ihre-website.de/termin">
+                                                    <p class="text-xs text-gray-500 dark:text-slate-400 mt-1">Link zur Terminbuchung oder Kontaktseite - wird als {{buchungs_link}} eingefügt</p>
+                                                </div>
+                                            </div>
                                         </div>
                                         
                                         <!-- ==================== PROFESSIONAL BELOHNUNGEN ==================== -->
@@ -572,7 +621,7 @@ $isProfessional = ($plan === 'professional');
                                             <div class="space-y-4">
                                                 <div>
                                                     <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
-                                                        <i class="fas fa-video text-purple-500 mr-1"></i>Video-Kurs URL
+                                                        <i class="fas fa-video text-purple-500 mr-1"></i>Video-Kurs URL *
                                                     </label>
                                                     <input type="url" name="reward_<?= $i ?>_video_url" class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white" placeholder="https://ihre-seite.de/kurs/zugang">
                                                     <p class="text-xs text-gray-500 dark:text-slate-400 mt-1">Link zum Video-Kurs oder Mitgliederbereich - wird als {{videokurs_link}} eingefügt</p>
@@ -643,7 +692,7 @@ $isProfessional = ($plan === 'professional');
                                             <div class="space-y-4">
                                                 <div>
                                                     <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
-                                                        <i class="fas fa-broadcast-tower text-indigo-500 mr-1"></i>Webinar-URL / Registrierungslink
+                                                        <i class="fas fa-broadcast-tower text-indigo-500 mr-1"></i>Webinar-URL / Registrierungslink *
                                                     </label>
                                                     <input type="url" name="reward_<?= $i ?>_webinar_url" class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white" placeholder="https://webinarjam.com/register/...">
                                                     <p class="text-xs text-gray-500 dark:text-slate-400 mt-1">Wird als {{webinar_link}} in der E-Mail eingefügt</p>
@@ -673,7 +722,7 @@ $isProfessional = ($plan === 'professional');
                                             <div class="space-y-4">
                                                 <div>
                                                     <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
-                                                        <i class="fas fa-lock-open text-amber-500 mr-1"></i>Exklusiver Inhalt URL
+                                                        <i class="fas fa-lock-open text-amber-500 mr-1"></i>Exklusiver Inhalt URL *
                                                     </label>
                                                     <input type="url" name="reward_<?= $i ?>_exclusive_url" class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white" placeholder="https://ihre-seite.de/exklusiv/bonus">
                                                     <p class="text-xs text-gray-500 dark:text-slate-400 mt-1">Wird als {{exklusiv_link}} in der E-Mail eingefügt</p>
@@ -790,7 +839,7 @@ $isProfessional = ($plan === 'professional');
                                                 </div>
                                                 <div>
                                                     <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
-                                                        <i class="fas fa-link text-violet-500 mr-1"></i>Aktivierungs-URL
+                                                        <i class="fas fa-link text-violet-500 mr-1"></i>Aktivierungs-URL *
                                                     </label>
                                                     <input type="url" name="reward_<?= $i ?>_membership_url" class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white" placeholder="https://ihre-seite.de/upgrade">
                                                     <p class="text-xs text-gray-500 dark:text-slate-400 mt-1">Wird als {{membership_link}} in der E-Mail eingefügt</p>
@@ -826,7 +875,7 @@ $isProfessional = ($plan === 'professional');
                                                 </div>
                                                 <div>
                                                     <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
-                                                        <i class="fas fa-link text-rose-500 mr-1"></i>Ticket-/Registrierungslink
+                                                        <i class="fas fa-link text-rose-500 mr-1"></i>Ticket-/Registrierungslink *
                                                     </label>
                                                     <input type="url" name="reward_<?= $i ?>_event_url" class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white" placeholder="https://eventbrite.de/...">
                                                     <p class="text-xs text-gray-500 dark:text-slate-400 mt-1">Wird als {{event_link}} in der E-Mail eingefügt</p>
@@ -1112,69 +1161,126 @@ $isProfessional = ($plan === 'professional');
         }
         
         function createAllExtraFieldsHTML(level) {
-            // Alle Extra-Felder HTML generieren (vereinfacht - die wichtigsten)
+            // Alle Extra-Felder HTML generieren mit URL-Feldern
             return `
+                <!-- Rabatt (%) - MIT EINLÖSE-URL -->
                 <div class="extra-field extra-discount active bg-gray-50 dark:bg-slate-700/50 rounded-lg p-4 mt-4">
-                    <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
-                        <i class="fas fa-percent text-primary-500 mr-1"></i>Rabatt in Prozent
-                    </label>
-                    <div class="flex items-center gap-2">
-                        <input type="number" name="reward_${level}_discount_percent" min="1" max="100" class="w-24 px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white" placeholder="10">
-                        <span class="text-gray-500 dark:text-slate-400">%</span>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+                                <i class="fas fa-percent text-primary-500 mr-1"></i>Rabatt in Prozent
+                            </label>
+                            <div class="flex items-center gap-2">
+                                <input type="number" name="reward_${level}_discount_percent" min="1" max="100" class="w-24 px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white" placeholder="10">
+                                <span class="text-gray-500 dark:text-slate-400">%</span>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+                                <i class="fas fa-link text-primary-500 mr-1"></i>Einlöse-URL (optional)
+                            </label>
+                            <input type="url" name="reward_${level}_discount_url" class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white" placeholder="https://ihre-website.de/shop">
+                            <p class="text-xs text-gray-500 dark:text-slate-400 mt-1">Link zur Seite wo der Rabatt eingelöst wird - wird als {{einloese_link}} eingefügt</p>
+                        </div>
                     </div>
                 </div>
                 
+                <!-- Gutschein-Code - MIT EINLÖSE-URL -->
                 <div class="extra-field extra-coupon_code bg-gray-50 dark:bg-slate-700/50 rounded-lg p-4 mt-4">
-                    <div class="grid sm:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
-                                <i class="fas fa-ticket text-primary-500 mr-1"></i>Gutschein-Code
-                            </label>
-                            <input type="text" name="reward_${level}_coupon_code" class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white font-mono" placeholder="EMPFEHLUNG10">
+                    <div class="space-y-4">
+                        <div class="grid sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+                                    <i class="fas fa-ticket text-primary-500 mr-1"></i>Gutschein-Code
+                                </label>
+                                <input type="text" name="reward_${level}_coupon_code" class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white font-mono" placeholder="EMPFEHLUNG10">
+                            </div>
+                            <div>
+                                <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+                                    <i class="fas fa-calendar text-primary-500 mr-1"></i>Gültigkeit (Tage)
+                                </label>
+                                <input type="number" name="reward_${level}_coupon_validity" min="1" max="365" class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white" placeholder="30">
+                            </div>
                         </div>
                         <div>
                             <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
-                                <i class="fas fa-calendar text-primary-500 mr-1"></i>Gültigkeit (Tage)
+                                <i class="fas fa-link text-primary-500 mr-1"></i>Einlöse-URL (optional)
                             </label>
-                            <input type="number" name="reward_${level}_coupon_validity" min="1" max="365" class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white" placeholder="30">
+                            <input type="url" name="reward_${level}_coupon_url" class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white" placeholder="https://ihre-website.de/shop/checkout">
+                            <p class="text-xs text-gray-500 dark:text-slate-400 mt-1">Link zur Seite wo der Gutschein eingelöst wird - wird als {{einloese_link}} eingefügt</p>
                         </div>
                     </div>
                 </div>
                 
+                <!-- Digital Download -->
                 <div class="extra-field extra-digital_download bg-gray-50 dark:bg-slate-700/50 rounded-lg p-4 mt-4">
                     <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                         <i class="fas fa-download text-primary-500 mr-1"></i>Download-URL
                     </label>
                     <input type="url" name="reward_${level}_download_url" class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white" placeholder="https://ihre-seite.de/downloads/bonus.pdf">
+                    <p class="text-xs text-gray-500 dark:text-slate-400 mt-1">Link zu Ihrer Download-Datei - wird als {{download_link}} eingefügt</p>
                 </div>
                 
+                <!-- Wertgutschein - MIT EINLÖSE-URL -->
                 <div class="extra-field extra-voucher bg-gray-50 dark:bg-slate-700/50 rounded-lg p-4 mt-4">
-                    <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
-                        <i class="fas fa-euro-sign text-primary-500 mr-1"></i>Gutscheinwert in Euro
-                    </label>
-                    <div class="flex items-center gap-2">
-                        <input type="number" name="reward_${level}_voucher_amount" min="1" step="0.01" class="w-32 px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white" placeholder="50.00">
-                        <span class="text-gray-500 dark:text-slate-400">€</span>
-                    </div>
-                </div>
-                
-                <div class="extra-field extra-free_product bg-gray-50 dark:bg-slate-700/50 rounded-lg p-4 mt-4">
-                    <div class="flex items-start gap-3">
-                        <input type="checkbox" name="reward_${level}_requires_address" value="1" class="mt-1 w-4 h-4 text-primary-500 rounded">
+                    <div class="space-y-4">
                         <div>
-                            <label class="text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300">Adresse abfragen</label>
-                            <p class="text-xs text-gray-500 dark:text-slate-400">Aktivieren, wenn das Produkt versendet werden muss</p>
+                            <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+                                <i class="fas fa-euro-sign text-primary-500 mr-1"></i>Gutscheinwert in Euro
+                            </label>
+                            <div class="flex items-center gap-2">
+                                <input type="number" name="reward_${level}_voucher_amount" min="1" step="0.01" class="w-32 px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white" placeholder="50.00">
+                                <span class="text-gray-500 dark:text-slate-400">€</span>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+                                <i class="fas fa-link text-primary-500 mr-1"></i>Einlöse-URL (optional)
+                            </label>
+                            <input type="url" name="reward_${level}_voucher_url" class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white" placeholder="https://ihre-website.de/shop">
+                            <p class="text-xs text-gray-500 dark:text-slate-400 mt-1">Link zur Seite wo der Wertgutschein eingelöst wird - wird als {{einloese_link}} eingefügt</p>
                         </div>
                     </div>
                 </div>
                 
-                <div class="extra-field extra-free_service bg-gray-50 dark:bg-slate-700/50 rounded-lg p-4 mt-4">
-                    <p class="text-xs text-gray-500 dark:text-slate-400">
-                        <i class="fas fa-info-circle text-blue-500 mr-1"></i>
-                        Der Empfehler erhält eine E-Mail mit der Beschreibung.
-                    </p>
+                <!-- Gratis-Produkt - MIT BESTELL-URL -->
+                <div class="extra-field extra-free_product bg-gray-50 dark:bg-slate-700/50 rounded-lg p-4 mt-4">
+                    <div class="space-y-4">
+                        <div class="flex items-start gap-3">
+                            <input type="checkbox" name="reward_${level}_requires_address" value="1" class="mt-1 w-4 h-4 text-primary-500 rounded">
+                            <div>
+                                <label class="text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300">Adresse abfragen</label>
+                                <p class="text-xs text-gray-500 dark:text-slate-400">Aktivieren, wenn das Produkt versendet werden muss</p>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+                                <i class="fas fa-shopping-cart text-primary-500 mr-1"></i>Bestell-/Produktseite URL (optional)
+                            </label>
+                            <input type="url" name="reward_${level}_product_url" class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white" placeholder="https://ihre-website.de/produkt">
+                            <p class="text-xs text-gray-500 dark:text-slate-400 mt-1">Link zur Produktseite oder Bestellung - wird als {{bestell_link}} eingefügt</p>
+                        </div>
+                    </div>
                 </div>
                 
+                <!-- Gratis-Service - MIT BUCHUNGS-URL -->
+                <div class="extra-field extra-free_service bg-gray-50 dark:bg-slate-700/50 rounded-lg p-4 mt-4">
+                    <div class="space-y-4">
+                        <p class="text-xs text-gray-500 dark:text-slate-400">
+                            <i class="fas fa-info-circle text-blue-500 mr-1"></i>
+                            Der Empfehler erhält eine E-Mail mit der Beschreibung.
+                        </p>
+                        <div>
+                            <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+                                <i class="fas fa-calendar-check text-primary-500 mr-1"></i>Buchungs-/Kontakt-URL (optional)
+                            </label>
+                            <input type="url" name="reward_${level}_service_url" class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white" placeholder="https://ihre-website.de/termin">
+                            <p class="text-xs text-gray-500 dark:text-slate-400 mt-1">Link zur Terminbuchung oder Kontaktseite - wird als {{buchungs_link}} eingefügt</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Video-Kurs (URL) -->
                 <div class="extra-field extra-video_course bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-lg p-4 mt-4 border border-purple-200 dark:border-purple-800">
                     <div class="flex items-center gap-2 mb-3">
                         <span class="pro-badge"><i class="fas fa-crown"></i> PRO</span>
@@ -1199,6 +1305,7 @@ $isProfessional = ($plan === 'professional');
                     </div>
                 </div>
                 
+                <!-- Coaching-Session -->
                 <div class="extra-field extra-coaching_session bg-gradient-to-r from-green-50 to-teal-50 dark:from-green-900/20 dark:to-teal-900/20 rounded-lg p-4 mt-4 border border-green-200 dark:border-green-800">
                     <div class="flex items-center gap-2 mb-3">
                         <span class="pro-badge"><i class="fas fa-crown"></i> PRO</span>
@@ -1219,6 +1326,7 @@ $isProfessional = ($plan === 'professional');
                     </div>
                 </div>
                 
+                <!-- Webinar-Zugang -->
                 <div class="extra-field extra-webinar_access bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-lg p-4 mt-4 border border-indigo-200 dark:border-indigo-800">
                     <div class="flex items-center gap-2 mb-3">
                         <span class="pro-badge"><i class="fas fa-crown"></i> PRO</span>
@@ -1229,6 +1337,7 @@ $isProfessional = ($plan === 'professional');
                     </div>
                 </div>
                 
+                <!-- Exklusiver Inhalt (URL) -->
                 <div class="extra-field extra-exclusive_content bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-lg p-4 mt-4 border border-amber-200 dark:border-amber-800">
                     <div class="flex items-center gap-2 mb-3">
                         <span class="pro-badge"><i class="fas fa-crown"></i> PRO</span>
@@ -1239,6 +1348,7 @@ $isProfessional = ($plan === 'professional');
                     </div>
                 </div>
                 
+                <!-- Affiliate-Provision (%) -->
                 <div class="extra-field extra-affiliate_commission bg-gradient-to-r from-emerald-50 to-green-50 dark:from-emerald-900/20 dark:to-green-900/20 rounded-lg p-4 mt-4 border border-emerald-200 dark:border-emerald-800">
                     <div class="flex items-center gap-2 mb-3">
                         <span class="pro-badge"><i class="fas fa-crown"></i> PRO</span>
@@ -1249,6 +1359,7 @@ $isProfessional = ($plan === 'professional');
                     </div>
                 </div>
                 
+                <!-- Bar-Auszahlung (€) -->
                 <div class="extra-field extra-cash_bonus bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-900/20 dark:to-amber-900/20 rounded-lg p-4 mt-4 border border-yellow-200 dark:border-yellow-800">
                     <div class="flex items-center gap-2 mb-3">
                         <span class="pro-badge"><i class="fas fa-crown"></i> PRO</span>
@@ -1259,6 +1370,7 @@ $isProfessional = ($plan === 'professional');
                     </div>
                 </div>
                 
+                <!-- Membership-Upgrade -->
                 <div class="extra-field extra-membership_upgrade bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-900/20 dark:to-purple-900/20 rounded-lg p-4 mt-4 border border-violet-200 dark:border-violet-800">
                     <div class="flex items-center gap-2 mb-3">
                         <span class="pro-badge"><i class="fas fa-crown"></i> PRO</span>
@@ -1275,6 +1387,7 @@ $isProfessional = ($plan === 'professional');
                     </div>
                 </div>
                 
+                <!-- Event-Ticket -->
                 <div class="extra-field extra-event_ticket bg-gradient-to-r from-rose-50 to-pink-50 dark:from-rose-900/20 dark:to-pink-900/20 rounded-lg p-4 mt-4 border border-rose-200 dark:border-rose-800">
                     <div class="flex items-center gap-2 mb-3">
                         <span class="pro-badge"><i class="fas fa-crown"></i> PRO</span>
