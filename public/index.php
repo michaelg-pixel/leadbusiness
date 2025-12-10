@@ -317,13 +317,16 @@ $heroSlides = [
     </div>
 </section>
 
-<!-- Hero Slider JavaScript - Robuste Version mit Theme-Change-Support -->
+<!-- Hero Slider JavaScript - Mit Theme-Change-Support und Debug-Logging -->
 <script>
 (function() {
     'use strict';
     
     // Nur auf Desktop (>= 1024px) aktivieren
-    if (window.innerWidth < 1024) return;
+    if (window.innerWidth < 1024) {
+        console.log('[Slider] Mobile erkannt, Slider deaktiviert');
+        return;
+    }
     
     var SLIDE_INTERVAL = 6000; // 6 Sekunden
     var totalSlides = <?= count($heroSlides) ?>;
@@ -331,7 +334,9 @@ $heroSlides = [
     var timerId = null;
     var isPaused = false;
     
-    // Elemente werden bei Bedarf frisch geholt (robust gegen DOM-Änderungen)
+    console.log('[Slider] Initialisierung, Interval:', SLIDE_INTERVAL, 'ms');
+    
+    // Elemente werden bei Bedarf frisch geholt
     function getElements() {
         return {
             bgSlides: document.querySelectorAll('.hero-bg-slide'),
@@ -343,14 +348,10 @@ $heroSlides = [
     
     function goToSlide(index) {
         var els = getElements();
-        
-        // Validierung
         if (!els.bgSlides.length) return;
         
-        // Index normalisieren
         index = ((index % totalSlides) + totalSlides) % totalSlides;
         
-        // Backgrounds
         for (var i = 0; i < els.bgSlides.length; i++) {
             if (i === index) {
                 els.bgSlides[i].classList.add('opacity-100');
@@ -361,7 +362,6 @@ $heroSlides = [
             }
         }
         
-        // Hooks
         for (var i = 0; i < els.hookSlides.length; i++) {
             if (i === index) {
                 els.hookSlides[i].classList.add('opacity-100', 'relative');
@@ -372,7 +372,6 @@ $heroSlides = [
             }
         }
         
-        // Cards
         for (var i = 0; i < els.cardSlides.length; i++) {
             if (i === index) {
                 els.cardSlides[i].classList.add('opacity-100', 'relative');
@@ -383,7 +382,6 @@ $heroSlides = [
             }
         }
         
-        // Dots
         for (var i = 0; i < els.dots.length; i++) {
             if (i === index) {
                 els.dots[i].classList.add('bg-white', 'w-8');
@@ -398,56 +396,47 @@ $heroSlides = [
     }
     
     function tick() {
-        // Timer stoppen falls vorhanden
         if (timerId) {
             clearTimeout(timerId);
             timerId = null;
         }
         
-        // Wenn pausiert oder Tab versteckt, nur Timer setzen ohne Wechsel
         if (isPaused || document.hidden) {
             timerId = setTimeout(tick, SLIDE_INTERVAL);
             return;
         }
         
-        // Nächsten Slide zeigen
         var nextSlide = (currentSlide + 1) % totalSlides;
+        console.log('[Slider] tick() -> Slide', nextSlide, 'um', new Date().toLocaleTimeString());
         goToSlide(nextSlide);
         
-        // Nächsten Tick planen
         timerId = setTimeout(tick, SLIDE_INTERVAL);
     }
     
     function restart() {
-        // Timer komplett stoppen und neu starten
+        console.log('[Slider] restart() aufgerufen um', new Date().toLocaleTimeString());
         if (timerId) {
             clearTimeout(timerId);
             timerId = null;
         }
-        // Neuen Timer mit vollem Intervall starten
         timerId = setTimeout(tick, SLIDE_INTERVAL);
     }
     
-    function stop() {
-        if (timerId) {
-            clearTimeout(timerId);
-            timerId = null;
-        }
-    }
-    
-    // Initialisierung
     function init() {
         var els = getElements();
         
-        // Prüfen ob Elemente vorhanden
         if (!els.bgSlides.length || !els.hookSlides.length || !els.cardSlides.length || !els.dots.length) {
+            console.log('[Slider] Elemente nicht gefunden');
             return;
         }
+        
+        console.log('[Slider] Elemente gefunden:', els.bgSlides.length, 'Slides');
         
         // Dot Click Handler
         for (var i = 0; i < els.dots.length; i++) {
             (function(index) {
                 els.dots[index].addEventListener('click', function() {
+                    console.log('[Slider] Dot geklickt:', index);
                     goToSlide(index);
                     restart();
                 });
@@ -465,23 +454,24 @@ $heroSlides = [
             });
         }
         
-        // Tab Visibility - Timer neu starten wenn Tab wieder sichtbar
+        // Tab Visibility
         document.addEventListener('visibilitychange', function() {
             if (!document.hidden) {
+                console.log('[Slider] Tab wieder sichtbar');
                 restart();
             }
         });
         
-        // WICHTIG: Theme-Wechsel Event - Timer neu starten bei Dark/Light Mode Wechsel
-        window.addEventListener('themechange', function() {
+        // Theme-Wechsel Event - Timer neu starten
+        window.addEventListener('themechange', function(e) {
+            console.log('[Slider] >>> themechange Event empfangen! <<<', e.detail);
             restart();
         });
         
-        // Slider starten
+        console.log('[Slider] Event Listener registriert, starte...');
         restart();
     }
     
-    // Starten wenn DOM bereit
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
     } else {
