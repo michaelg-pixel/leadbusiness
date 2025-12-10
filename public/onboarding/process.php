@@ -131,8 +131,8 @@ try {
         'created_at' => date('Y-m-d H:i:s')
     ]);
     
-    // Belohnungen erstellen
-    createRewardsFromForm($db, $customerId, $campaignId, $_POST);
+    // Belohnungen erstellen (mit allen neuen Feldern)
+    createRewardsFromForm($db, $customerId, $campaignId, $_POST, $data['plan']);
     
     // E-Mail-Sequenzen aktivieren
     activateEmailSequences($db, $customerId);
@@ -251,10 +251,13 @@ function handleBackgroundUpload($file, $subdomain) {
 
 /**
  * Erstellt Belohnungen aus dem Onboarding-Formular
- * Speichert alle typspezifischen Felder (Gutschein-Code, Download-URL, etc.)
+ * Speichert alle typspezifischen Felder inkl. URLs für E-Mail-Platzhalter
  */
-function createRewardsFromForm($db, $customerId, $campaignId, $formData) {
-    for ($i = 1; $i <= 5; $i++) {
+function createRewardsFromForm($db, $customerId, $campaignId, $formData, $plan) {
+    // Professional kann bis zu 10 Stufen haben, Starter nur 3
+    $maxLevels = ($plan === 'professional' || $plan === 'enterprise') ? 10 : 3;
+    
+    for ($i = 1; $i <= $maxLevels; $i++) {
         $threshold = intval($formData["reward_{$i}_threshold"] ?? 0);
         $type = $formData["reward_{$i}_type"] ?? '';
         $description = trim($formData["reward_{$i}_description"] ?? '');
@@ -275,43 +278,122 @@ function createRewardsFromForm($db, $customerId, $campaignId, $formData) {
                 'created_at' => date('Y-m-d H:i:s')
             ];
             
-            // Typspezifische Felder
+            // Typspezifische Felder - alle URL-Felder werden validiert
             switch ($type) {
                 case 'discount':
-                    // Rabatt in Prozent
+                    // Rabatt in Prozent + Einlöse-URL
                     $rewardData['discount_percent'] = intval($formData["reward_{$i}_discount_percent"] ?? 0);
+                    $rewardData['redeem_url'] = validateUrl($formData["reward_{$i}_discount_url"] ?? '');
                     break;
                     
                 case 'coupon_code':
-                    // Gutschein-Code und Gültigkeit
+                    // Gutschein-Code, Gültigkeit und Einlöse-URL
                     $rewardData['coupon_code'] = trim($formData["reward_{$i}_coupon_code"] ?? '');
                     $rewardData['coupon_validity_days'] = intval($formData["reward_{$i}_coupon_validity"] ?? 30);
+                    $rewardData['redeem_url'] = validateUrl($formData["reward_{$i}_coupon_url"] ?? '');
                     break;
                     
                 case 'digital_download':
-                    // Download-URL
-                    $downloadUrl = trim($formData["reward_{$i}_download_url"] ?? '');
-                    if (!empty($downloadUrl) && filter_var($downloadUrl, FILTER_VALIDATE_URL)) {
-                        $rewardData['download_file_url'] = $downloadUrl;
-                    }
+                    // Download-URL (erforderlich)
+                    $rewardData['download_file_url'] = validateUrl($formData["reward_{$i}_download_url"] ?? '');
                     break;
                     
                 case 'voucher':
-                    // Wertgutschein in Euro
+                    // Wertgutschein in Euro + Einlöse-URL
                     $amount = floatval($formData["reward_{$i}_voucher_amount"] ?? 0);
                     $rewardData['voucher_amount'] = $amount > 0 ? $amount : null;
+                    $rewardData['redeem_url'] = validateUrl($formData["reward_{$i}_voucher_url"] ?? '');
                     break;
                     
                 case 'free_product':
-                case 'free_service':
-                    // Adressabfrage erforderlich?
+                    // Adressabfrage + Bestell-URL
                     $rewardData['requires_address'] = isset($formData["reward_{$i}_requires_address"]) ? 1 : 0;
+                    $rewardData['product_url'] = validateUrl($formData["reward_{$i}_product_url"] ?? '');
+                    break;
+                    
+                case 'free_service':
+                    // Buchungs-URL
+                    $rewardData['service_url'] = validateUrl($formData["reward_{$i}_service_url"] ?? '');
+                    break;
+                    
+                // ==================== PROFESSIONAL BELOHNUNGEN ====================
+                
+                case 'video_course':
+                    // Video-Kurs URL, Zugangscode und Gültigkeit
+                    $rewardData['video_url'] = validateUrl($formData["reward_{$i}_video_url"] ?? '');
+                    $rewardData['video_access_code'] = trim($formData["reward_{$i}_video_access_code"] ?? '');
+                    $rewardData['video_validity_days'] = intval($formData["reward_{$i}_video_validity"] ?? 365);
+                    break;
+                    
+                case 'coaching_session':
+                    // Coaching-Dauer, -Art und Buchungslink
+                    $rewardData['coaching_duration'] = intval($formData["reward_{$i}_coaching_duration"] ?? 30);
+                    $rewardData['coaching_type'] = $formData["reward_{$i}_coaching_type"] ?? 'video_call';
+                    $rewardData['coaching_booking_url'] = validateUrl($formData["reward_{$i}_coaching_booking_url"] ?? '');
+                    break;
+                    
+                case 'webinar_access':
+                    // Webinar-URL, Datum und Uhrzeit
+                    $rewardData['webinar_url'] = validateUrl($formData["reward_{$i}_webinar_url"] ?? '');
+                    $rewardData['webinar_date'] = !empty($formData["reward_{$i}_webinar_date"]) 
+                        ? $formData["reward_{$i}_webinar_date"] : null;
+                    $rewardData['webinar_time'] = !empty($formData["reward_{$i}_webinar_time"]) 
+                        ? $formData["reward_{$i}_webinar_time"] : null;
+                    break;
+                    
+                case 'exclusive_content':
+                    // Exklusiver Inhalt URL und Typ
+                    $rewardData['exclusive_url'] = validateUrl($formData["reward_{$i}_exclusive_url"] ?? '');
+                    $rewardData['exclusive_type'] = $formData["reward_{$i}_exclusive_type"] ?? 'ebook';
+                    break;
+                    
+                case 'affiliate_commission':
+                    // Provision, Max. Betrag und Produkt
+                    $rewardData['affiliate_percent'] = intval($formData["reward_{$i}_affiliate_percent"] ?? 0);
+                    $maxAmount = floatval($formData["reward_{$i}_affiliate_max"] ?? 0);
+                    $rewardData['affiliate_max_amount'] = $maxAmount > 0 ? $maxAmount : null;
+                    $rewardData['affiliate_product'] = trim($formData["reward_{$i}_affiliate_product"] ?? '');
+                    break;
+                    
+                case 'cash_bonus':
+                    // Bar-Auszahlung Betrag und Methode
+                    $cashAmount = floatval($formData["reward_{$i}_cash_amount"] ?? 0);
+                    $rewardData['cash_amount'] = $cashAmount > 0 ? $cashAmount : null;
+                    $rewardData['cash_method'] = $formData["reward_{$i}_cash_method"] ?? 'bank_transfer';
+                    break;
+                    
+                case 'membership_upgrade':
+                    // Membership Level, Dauer und URL
+                    $rewardData['membership_level'] = trim($formData["reward_{$i}_membership_level"] ?? '');
+                    $rewardData['membership_duration'] = $formData["reward_{$i}_membership_duration"] ?? '12';
+                    $rewardData['membership_url'] = validateUrl($formData["reward_{$i}_membership_url"] ?? '');
+                    break;
+                    
+                case 'event_ticket':
+                    // Event-Name, Datum, Ort und URL
+                    $rewardData['event_name'] = trim($formData["reward_{$i}_event_name"] ?? '');
+                    $rewardData['event_date'] = !empty($formData["reward_{$i}_event_date"]) 
+                        ? $formData["reward_{$i}_event_date"] : null;
+                    $rewardData['event_location'] = trim($formData["reward_{$i}_event_location"] ?? '');
+                    $rewardData['event_url'] = validateUrl($formData["reward_{$i}_event_url"] ?? '');
                     break;
             }
             
             $db->insert('rewards', $rewardData);
         }
     }
+}
+
+/**
+ * Validiert eine URL und gibt sie zurück oder null wenn ungültig/leer
+ */
+function validateUrl($url) {
+    $url = trim($url);
+    if (empty($url)) return null;
+    if (filter_var($url, FILTER_VALIDATE_URL)) {
+        return $url;
+    }
+    return null;
 }
 
 /**
@@ -324,7 +406,15 @@ function getDefaultRewardTitle($type) {
         'free_product' => 'Gratis-Produkt',
         'free_service' => 'Gratis-Service',
         'digital_download' => 'Digital-Download',
-        'voucher' => 'Wertgutschein'
+        'voucher' => 'Wertgutschein',
+        'video_course' => 'Video-Kurs',
+        'coaching_session' => 'Coaching-Session',
+        'webinar_access' => 'Webinar-Zugang',
+        'exclusive_content' => 'Exklusiver Inhalt',
+        'affiliate_commission' => 'Affiliate-Provision',
+        'cash_bonus' => 'Bar-Auszahlung',
+        'membership_upgrade' => 'Membership-Upgrade',
+        'event_ticket' => 'Event-Ticket'
     ];
     return $titles[$type] ?? 'Belohnung';
 }
