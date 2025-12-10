@@ -1,5 +1,6 @@
 -- Migration: E-Mail Tool Integrationen
--- Für KlickTipp, Quentn, CleverReach, etc.
+-- Leads parallel zum Kunden-E-Mail-Tool syncen
+-- Marketing bleibt bei Leadbusiness/Mailgun (außer Enterprise)
 
 CREATE TABLE IF NOT EXISTS customer_email_integrations (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -14,22 +15,16 @@ CREATE TABLE IF NOT EXISTS customer_email_integrations (
     api_secret VARCHAR(500) NULL,
     api_url VARCHAR(255) NULL,
     
-    -- Ziel-Konfiguration
+    -- Ziel-Konfiguration (Liste wohin Leads gepusht werden)
     list_id VARCHAR(100) NULL,
     list_name VARCHAR(255) NULL,
-    tag_id VARCHAR(100) NULL,
-    tag_name VARCHAR(255) NULL,
     
-    -- Zusätzliche Tags die gesetzt werden
-    additional_tags JSON NULL,
+    -- Tag der bei Anmeldung gesetzt wird (optional)
+    default_tag_id VARCHAR(100) NULL,
+    default_tag_name VARCHAR(255) NULL,
     
-    -- Sync-Optionen
-    sync_on_lead_created TINYINT(1) DEFAULT 1,
-    sync_on_conversion TINYINT(1) DEFAULT 0,
-    sync_on_reward TINYINT(1) DEFAULT 0,
-    
-    -- Custom Fields Mapping
-    field_mapping JSON NULL,
+    -- Enterprise-Only: Kunde darf eigenen Autoresponder nutzen
+    allow_customer_autoresponder TINYINT(1) DEFAULT 0,
     
     -- Status & Logging
     last_sync_at DATETIME NULL,
@@ -54,11 +49,8 @@ CREATE TABLE IF NOT EXISTS email_integration_logs (
     integration_id INT NOT NULL,
     lead_id INT NULL,
     
-    action ENUM('subscribe', 'update', 'tag', 'unsubscribe') NOT NULL,
+    action ENUM('subscribe', 'tag', 'error') NOT NULL,
     status ENUM('success', 'error', 'skipped') NOT NULL,
-    
-    request_data JSON NULL,
-    response_data JSON NULL,
     error_message TEXT NULL,
     
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
