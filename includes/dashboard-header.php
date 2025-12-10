@@ -15,6 +15,10 @@ if (!isset($customer) && isset($_SESSION['customer_id'])) {
     $db = Database::getInstance();
     $customer = $db->fetch("SELECT * FROM customers WHERE id = ?", [$_SESSION['customer_id']]);
 }
+
+// Plan-Check für API-Zugang
+$hasApiAccess = in_array($customer['plan'] ?? '', ['professional', 'enterprise']);
+$isEnterprise = ($customer['plan'] ?? '') === 'enterprise';
 ?>
 <!DOCTYPE html>
 <html lang="de" class="<?= $theme === 'dark' ? 'dark' : '' ?>">
@@ -50,6 +54,17 @@ if (!isset($customer) && isset($_SESSION['customer_id'])) {
         .nav-item.active { 
             background: linear-gradient(90deg, rgba(14, 165, 233, 0.15) 0%, transparent 100%);
             border-left: 3px solid #0ea5e9;
+        }
+        .pro-feature {
+            position: relative;
+        }
+        .pro-badge-nav {
+            font-size: 0.5rem;
+            padding: 0.125rem 0.375rem;
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            border-radius: 9999px;
+            margin-left: 0.5rem;
         }
     </style>
 </head>
@@ -106,6 +121,24 @@ if (!isset($customer) && isset($_SESSION['customer_id'])) {
                 <i class="fas fa-cog w-5 text-center"></i>
                 <span>Einstellungen</span>
             </a>
+            
+            <?php if ($hasApiAccess): ?>
+            <div class="border-t border-slate-200 dark:border-slate-700 my-4"></div>
+            
+            <p class="px-4 text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">Entwickler</p>
+            
+            <a href="/dashboard/api.php" class="nav-item <?= $currentPage === 'api' ? 'active' : '' ?> flex items-center gap-3 px-4 py-3 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all">
+                <i class="fas fa-code w-5 text-center"></i>
+                <span>API-Zugang</span>
+                <span class="pro-badge-nav"><?= $isEnterprise ? 'ENT' : 'PRO' ?></span>
+            </a>
+            
+            <a href="/dashboard/webhooks.php" class="nav-item <?= $currentPage === 'webhooks' ? 'active' : '' ?> flex items-center gap-3 px-4 py-3 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all">
+                <i class="fas fa-bolt w-5 text-center"></i>
+                <span>Webhooks</span>
+                <span class="pro-badge-nav"><?= $isEnterprise ? 'ENT' : 'PRO' ?></span>
+            </a>
+            <?php endif; ?>
             
             <div class="border-t border-slate-200 dark:border-slate-700 my-4"></div>
             
