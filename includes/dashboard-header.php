@@ -19,6 +19,11 @@ if (!isset($customer) && isset($_SESSION['customer_id'])) {
 // Plan-Check für API-Zugang
 $hasApiAccess = in_array($customer['plan'] ?? '', ['professional', 'enterprise']);
 $isEnterprise = ($customer['plan'] ?? '') === 'enterprise';
+
+// Custom Domain URL ermitteln
+$siteUrl = !empty($customer['custom_domain']) && !empty($customer['custom_domain_verified']) && $customer['custom_domain_ssl_status'] === 'active'
+    ? 'https://' . $customer['custom_domain']
+    : 'https://' . ($customer['subdomain'] ?? '') . '.empfehlungen.cloud';
 ?>
 <!DOCTYPE html>
 <html lang="de" class="<?= $theme === 'dark' ? 'dark' : '' ?>">
@@ -55,6 +60,10 @@ $isEnterprise = ($customer['plan'] ?? '') === 'enterprise';
             background: linear-gradient(90deg, rgba(14, 165, 233, 0.15) 0%, transparent 100%);
             border-left: 3px solid #0ea5e9;
         }
+        .nav-item.active.enterprise {
+            background: linear-gradient(90deg, rgba(168, 85, 247, 0.15) 0%, transparent 100%);
+            border-left-color: #a855f7;
+        }
         .pro-feature {
             position: relative;
         }
@@ -62,6 +71,14 @@ $isEnterprise = ($customer['plan'] ?? '') === 'enterprise';
             font-size: 0.5rem;
             padding: 0.125rem 0.375rem;
             background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            border-radius: 9999px;
+            margin-left: 0.5rem;
+        }
+        .enterprise-badge-nav {
+            font-size: 0.5rem;
+            padding: 0.125rem 0.375rem;
+            background: linear-gradient(135deg, #a855f7 0%, #7c3aed 100%);
             color: white;
             border-radius: 9999px;
             margin-left: 0.5rem;
@@ -76,7 +93,7 @@ $isEnterprise = ($customer['plan'] ?? '') === 'enterprise';
     </button>
     
     <!-- Sidebar -->
-    <aside id="sidebar" class="fixed left-0 top-0 h-full w-64 bg-white dark:bg-slate-800 shadow-lg transform -translate-x-full lg:translate-x-0 transition-transform duration-300 z-40">
+    <aside id="sidebar" class="fixed left-0 top-0 h-full w-64 bg-white dark:bg-slate-800 shadow-lg transform -translate-x-full lg:translate-x-0 transition-transform duration-300 z-40 flex flex-col">
         
         <!-- Logo -->
         <div class="p-6 border-b border-slate-200 dark:border-slate-700">
@@ -88,15 +105,19 @@ $isEnterprise = ($customer['plan'] ?? '') === 'enterprise';
                     <i class="fas fa-building text-primary-600 dark:text-primary-400"></i>
                 </div>
                 <?php endif; ?>
-                <div>
+                <div class="min-w-0">
                     <h1 class="font-bold text-slate-800 dark:text-white truncate text-sm"><?= e($customer['company_name'] ?? 'Dashboard') ?></h1>
-                    <p class="text-xs text-slate-500"><?= e($customer['subdomain'] ?? '') ?>.empfohlen.de</p>
+                    <?php if (!empty($customer['custom_domain']) && !empty($customer['custom_domain_verified'])): ?>
+                    <p class="text-xs text-purple-500 truncate"><?= e($customer['custom_domain']) ?></p>
+                    <?php else: ?>
+                    <p class="text-xs text-slate-500 truncate"><?= e($customer['subdomain'] ?? '') ?>.empfehlungen.cloud</p>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
         
-        <!-- Navigation -->
-        <nav class="p-4 space-y-1">
+        <!-- Navigation - Scrollable -->
+        <nav class="p-4 space-y-1 flex-1 overflow-y-auto">
             <a href="/dashboard/" class="nav-item <?= $currentPage === 'index' ? 'active' : '' ?> flex items-center gap-3 px-4 py-3 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all">
                 <i class="fas fa-chart-pie w-5 text-center"></i>
                 <span>Übersicht</span>
@@ -130,26 +151,47 @@ $isEnterprise = ($customer['plan'] ?? '') === 'enterprise';
             <a href="/dashboard/api.php" class="nav-item <?= $currentPage === 'api' ? 'active' : '' ?> flex items-center gap-3 px-4 py-3 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all">
                 <i class="fas fa-code w-5 text-center"></i>
                 <span>API-Zugang</span>
-                <span class="pro-badge-nav"><?= $isEnterprise ? 'ENT' : 'PRO' ?></span>
+                <span class="<?= $isEnterprise ? 'enterprise-badge-nav' : 'pro-badge-nav' ?>"><?= $isEnterprise ? 'ENT' : 'PRO' ?></span>
             </a>
             
             <a href="/dashboard/webhooks.php" class="nav-item <?= $currentPage === 'webhooks' ? 'active' : '' ?> flex items-center gap-3 px-4 py-3 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all">
                 <i class="fas fa-bolt w-5 text-center"></i>
                 <span>Webhooks</span>
-                <span class="pro-badge-nav"><?= $isEnterprise ? 'ENT' : 'PRO' ?></span>
+                <span class="<?= $isEnterprise ? 'enterprise-badge-nav' : 'pro-badge-nav' ?>"><?= $isEnterprise ? 'ENT' : 'PRO' ?></span>
+            </a>
+            <?php endif; ?>
+            
+            <?php if ($isEnterprise): ?>
+            <div class="border-t border-slate-200 dark:border-slate-700 my-4"></div>
+            
+            <p class="px-4 text-xs font-semibold text-purple-500 dark:text-purple-400 uppercase tracking-wider mb-2">
+                <i class="fas fa-crown mr-1"></i>Enterprise
+            </p>
+            
+            <a href="/dashboard/domain.php" class="nav-item <?= $currentPage === 'domain' ? 'active enterprise' : '' ?> flex items-center gap-3 px-4 py-3 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-all">
+                <i class="fas fa-globe w-5 text-center text-purple-500"></i>
+                <span>Eigene Domain</span>
+                <?php if (!empty($customer['custom_domain']) && !empty($customer['custom_domain_verified'])): ?>
+                <i class="fas fa-check-circle text-green-500 ml-auto text-xs"></i>
+                <?php endif; ?>
+            </a>
+            
+            <a href="/dashboard/whitelabel.php" class="nav-item <?= $currentPage === 'whitelabel' ? 'active enterprise' : '' ?> flex items-center gap-3 px-4 py-3 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-all">
+                <i class="fas fa-tag w-5 text-center text-purple-500"></i>
+                <span>White-Label</span>
             </a>
             <?php endif; ?>
             
             <div class="border-t border-slate-200 dark:border-slate-700 my-4"></div>
             
-            <a href="https://<?= e($customer['subdomain'] ?? '') ?>.empfohlen.de" target="_blank" class="nav-item flex items-center gap-3 px-4 py-3 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all">
+            <a href="<?= e($siteUrl) ?>" target="_blank" class="nav-item flex items-center gap-3 px-4 py-3 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all">
                 <i class="fas fa-external-link w-5 text-center"></i>
                 <span>Empfehlungsseite</span>
             </a>
         </nav>
         
-        <!-- User Info -->
-        <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50">
+        <!-- User Info - Fixed at bottom -->
+        <div class="p-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50">
             <div class="flex items-center gap-3 mb-3">
                 <div class="w-10 h-10 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center">
                     <span class="text-primary-600 dark:text-primary-400 font-medium">
@@ -189,11 +231,12 @@ $isEnterprise = ($customer['plan'] ?? '') === 'enterprise';
                     $planColors = [
                         'starter' => 'bg-slate-100 text-slate-700 dark:bg-slate-600 dark:text-slate-200',
                         'professional' => 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300',
-                        'enterprise' => 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
+                        'enterprise' => 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300'
                     ];
                     $planColor = $planColors[$customer['plan'] ?? 'starter'] ?? $planColors['starter'];
                     ?>
-                    <span class="hidden sm:inline-flex px-3 py-1 text-xs font-medium rounded-full <?= $planColor ?>">
+                    <span class="hidden sm:inline-flex items-center gap-1 px-3 py-1 text-xs font-medium rounded-full <?= $planColor ?>">
+                        <?php if ($isEnterprise): ?><i class="fas fa-crown text-xs"></i><?php endif; ?>
                         <?= ucfirst($customer['plan'] ?? 'Starter') ?>
                     </span>
                     
