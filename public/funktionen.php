@@ -523,7 +523,7 @@ require_once __DIR__ . '/../templates/marketing/header.php';
         <p class="text-lg md:text-xl text-white/90 mb-6 md:mb-8">
             7 Tage kostenlos testen – keine Kreditkarte erforderlich.
         </p>
-        <a href="/onboarding" class="inline-flex items-center gap-2 px-8 py-4 bg-white text-gray-900 font-semibold text-lg rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300">
+        <a href="/onboarding" class="inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-yellow-400 to-orange-500 text-gray-900 font-bold text-lg rounded-full shadow-[0_0_30px_rgba(251,191,36,0.5)] hover:shadow-[0_0_50px_rgba(251,191,36,0.8)] hover:scale-105 transition-all duration-300">
             <span>Jetzt starten</span>
             <i class="fas fa-arrow-right"></i>
         </a>
