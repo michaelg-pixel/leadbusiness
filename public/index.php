@@ -317,132 +317,179 @@ $heroSlides = [
     </div>
 </section>
 
-<!-- Hero Slider JavaScript - Robuste Version -->
+<!-- Hero Slider JavaScript - Robuste Version mit setTimeout -->
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+(function() {
+    'use strict';
+    
     // Nur auf Desktop (>= 1024px) aktivieren
     if (window.innerWidth < 1024) return;
     
     var SLIDE_INTERVAL = 6000; // 6 Sekunden
     var totalSlides = <?= count($heroSlides) ?>;
     var currentSlide = 0;
-    var sliderTimer = null;
-    var isHovering = false;
+    var timerId = null;
+    var isPaused = false;
+    var lastTickTime = 0;
     
-    // Elemente cachen
-    var bgSlides = document.querySelectorAll('.hero-bg-slide');
-    var hookSlides = document.querySelectorAll('.hero-hook-slide');
-    var cardSlides = document.querySelectorAll('.hero-card-slide');
-    var dots = document.querySelectorAll('.hero-slider-dot');
-    
-    // Prüfen ob alle Elemente vorhanden sind
-    if (!bgSlides.length || !hookSlides.length || !cardSlides.length || !dots.length) {
-        console.warn('Slider elements not found');
-        return;
+    // Elemente werden bei Bedarf frisch geholt (robust gegen DOM-Änderungen)
+    function getElements() {
+        return {
+            bgSlides: document.querySelectorAll('.hero-bg-slide'),
+            hookSlides: document.querySelectorAll('.hero-hook-slide'),
+            cardSlides: document.querySelectorAll('.hero-card-slide'),
+            dots: document.querySelectorAll('.hero-slider-dot')
+        };
     }
     
     function goToSlide(index) {
-        // Sicherstellen dass Index valide ist
-        index = Math.max(0, Math.min(index, totalSlides - 1));
+        var els = getElements();
+        
+        // Validierung
+        if (!els.bgSlides.length) return;
+        
+        // Index normalisieren
+        index = ((index % totalSlides) + totalSlides) % totalSlides;
         
         // Backgrounds
-        for (var i = 0; i < bgSlides.length; i++) {
+        for (var i = 0; i < els.bgSlides.length; i++) {
             if (i === index) {
-                bgSlides[i].classList.add('opacity-100');
-                bgSlides[i].classList.remove('opacity-0');
+                els.bgSlides[i].classList.add('opacity-100');
+                els.bgSlides[i].classList.remove('opacity-0');
             } else {
-                bgSlides[i].classList.remove('opacity-100');
-                bgSlides[i].classList.add('opacity-0');
+                els.bgSlides[i].classList.remove('opacity-100');
+                els.bgSlides[i].classList.add('opacity-0');
             }
         }
         
         // Hooks
-        for (var i = 0; i < hookSlides.length; i++) {
+        for (var i = 0; i < els.hookSlides.length; i++) {
             if (i === index) {
-                hookSlides[i].classList.add('opacity-100', 'relative');
-                hookSlides[i].classList.remove('opacity-0', 'absolute');
+                els.hookSlides[i].classList.add('opacity-100', 'relative');
+                els.hookSlides[i].classList.remove('opacity-0', 'absolute');
             } else {
-                hookSlides[i].classList.remove('opacity-100', 'relative');
-                hookSlides[i].classList.add('opacity-0', 'absolute');
+                els.hookSlides[i].classList.remove('opacity-100', 'relative');
+                els.hookSlides[i].classList.add('opacity-0', 'absolute');
             }
         }
         
         // Cards
-        for (var i = 0; i < cardSlides.length; i++) {
+        for (var i = 0; i < els.cardSlides.length; i++) {
             if (i === index) {
-                cardSlides[i].classList.add('opacity-100', 'relative');
-                cardSlides[i].classList.remove('opacity-0', 'absolute', 'pointer-events-none');
+                els.cardSlides[i].classList.add('opacity-100', 'relative');
+                els.cardSlides[i].classList.remove('opacity-0', 'absolute', 'pointer-events-none');
             } else {
-                cardSlides[i].classList.remove('opacity-100', 'relative');
-                cardSlides[i].classList.add('opacity-0', 'absolute', 'pointer-events-none');
+                els.cardSlides[i].classList.remove('opacity-100', 'relative');
+                els.cardSlides[i].classList.add('opacity-0', 'absolute', 'pointer-events-none');
             }
         }
         
         // Dots
-        for (var i = 0; i < dots.length; i++) {
+        for (var i = 0; i < els.dots.length; i++) {
             if (i === index) {
-                dots[i].classList.add('bg-white', 'w-8');
-                dots[i].classList.remove('bg-white/40');
+                els.dots[i].classList.add('bg-white', 'w-8');
+                els.dots[i].classList.remove('bg-white/40');
             } else {
-                dots[i].classList.remove('bg-white', 'w-8');
-                dots[i].classList.add('bg-white/40');
+                els.dots[i].classList.remove('bg-white', 'w-8');
+                els.dots[i].classList.add('bg-white/40');
             }
         }
         
         currentSlide = index;
     }
     
-    function nextSlide() {
-        if (isHovering) return;
-        var next = (currentSlide + 1) % totalSlides;
-        goToSlide(next);
+    function tick() {
+        // Timer stoppen falls vorhanden
+        if (timerId) {
+            clearTimeout(timerId);
+            timerId = null;
+        }
+        
+        // Wenn pausiert, nur neuen Timer setzen ohne Slide-Wechsel
+        if (isPaused || document.hidden) {
+            timerId = setTimeout(tick, SLIDE_INTERVAL);
+            return;
+        }
+        
+        // Nächsten Slide zeigen
+        var nextSlide = (currentSlide + 1) % totalSlides;
+        goToSlide(nextSlide);
+        
+        // Zeit merken
+        lastTickTime = Date.now();
+        
+        // Nächsten Tick planen
+        timerId = setTimeout(tick, SLIDE_INTERVAL);
     }
     
-    function startAutoplay() {
-        stopAutoplay();
-        sliderTimer = setInterval(nextSlide, SLIDE_INTERVAL);
+    function start() {
+        if (timerId) {
+            clearTimeout(timerId);
+        }
+        timerId = setTimeout(tick, SLIDE_INTERVAL);
     }
     
-    function stopAutoplay() {
-        if (sliderTimer) {
-            clearInterval(sliderTimer);
-            sliderTimer = null;
+    function stop() {
+        if (timerId) {
+            clearTimeout(timerId);
+            timerId = null;
         }
     }
     
-    // Dot Click Handler
-    for (var i = 0; i < dots.length; i++) {
-        (function(index) {
-            dots[index].addEventListener('click', function() {
-                goToSlide(index);
-                startAutoplay(); // Timer neu starten
+    // Initialisierung nach DOM ready
+    function init() {
+        var els = getElements();
+        
+        // Prüfen ob Elemente vorhanden
+        if (!els.bgSlides.length || !els.hookSlides.length || !els.cardSlides.length || !els.dots.length) {
+            return;
+        }
+        
+        // Dot Click Handler
+        for (var i = 0; i < els.dots.length; i++) {
+            (function(index) {
+                els.dots[index].addEventListener('click', function() {
+                    goToSlide(index);
+                    // Timer neu starten
+                    stop();
+                    start();
+                });
+            })(i);
+        }
+        
+        // Hover Pause
+        var heroSection = document.getElementById('hero-slider');
+        if (heroSection) {
+            heroSection.addEventListener('mouseenter', function() {
+                isPaused = true;
             });
-        })(i);
-    }
-    
-    // Hover Pause
-    var heroSection = document.getElementById('hero-slider');
-    if (heroSection) {
-        heroSection.addEventListener('mouseenter', function() {
-            isHovering = true;
-        });
-        heroSection.addEventListener('mouseleave', function() {
-            isHovering = false;
-        });
-    }
-    
-    // Tab Visibility
-    document.addEventListener('visibilitychange', function() {
-        if (document.hidden) {
-            stopAutoplay();
-        } else {
-            startAutoplay();
+            heroSection.addEventListener('mouseleave', function() {
+                isPaused = false;
+            });
         }
-    });
+        
+        // Tab Visibility - pausiert wenn Tab nicht sichtbar
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                // Tab versteckt - nichts tun, tick() prüft document.hidden
+            } else {
+                // Tab wieder sichtbar - Timer neu starten für konsistentes Timing
+                stop();
+                start();
+            }
+        });
+        
+        // Slider starten
+        start();
+    }
     
-    // Start!
-    startAutoplay();
-});
+    // Starten wenn DOM bereit
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+})();
 </script>
 
 <!-- Logo Slider / Industry Ticker (Social Proof) -->
