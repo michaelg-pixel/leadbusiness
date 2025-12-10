@@ -317,7 +317,7 @@ $heroSlides = [
     </div>
 </section>
 
-<!-- Hero Slider JavaScript - Robuste Version mit setTimeout -->
+<!-- Hero Slider JavaScript - Robuste Version mit Theme-Change-Support -->
 <script>
 (function() {
     'use strict';
@@ -330,7 +330,6 @@ $heroSlides = [
     var currentSlide = 0;
     var timerId = null;
     var isPaused = false;
-    var lastTickTime = 0;
     
     // Elemente werden bei Bedarf frisch geholt (robust gegen DOM-Änderungen)
     function getElements() {
@@ -405,7 +404,7 @@ $heroSlides = [
             timerId = null;
         }
         
-        // Wenn pausiert, nur neuen Timer setzen ohne Slide-Wechsel
+        // Wenn pausiert oder Tab versteckt, nur Timer setzen ohne Wechsel
         if (isPaused || document.hidden) {
             timerId = setTimeout(tick, SLIDE_INTERVAL);
             return;
@@ -415,17 +414,17 @@ $heroSlides = [
         var nextSlide = (currentSlide + 1) % totalSlides;
         goToSlide(nextSlide);
         
-        // Zeit merken
-        lastTickTime = Date.now();
-        
         // Nächsten Tick planen
         timerId = setTimeout(tick, SLIDE_INTERVAL);
     }
     
-    function start() {
+    function restart() {
+        // Timer komplett stoppen und neu starten
         if (timerId) {
             clearTimeout(timerId);
+            timerId = null;
         }
+        // Neuen Timer mit vollem Intervall starten
         timerId = setTimeout(tick, SLIDE_INTERVAL);
     }
     
@@ -436,7 +435,7 @@ $heroSlides = [
         }
     }
     
-    // Initialisierung nach DOM ready
+    // Initialisierung
     function init() {
         var els = getElements();
         
@@ -450,9 +449,7 @@ $heroSlides = [
             (function(index) {
                 els.dots[index].addEventListener('click', function() {
                     goToSlide(index);
-                    // Timer neu starten
-                    stop();
-                    start();
+                    restart();
                 });
             })(i);
         }
@@ -468,19 +465,20 @@ $heroSlides = [
             });
         }
         
-        // Tab Visibility - pausiert wenn Tab nicht sichtbar
+        // Tab Visibility - Timer neu starten wenn Tab wieder sichtbar
         document.addEventListener('visibilitychange', function() {
-            if (document.hidden) {
-                // Tab versteckt - nichts tun, tick() prüft document.hidden
-            } else {
-                // Tab wieder sichtbar - Timer neu starten für konsistentes Timing
-                stop();
-                start();
+            if (!document.hidden) {
+                restart();
             }
         });
         
+        // WICHTIG: Theme-Wechsel Event - Timer neu starten bei Dark/Light Mode Wechsel
+        window.addEventListener('themechange', function() {
+            restart();
+        });
+        
         // Slider starten
-        start();
+        restart();
     }
     
     // Starten wenn DOM bereit
