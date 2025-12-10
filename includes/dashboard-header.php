@@ -1,7 +1,7 @@
 <?php
 /**
  * Dashboard Header Component
- * Mit Dark/Light Mode Toggle
+ * Mit Dark/Light Mode Toggle + Admin Impersonation Support
  */
 
 // Theme aus Cookie
@@ -19,6 +19,9 @@ if (!isset($customer) && isset($_SESSION['customer_id'])) {
 // Plan-Check für API-Zugang
 $hasApiAccess = in_array($customer['plan'] ?? '', ['professional', 'enterprise']);
 $isEnterprise = ($customer['plan'] ?? '') === 'enterprise';
+
+// Admin Impersonation Check
+$isImpersonating = isset($_SESSION['admin_impersonating']) && $_SESSION['admin_impersonating'];
 
 // Custom Domain URL ermitteln
 $siteUrl = !empty($customer['custom_domain']) && !empty($customer['custom_domain_verified']) && $customer['custom_domain_ssl_status'] === 'active'
@@ -83,9 +86,37 @@ $siteUrl = !empty($customer['custom_domain']) && !empty($customer['custom_domain
             border-radius: 9999px;
             margin-left: 0.5rem;
         }
+        <?php if ($isImpersonating): ?>
+        /* Offset für Impersonation Banner */
+        aside { top: 44px !important; height: calc(100% - 44px) !important; }
+        main { margin-top: 44px; }
+        .lg\:hidden.fixed.top-4 { top: 60px !important; }
+        <?php endif; ?>
     </style>
 </head>
 <body class="bg-slate-100 dark:bg-slate-900 min-h-screen">
+    
+    <?php if ($isImpersonating): ?>
+    <!-- Admin Impersonation Banner -->
+    <div class="fixed top-0 left-0 right-0 z-[60] bg-gradient-to-r from-amber-500 to-orange-500 text-white py-2.5 px-4 shadow-lg">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                    <i class="fas fa-user-secret"></i>
+                </div>
+                <div>
+                    <span class="font-medium">Admin-Modus aktiv</span>
+                    <span class="hidden sm:inline text-amber-100 ml-2">Du siehst das Dashboard von <strong><?= e($customer['company_name'] ?? 'Kunde') ?></strong></span>
+                </div>
+            </div>
+            <a href="/dashboard/return-to-admin.php" class="px-4 py-1.5 bg-white text-amber-600 hover:bg-amber-50 rounded-lg text-sm font-semibold transition-all flex items-center gap-2">
+                <i class="fas fa-arrow-left"></i>
+                <span class="hidden sm:inline">Zurück zum Admin</span>
+                <span class="sm:hidden">Zurück</span>
+            </a>
+        </div>
+    </div>
+    <?php endif; ?>
     
     <!-- Mobile Menu Button -->
     <button onclick="toggleSidebar()" class="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white dark:bg-slate-800 rounded-lg shadow-lg">
@@ -203,10 +234,17 @@ $siteUrl = !empty($customer['custom_domain']) && !empty($customer['custom_domain
                     <p class="text-xs text-slate-500 truncate"><?= e($customer['email'] ?? '') ?></p>
                 </div>
             </div>
+            <?php if ($isImpersonating): ?>
+            <a href="/dashboard/return-to-admin.php" class="flex items-center justify-center gap-2 w-full px-4 py-2 bg-amber-500 hover:bg-amber-600 rounded-lg text-sm text-white font-medium transition-all">
+                <i class="fas fa-arrow-left"></i>
+                Zurück zum Admin
+            </a>
+            <?php else: ?>
             <a href="/dashboard/logout.php" class="flex items-center justify-center gap-2 w-full px-4 py-2 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 rounded-lg text-sm text-slate-700 dark:text-slate-200 transition-all">
                 <i class="fas fa-sign-out-alt"></i>
                 Abmelden
             </a>
+            <?php endif; ?>
         </div>
     </aside>
     
