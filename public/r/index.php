@@ -20,6 +20,7 @@ require_once __DIR__ . '/../../includes/security/BotDetector.php';
 require_once __DIR__ . '/../../includes/security/DisposableEmailBlocker.php';
 require_once __DIR__ . '/../../includes/services/BackgroundService.php';
 require_once __DIR__ . '/../../includes/services/LeaderboardService.php';
+require_once __DIR__ . '/../../includes/services/LeadEventHandler.php';
 
 $db = Database::getInstance();
 
@@ -112,7 +113,7 @@ if (preg_match('/\/r\/([A-Z0-9]+)/i', $path, $matches)) {
                 'created_at' => date('Y-m-d H:i:s')
             ]);
             
-            // Klick-Zähler erhöhen
+            // Klick-Zaehler erhoehen
             $db->query("UPDATE leads SET clicks = clicks + 1 WHERE id = ?", [$referrer['id']]);
         }
     }
@@ -132,7 +133,7 @@ if ($customer['leaderboard_enabled']) {
     $leaderboard = $leaderboardService->getAnonymizedLeaderboard($campaign['id'], 5);
 }
 
-// Session für Form
+// Session fuer Form
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -151,15 +152,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isAjax()) {
     header('Content-Type: application/json');
     
     try {
-        // CSRF prüfen
+        // CSRF pruefen
         if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
-            throw new Exception('Ungültige Anfrage. Bitte laden Sie die Seite neu.');
+            throw new Exception('Ungueltige Anfrage. Bitte laden Sie die Seite neu.');
         }
         
         // Bot-Check
         $botResult = $botDetector->analyze($_POST);
         if ($botResult['is_bot']) {
-            throw new Exception('Ihre Anfrage wurde als verdächtig eingestuft.');
+            throw new Exception('Ihre Anfrage wurde als verdaechtig eingestuft.');
         }
         
         // Rate Limiting
@@ -175,16 +176,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isAjax()) {
         $name = trim($_POST['name'] ?? '');
         
         if (!$email) {
-            throw new Exception('Bitte geben Sie eine gültige E-Mail-Adresse ein.');
+            throw new Exception('Bitte geben Sie eine gueltige E-Mail-Adresse ein.');
         }
         
-        // Wegwerf-E-Mail prüfen
+        // Wegwerf-E-Mail pruefen
         $disposableBlocker = new DisposableEmailBlocker();
         if ($disposableBlocker->isDisposable($email)) {
             throw new Exception('Bitte verwenden Sie eine permanente E-Mail-Adresse.');
         }
         
-        // Prüfen ob E-Mail bereits registriert
+        // Pruefen ob E-Mail bereits registriert
         $existingLead = $db->fetch(
             "SELECT id, status FROM leads WHERE email = ? AND campaign_id = ?",
             [$email, $campaign['id']]
@@ -211,7 +212,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isAjax()) {
             'name' => $name,
             'referral_code' => $newReferralCode,
             'referred_by_id' => $referrer ? $referrer['id'] : null,
-            'status' => 'pending', // Wird nach E-Mail-Bestätigung aktiv
+            'status' => 'pending', // Wird nach E-Mail-Bestaetigung aktiv
             'confirmation_token' => $confirmationToken,
             'ip_hash' => hashIp($clientIp),
             'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? '',
@@ -219,7 +220,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isAjax()) {
             'created_at' => date('Y-m-d H:i:s')
         ]);
         
-        // Bestätigungs-E-Mail in Queue
+        // E-Mail-Tool Sync (passiv - Lead landet beim Kunden-Tool)
+        triggerLeadCreated($leadId, $customer['id'], [
+            'email' => $email,
+            'name' => $name,
+            'referral_code' => $newReferralCode,
+            'campaign_name' => $campaign['name'] ?? ''
+        ]);
+        
+        // Bestaetigungs-E-Mail in Queue
         $confirmUrl = "https://{$subdomain}.empfohlen.de/confirm/{$confirmationToken}";
         
         $db->insert('email_queue', [
@@ -238,13 +247,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isAjax()) {
             'created_at' => date('Y-m-d H:i:s')
         ]);
         
-        // Wenn Referrer vorhanden, als Conversion tracken (nach Bestätigung)
+        // Wenn Referrer vorhanden, als Conversion tracken (nach Bestaetigung)
         if ($referrer) {
             $db->insert('conversions', [
                 'lead_id' => $leadId,
                 'referrer_id' => $referrer['id'],
                 'campaign_id' => $campaign['id'],
-                'status' => 'pending', // Wird nach Bestätigung 'confirmed'
+                'status' => 'pending', // Wird nach Bestaetigung 'confirmed'
                 'ip_hash' => hashIp($clientIp),
                 'created_at' => date('Y-m-d H:i:s')
             ]);
@@ -258,7 +267,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isAjax()) {
         
         echo json_encode([
             'success' => true,
-            'message' => 'Fast geschafft! Bitte bestätigen Sie Ihre E-Mail-Adresse.',
+            'message' => 'Fast geschafft! Bitte bestaetigen Sie Ihre E-Mail-Adresse.',
             'redirect' => null
         ]);
         exit;
@@ -282,7 +291,7 @@ $pageTitle = "Empfehlen Sie {$customer['company_name']} und erhalten Sie tolle B
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($pageTitle) ?></title>
-    <meta name="description" content="Werden Sie Empfehler bei <?= htmlspecialchars($customer['company_name']) ?> und erhalten Sie Belohnungen für erfolgreiche Empfehlungen.">
+    <meta name="description" content="Werden Sie Empfehler bei <?= htmlspecialchars($customer['company_name']) ?> und erhalten Sie Belohnungen fuer erfolgreiche Empfehlungen.">
     <meta name="robots" content="noindex, nofollow">
     
     <!-- Open Graph -->
@@ -395,7 +404,7 @@ $pageTitle = "Empfehlen Sie {$customer['company_name']} und erhalten Sie tolle B
             </h1>
             
             <p class="text-lg md:text-xl text-white/90 mb-8 max-w-2xl mx-auto">
-                Werden Sie Teil unseres Empfehlungsprogramms und erhalten Sie für jede erfolgreiche Empfehlung attraktive Prämien.
+                Werden Sie Teil unseres Empfehlungsprogramms und erhalten Sie fuer jede erfolgreiche Empfehlung attraktive Praemien.
             </p>
             
             <!-- Live Counter -->
@@ -451,7 +460,7 @@ $pageTitle = "Empfehlen Sie {$customer['company_name']} und erhalten Sie tolle B
         <div class="max-w-4xl mx-auto px-4">
             <div class="text-center mb-12">
                 <h2 class="text-2xl md:text-3xl font-bold text-gray-900 mb-4">So werden Sie belohnt</h2>
-                <p class="text-gray-600">Für jede erfolgreiche Empfehlung erhalten Sie tolle Prämien.</p>
+                <p class="text-gray-600">Fuer jede erfolgreiche Empfehlung erhalten Sie tolle Praemien.</p>
             </div>
             
             <div class="grid md:grid-cols-3 gap-6">
@@ -489,7 +498,7 @@ $pageTitle = "Empfehlen Sie {$customer['company_name']} und erhalten Sie tolle B
                         1
                     </div>
                     <h3 class="font-bold text-gray-900 mb-2">Anmelden</h3>
-                    <p class="text-gray-600 text-sm">Kostenlos registrieren und Ihren persönlichen Empfehlungslink erhalten.</p>
+                    <p class="text-gray-600 text-sm">Kostenlos registrieren und Ihren persoenlichen Empfehlungslink erhalten.</p>
                 </div>
                 
                 <div class="text-center">
@@ -507,7 +516,7 @@ $pageTitle = "Empfehlen Sie {$customer['company_name']} und erhalten Sie tolle B
                         3
                     </div>
                     <h3 class="font-bold text-gray-900 mb-2">Belohnung erhalten</h3>
-                    <p class="text-gray-600 text-sm">Für jede erfolgreiche Empfehlung erhalten Sie automatisch Ihre Belohnung.</p>
+                    <p class="text-gray-600 text-sm">Fuer jede erfolgreiche Empfehlung erhalten Sie automatisch Ihre Belohnung.</p>
                 </div>
             </div>
         </div>
@@ -569,7 +578,7 @@ $pageTitle = "Empfehlen Sie {$customer['company_name']} und erhalten Sie tolle B
             <?php if ($customer['tax_id']): ?>
             <p class="text-gray-600 mb-2">USt-IdNr.: <?= htmlspecialchars($customer['tax_id']) ?></p>
             <?php endif; ?>
-            <button onclick="closeModal('impressumModal')" class="mt-4 px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">Schließen</button>
+            <button onclick="closeModal('impressumModal')" class="mt-4 px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">Schliessen</button>
         </div>
     </div>
     
