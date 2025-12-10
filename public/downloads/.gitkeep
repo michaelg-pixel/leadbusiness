@@ -1,3 +1,35 @@
 # Downloads Verzeichnis
 
-Dieses Verzeichnis enthält herunterladbare Dateien wie den AVV.
+Dieses Verzeichnis enthält herunterladbare Dateien.
+
+## AVV-PDF
+
+Das AVV-PDF (`avv-leadbusiness.pdf`) muss manuell auf den Server hochgeladen werden.
+
+### So erstellst du das PDF:
+
+1. **Lokal mit Python (empfohlen):**
+   ```bash
+   pip install reportlab
+   python create_avv_pdf.py
+   ```
+   
+2. **Online-Konverter:**
+   - Öffne `/avv` im Browser
+   - Drucke die Seite als PDF (Strg+P → Als PDF speichern)
+   - Lade die Datei als `avv-leadbusiness.pdf` hier hoch
+
+3. **TCPDF auf dem Server:**
+   - Installiere TCPDF via Composer: `composer require tecnickcom/tcpdf`
+   - Das Script `avv-leadbusiness.php` generiert dann das PDF automatisch
+
+### Datei hochladen:
+
+```bash
+# Via SCP
+scp avv-leadbusiness.pdf user@server:/path/to/public/downloads/
+
+# Oder via SFTP/FTP
+```
+
+Nach dem Upload ist das PDF unter `/downloads/avv-leadbusiness.pdf` verfügbar.
