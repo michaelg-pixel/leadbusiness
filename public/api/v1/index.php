@@ -42,12 +42,18 @@ switch ($endpoint) {
     case 'referrers':
         require __DIR__ . '/referrers.php';
         break;
+    
+    case 'leads':
+        // Alias für referrers
+        require __DIR__ . '/referrers.php';
+        break;
         
     case 'conversions':
         require __DIR__ . '/conversions.php';
         break;
         
     case 'stats':
+    case 'statistics':
         require __DIR__ . '/stats.php';
         break;
         
@@ -73,21 +79,53 @@ switch ($endpoint) {
         
     case '':
         // API Root - Info ausgeben
-        $api->successResponse([
-            'name' => 'Leadbusiness API',
-            'version' => 'v1',
-            'documentation' => 'https://empfehlungen.cloud/api/docs',
-            'endpoints' => [
-                'GET /api/v1/referrers' => 'List all referrers',
-                'POST /api/v1/referrers' => 'Create a referrer',
-                'GET /api/v1/referrers/{id}' => 'Get a specific referrer',
+        $customer = $api->getCustomer();
+        $isEnterprise = $customer['plan'] === 'enterprise';
+        
+        $endpoints = [
+            'referrers' => [
+                'GET /api/v1/referrers' => 'List all referrers (supports pagination, filtering)',
+                'POST /api/v1/referrers' => 'Create a new referrer',
+                'GET /api/v1/referrers/{id}' => 'Get a specific referrer by ID or code',
                 'PUT /api/v1/referrers/{id}' => 'Update a referrer',
-                'DELETE /api/v1/referrers/{id}' => 'Delete a referrer',
+                'DELETE /api/v1/referrers/{id}' => 'Delete a referrer (soft delete)'
+            ],
+            'conversions' => [
                 'GET /api/v1/conversions' => 'List all conversions',
-                'POST /api/v1/conversions' => 'Track a conversion',
-                'GET /api/v1/stats' => 'Get statistics',
-                'GET /api/v1/rewards' => 'List reward levels'
+                'POST /api/v1/conversions' => 'Track a new conversion',
+                'GET /api/v1/conversions/{id}' => 'Get a specific conversion'
+            ],
+            'stats' => [
+                'GET /api/v1/stats' => 'Get account statistics',
+                'GET /api/v1/stats/daily' => 'Get daily statistics'
+            ],
+            'rewards' => [
+                'GET /api/v1/rewards' => 'List all reward levels'
             ]
+        ];
+        
+        if ($isEnterprise) {
+            $endpoints['webhooks'] = [
+                'GET /api/v1/webhooks' => 'List registered webhooks',
+                'POST /api/v1/webhooks' => 'Register a webhook URL',
+                'DELETE /api/v1/webhooks/{id}' => 'Remove a webhook'
+            ];
+            $endpoints['export'] = [
+                'GET /api/v1/export/referrers' => 'Export referrers as CSV/JSON',
+                'GET /api/v1/export/conversions' => 'Export conversions as CSV/JSON'
+            ];
+        }
+        
+        $api->successResponse([
+            'name' => 'Leadbusiness REST API',
+            'version' => 'v1',
+            'plan' => $customer['plan'],
+            'documentation' => 'https://empfehlungen.cloud/api/docs',
+            'rate_limits' => [
+                'requests_per_minute' => $customer['plan'] === 'enterprise' ? 300 : 60,
+                'requests_per_day' => $customer['plan'] === 'enterprise' ? 50000 : 5000
+            ],
+            'endpoints' => $endpoints
         ]);
         break;
         
