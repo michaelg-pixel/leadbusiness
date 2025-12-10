@@ -639,6 +639,289 @@ $heroSlides = [
     </div>
 </section>
 
+<!-- ROI Calculator Section -->
+<section class="py-20 bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-800 dark:to-slate-900" id="roi-rechner">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+            <span class="text-blue-600 dark:text-blue-400 font-semibold uppercase tracking-wide">Kostenvergleich</span>
+            <h2 class="text-3xl md:text-4xl font-bold mt-3 dark:text-white">So viel sparen Sie mit Empfehlungen</h2>
+            <p class="text-gray-600 dark:text-gray-400 mt-4 max-w-2xl mx-auto">Vergleichen Sie die Kosten für Neukunden über bezahlte Werbung mit unserem Empfehlungsprogramm</p>
+        </div>
+        
+        <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl p-6 md:p-10 border border-gray-100 dark:border-slate-700">
+            <!-- Branchenauswahl -->
+            <div class="mb-8">
+                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+                    <i class="fas fa-industry mr-2 text-blue-500"></i>Ihre Branche
+                </label>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3" id="industry-selector">
+                    <button type="button" data-industry="zahnarzt" data-cpl="120" class="industry-btn active flex flex-col items-center gap-2 p-4 rounded-xl border-2 border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 transition-all">
+                        <i class="fas fa-tooth text-2xl"></i>
+                        <span class="text-sm font-medium">Zahnarzt</span>
+                    </button>
+                    <button type="button" data-industry="handwerker" data-cpl="100" class="industry-btn flex flex-col items-center gap-2 p-4 rounded-xl border-2 border-gray-200 dark:border-slate-600 hover:border-blue-400 bg-white dark:bg-slate-700 text-gray-600 dark:text-gray-300 transition-all">
+                        <i class="fas fa-hammer text-2xl"></i>
+                        <span class="text-sm font-medium">Handwerker</span>
+                    </button>
+                    <button type="button" data-industry="coach" data-cpl="65" class="industry-btn flex flex-col items-center gap-2 p-4 rounded-xl border-2 border-gray-200 dark:border-slate-600 hover:border-blue-400 bg-white dark:bg-slate-700 text-gray-600 dark:text-gray-300 transition-all">
+                        <i class="fas fa-lightbulb text-2xl"></i>
+                        <span class="text-sm font-medium">Coach</span>
+                    </button>
+                    <button type="button" data-industry="fitness" data-cpl="50" class="industry-btn flex flex-col items-center gap-2 p-4 rounded-xl border-2 border-gray-200 dark:border-slate-600 hover:border-blue-400 bg-white dark:bg-slate-700 text-gray-600 dark:text-gray-300 transition-all">
+                        <i class="fas fa-dumbbell text-2xl"></i>
+                        <span class="text-sm font-medium">Fitness</span>
+                    </button>
+                    <button type="button" data-industry="friseur" data-cpl="40" class="industry-btn flex flex-col items-center gap-2 p-4 rounded-xl border-2 border-gray-200 dark:border-slate-600 hover:border-blue-400 bg-white dark:bg-slate-700 text-gray-600 dark:text-gray-300 transition-all">
+                        <i class="fas fa-cut text-2xl"></i>
+                        <span class="text-sm font-medium">Friseur</span>
+                    </button>
+                    <button type="button" data-industry="onlineshop" data-cpl="35" class="industry-btn flex flex-col items-center gap-2 p-4 rounded-xl border-2 border-gray-200 dark:border-slate-600 hover:border-blue-400 bg-white dark:bg-slate-700 text-gray-600 dark:text-gray-300 transition-all">
+                        <i class="fas fa-shopping-cart text-2xl"></i>
+                        <span class="text-sm font-medium">Online-Shop</span>
+                    </button>
+                    <button type="button" data-industry="restaurant" data-cpl="25" class="industry-btn flex flex-col items-center gap-2 p-4 rounded-xl border-2 border-gray-200 dark:border-slate-600 hover:border-blue-400 bg-white dark:bg-slate-700 text-gray-600 dark:text-gray-300 transition-all">
+                        <i class="fas fa-utensils text-2xl"></i>
+                        <span class="text-sm font-medium">Restaurant</span>
+                    </button>
+                    <button type="button" data-industry="marketing" data-cpl="85" class="industry-btn flex flex-col items-center gap-2 p-4 rounded-xl border-2 border-gray-200 dark:border-slate-600 hover:border-blue-400 bg-white dark:bg-slate-700 text-gray-600 dark:text-gray-300 transition-all">
+                        <i class="fas fa-bullhorn text-2xl"></i>
+                        <span class="text-sm font-medium">Marketing</span>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Leads Slider -->
+            <div class="mb-10">
+                <div class="flex justify-between items-center mb-3">
+                    <label class="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                        <i class="fas fa-users mr-2 text-blue-500"></i>Gewünschte Neukunden pro Monat
+                    </label>
+                    <span class="text-2xl font-bold text-blue-600 dark:text-blue-400" id="leads-value">20</span>
+                </div>
+                <input type="range" min="5" max="100" value="20" step="5" id="leads-slider" 
+                    class="w-full h-3 bg-gray-200 dark:bg-slate-600 rounded-full appearance-none cursor-pointer accent-blue-600">
+                <div class="flex justify-between text-xs text-gray-400 mt-2">
+                    <span>5</span>
+                    <span>25</span>
+                    <span>50</span>
+                    <span>75</span>
+                    <span>100</span>
+                </div>
+            </div>
+            
+            <!-- Ergebnis -->
+            <div class="grid md:grid-cols-2 gap-6 mb-8">
+                <!-- Bezahlte Werbung -->
+                <div class="relative bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20 rounded-2xl p-6 border border-red-200 dark:border-red-800">
+                    <div class="absolute -top-3 left-4 px-3 py-1 bg-red-500 text-white text-xs font-semibold rounded-full">
+                        <i class="fas fa-ad mr-1"></i>Bezahlte Werbung
+                    </div>
+                    <div class="mt-4 mb-4">
+                        <div class="flex items-center gap-3 mb-3">
+                            <div class="flex gap-1">
+                                <i class="fab fa-facebook text-blue-600 text-lg"></i>
+                                <i class="fab fa-instagram text-pink-600 text-lg"></i>
+                                <i class="fab fa-google text-yellow-600 text-lg"></i>
+                                <i class="fab fa-tiktok text-gray-800 dark:text-white text-lg"></i>
+                            </div>
+                            <span class="text-sm text-gray-500 dark:text-gray-400">Meta, Google, TikTok, etc.</span>
+                        </div>
+                        <div class="text-4xl md:text-5xl font-extrabold text-red-600 dark:text-red-400" id="ads-cost">2.400€</div>
+                        <div class="text-sm text-gray-500 dark:text-gray-400 mt-1">pro Monat</div>
+                    </div>
+                    <div class="pt-4 border-t border-red-200 dark:border-red-800">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600 dark:text-gray-400">Ø Kosten pro Lead:</span>
+                            <span class="font-semibold text-red-600 dark:text-red-400" id="cpl-value">120€</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Balken -->
+                    <div class="mt-4 h-4 bg-red-200 dark:bg-red-900/50 rounded-full overflow-hidden">
+                        <div class="h-full bg-gradient-to-r from-red-500 to-orange-500 rounded-full transition-all duration-500" id="ads-bar" style="width: 100%"></div>
+                    </div>
+                </div>
+                
+                <!-- Leadbusiness -->
+                <div class="relative bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-2xl p-6 border border-green-200 dark:border-green-800">
+                    <div class="absolute -top-3 left-4 px-3 py-1 bg-green-500 text-white text-xs font-semibold rounded-full">
+                        <i class="fas fa-heart mr-1"></i>Leadbusiness
+                    </div>
+                    <div class="mt-4 mb-4">
+                        <div class="flex items-center gap-3 mb-3">
+                            <i class="fas fa-users text-green-600 text-xl"></i>
+                            <span class="text-sm text-gray-500 dark:text-gray-400">Empfehlungsprogramm</span>
+                        </div>
+                        <div class="text-4xl md:text-5xl font-extrabold text-green-600 dark:text-green-400" id="lb-cost">99€</div>
+                        <div class="text-sm text-gray-500 dark:text-gray-400 mt-1">pro Monat (Professional)</div>
+                    </div>
+                    <div class="pt-4 border-t border-green-200 dark:border-green-800">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600 dark:text-gray-400">Inklusive bis:</span>
+                            <span class="font-semibold text-green-600 dark:text-green-400">5.000 Empfehler</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Balken -->
+                    <div class="mt-4 h-4 bg-green-200 dark:bg-green-900/50 rounded-full overflow-hidden">
+                        <div class="h-full bg-gradient-to-r from-green-500 to-emerald-500 rounded-full transition-all duration-500" id="lb-bar" style="width: 4%"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Ersparnis Highlight -->
+            <div class="relative bg-gradient-to-r from-blue-600 to-blue-800 rounded-2xl p-6 md:p-8 text-white text-center overflow-hidden">
+                <div class="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+                <div class="absolute bottom-0 left-0 w-32 h-32 bg-white/10 rounded-full translate-y-1/2 -translate-x-1/2"></div>
+                <div class="relative z-10">
+                    <div class="flex items-center justify-center gap-2 mb-2">
+                        <i class="fas fa-piggy-bank text-amber-300 text-2xl"></i>
+                        <span class="text-lg font-medium text-white/90">Ihre monatliche Ersparnis</span>
+                    </div>
+                    <div class="text-5xl md:text-6xl font-extrabold text-amber-300" id="savings-value">2.301€</div>
+                    <div class="text-white/80 mt-2">Das sind <span class="font-bold text-white" id="savings-percent">96%</span> weniger Kosten!</div>
+                    <div class="mt-6 text-sm text-white/70">
+                        <span class="font-semibold text-white" id="yearly-savings">27.612€</span> Ersparnis pro Jahr
+                    </div>
+                </div>
+            </div>
+            
+            <!-- CTA -->
+            <div class="text-center mt-8">
+                <a href="/onboarding/" class="inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-amber-400 to-orange-500 text-gray-900 font-bold text-lg rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300">
+                    <span>Jetzt Kosten senken</span>
+                    <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+            
+            <!-- Disclaimer -->
+            <div class="mt-8 p-4 bg-gray-50 dark:bg-slate-700/50 rounded-xl border border-gray-200 dark:border-slate-600">
+                <p class="text-xs text-gray-500 dark:text-gray-400 text-center">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    <strong>Hinweis:</strong> Die angezeigten Kosten pro Lead (CPL) für bezahlte Werbung sind Durchschnittswerte basierend auf Branchendaten für den deutschen Markt (Stand 2024). 
+                    Die tatsächlichen Kosten können je nach Zielgruppe, Region, Wettbewerb und Kampagnenqualität variieren. 
+                    Leadbusiness garantiert keine bestimmte Anzahl von Empfehlungen – der Erfolg hängt von der Aktivierung Ihrer Bestandskunden ab.
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+    (function() {
+        'use strict';
+        
+        // CPL-Daten pro Branche (Durchschnitt aus Meta, Google, etc.)
+        var industryData = {
+            zahnarzt: { cpl: 120, name: 'Zahnarzt' },
+            handwerker: { cpl: 100, name: 'Handwerker' },
+            coach: { cpl: 65, name: 'Coach' },
+            fitness: { cpl: 50, name: 'Fitness' },
+            friseur: { cpl: 40, name: 'Friseur' },
+            onlineshop: { cpl: 35, name: 'Online-Shop' },
+            restaurant: { cpl: 25, name: 'Restaurant' },
+            marketing: { cpl: 85, name: 'Marketing' }
+        };
+        
+        var currentIndustry = 'zahnarzt';
+        var leadbusinessCost = 99; // Professional Plan
+        
+        function formatCurrency(value) {
+            return value.toLocaleString('de-DE') + '€';
+        }
+        
+        function calculate() {
+            var leads = parseInt(document.getElementById('leads-slider').value);
+            var cpl = industryData[currentIndustry].cpl;
+            
+            // Berechnungen
+            var adsCost = leads * cpl;
+            var savings = adsCost - leadbusinessCost;
+            var savingsPercent = Math.round((savings / adsCost) * 100);
+            var yearlySavings = savings * 12;
+            
+            // UI aktualisieren
+            document.getElementById('leads-value').textContent = leads;
+            document.getElementById('ads-cost').textContent = formatCurrency(adsCost);
+            document.getElementById('cpl-value').textContent = formatCurrency(cpl);
+            document.getElementById('lb-cost').textContent = formatCurrency(leadbusinessCost);
+            document.getElementById('savings-value').textContent = formatCurrency(savings);
+            document.getElementById('savings-percent').textContent = savingsPercent + '%';
+            document.getElementById('yearly-savings').textContent = formatCurrency(yearlySavings);
+            
+            // Balken animieren
+            var maxCost = Math.max(adsCost, leadbusinessCost);
+            document.getElementById('ads-bar').style.width = '100%';
+            document.getElementById('lb-bar').style.width = Math.max(2, (leadbusinessCost / adsCost) * 100) + '%';
+        }
+        
+        function selectIndustry(industry) {
+            currentIndustry = industry;
+            
+            // Buttons aktualisieren
+            document.querySelectorAll('.industry-btn').forEach(function(btn) {
+                btn.classList.remove('active', 'border-blue-500', 'bg-blue-50', 'dark:bg-blue-900/30', 'text-blue-700', 'dark:text-blue-300');
+                btn.classList.add('border-gray-200', 'dark:border-slate-600', 'bg-white', 'dark:bg-slate-700', 'text-gray-600', 'dark:text-gray-300');
+            });
+            
+            var activeBtn = document.querySelector('.industry-btn[data-industry="' + industry + '"]');
+            if (activeBtn) {
+                activeBtn.classList.add('active', 'border-blue-500', 'bg-blue-50', 'dark:bg-blue-900/30', 'text-blue-700', 'dark:text-blue-300');
+                activeBtn.classList.remove('border-gray-200', 'dark:border-slate-600', 'bg-white', 'dark:bg-slate-700', 'text-gray-600', 'dark:text-gray-300');
+            }
+            
+            calculate();
+        }
+        
+        // Event Listeners
+        document.getElementById('leads-slider').addEventListener('input', calculate);
+        
+        document.querySelectorAll('.industry-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                selectIndustry(this.dataset.industry);
+            });
+        });
+        
+        // Initial berechnen
+        calculate();
+    })();
+    </script>
+    
+    <style>
+        /* Slider Styling */
+        #leads-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(37, 99, 235, 0.4);
+            transition: all 0.2s ease;
+        }
+        #leads-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 15px rgba(37, 99, 235, 0.5);
+        }
+        #leads-slider::-moz-range-thumb {
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 4px 10px rgba(37, 99, 235, 0.4);
+        }
+        
+        .industry-btn.active {
+            transform: scale(1.02);
+        }
+        .industry-btn:hover:not(.active) {
+            transform: translateY(-2px);
+        }
+    </style>
+</section>
+
 <!-- How it Works Section -->
 <section class="py-20 bg-gray-50 dark:bg-slate-800">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
