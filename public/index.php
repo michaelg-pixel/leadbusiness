@@ -37,7 +37,7 @@ require_once __DIR__ . '/../templates/marketing/header.php';
                 </p>
                 
                 <div class="flex flex-col sm:flex-row gap-4 mb-12">
-                    <a href="/onboarding" class="btn-white btn-large inline-flex items-center justify-center gap-2">
+                    <a href="/onboarding" class="inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-yellow-400 to-orange-500 text-gray-900 font-bold text-lg rounded-full shadow-[0_0_30px_rgba(251,191,36,0.5)] hover:shadow-[0_0_50px_rgba(251,191,36,0.8)] hover:scale-105 transition-all duration-300">
                         <span>Jetzt kostenlos starten</span>
                         <i class="fas fa-arrow-right"></i>
                     </a>
@@ -819,7 +819,7 @@ require_once __DIR__ . '/../templates/marketing/header.php';
             Starten Sie noch heute und verwandeln Sie zufriedene Kunden in Ihre besten Verkäufer.
         </p>
         <div class="flex flex-col sm:flex-row gap-4 justify-center">
-            <a href="/onboarding" class="btn-white btn-large inline-flex items-center justify-center gap-2">
+            <a href="/onboarding" class="inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-yellow-400 to-orange-500 text-gray-900 font-bold text-lg rounded-full shadow-[0_0_30px_rgba(251,191,36,0.5)] hover:shadow-[0_0_50px_rgba(251,191,36,0.8)] hover:scale-105 transition-all duration-300">
                 <span>Jetzt 7 Tage kostenlos testen</span>
                 <i class="fas fa-arrow-right"></i>
             </a>
