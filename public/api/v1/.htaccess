@@ -1,31 +1,72 @@
 # API v1 Routing
-# Ermöglicht saubere URLs wie /api/v1/leads/123
+# Ermöglicht saubere URLs wie /api/v1/referrers/123
 
 RewriteEngine On
 RewriteBase /api/v1/
-
-# Leads Endpoint
-RewriteRule ^leads/?(.*)$ leads.php/$1 [L,QSA]
-
-# Referrers Endpoint  
-RewriteRule ^referrers/?(.*)$ referrers.php/$1 [L,QSA]
-
-# Stats Endpoint
-RewriteRule ^stats/?$ stats.php [L,QSA]
-
-# Rewards Endpoint
-RewriteRule ^rewards/?$ rewards.php [L,QSA]
-
-# Docs
-RewriteRule ^docs/?$ docs.php [L,QSA]
 
 # CORS Headers für alle Requests
 <IfModule mod_headers.c>
     Header always set Access-Control-Allow-Origin "*"
     Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
-    Header always set Access-Control-Allow-Headers "Content-Type, X-API-Key, X-API-Secret"
+    Header always set Access-Control-Allow-Headers "Content-Type, X-API-Key, X-API-Secret, Authorization"
+    Header always set Access-Control-Max-Age "86400"
 </IfModule>
 
-# OPTIONS Requests sofort beantworten
+# OPTIONS Preflight Requests sofort beantworten
 RewriteCond %{REQUEST_METHOD} OPTIONS
-RewriteRule ^(.*)$ $1 [R=200,L]
+RewriteRule ^(.*)$ - [R=204,L]
+
+# Docs (ohne Auth)
+RewriteRule ^docs/?$ docs.php [L,QSA]
+
+# API Root - zeigt alle verfügbaren Endpunkte
+RewriteRule ^/?$ index.php [L,QSA]
+
+# Referrers Endpoint
+RewriteRule ^referrers/?$ referrers.php [L,QSA]
+RewriteRule ^referrers/([^/]+)/?$ referrers.php?resource_id=$1 [L,QSA]
+RewriteRule ^referrers/([^/]+)/([^/]+)/?$ referrers.php?resource_id=$1&sub_resource=$2 [L,QSA]
+
+# Leads Endpoint (Alias für Referrers)
+RewriteRule ^leads/?$ referrers.php [L,QSA]
+RewriteRule ^leads/([^/]+)/?$ referrers.php?resource_id=$1 [L,QSA]
+
+# Conversions Endpoint
+RewriteRule ^conversions/?$ conversions.php [L,QSA]
+RewriteRule ^conversions/([^/]+)/?$ conversions.php?resource_id=$1 [L,QSA]
+
+# Stats Endpoint
+RewriteRule ^stats/?$ stats.php [L,QSA]
+RewriteRule ^stats/([^/]+)/?$ stats.php?resource_id=$1 [L,QSA]
+
+# Rewards Endpoint
+RewriteRule ^rewards/?$ rewards.php [L,QSA]
+RewriteRule ^rewards/([^/]+)/?$ rewards.php?resource_id=$1 [L,QSA]
+
+# Webhooks Endpoint (Enterprise only)
+RewriteRule ^webhooks/?$ webhooks.php [L,QSA]
+RewriteRule ^webhooks/([^/]+)/?$ webhooks.php?resource_id=$1 [L,QSA]
+RewriteRule ^webhooks/([^/]+)/test/?$ webhooks.php?resource_id=$1&sub_resource=test [L,QSA]
+
+# Export Endpoint (Enterprise only)
+RewriteRule ^export/?$ export.php [L,QSA]
+RewriteRule ^export/([^/]+)/?$ export.php?resource_id=$1 [L,QSA]
+
+# Fallback - Alle anderen Anfragen an index.php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php?path=$1 [L,QSA]
+
+# Security Headers
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "DENY"
+</IfModule>
+
+# JSON Content-Type für PHP
+<FilesMatch "\.php$">
+    Header always set Content-Type "application/json; charset=utf-8"
+</FilesMatch>
+
+# Keine Directory Listings
+Options -Indexes
