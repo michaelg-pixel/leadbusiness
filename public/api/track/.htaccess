@@ -1,0 +1,8 @@
+RewriteEngine On
+RewriteBase /api/track/
+
+# Open tracking
+RewriteRule ^open$ open.php [L,QSA]
+
+# Click tracking
+RewriteRule ^click$ click.php [L,QSA]
