@@ -104,7 +104,7 @@ $stats = [
                     </div>
                     <div class="flex items-center gap-2">
                         <i class="fas fa-check-circle text-green-400"></i>
-                        <span>Digistore24-kompatibel</span>
+                        <span>E-Mail-Tool Export</span>
                     </div>
                     <div class="flex items-center gap-2">
                         <i class="fas fa-check-circle text-green-400"></i>
@@ -333,63 +333,217 @@ $stats = [
     </div>
 </section>
 
-<!-- Digistore Integration -->
+<!-- E-Mail Export Integration - Interactive -->
 <section class="py-12 md:py-20 bg-gray-50 dark:bg-slate-800">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="bg-gradient-to-r from-indigo-600 to-violet-600 rounded-2xl p-8 md:p-12 text-white">
-            <div class="grid md:grid-cols-2 gap-8 items-center">
-                <div>
-                    <div class="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full mb-6">
-                        <i class="fas fa-plug"></i>
-                        <span class="text-sm font-medium">Integration</span>
+        <div class="text-center mb-12">
+            <div class="inline-flex items-center gap-2 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 px-4 py-2 rounded-full mb-4">
+                <i class="fas fa-sync-alt"></i>
+                <span class="text-sm font-medium">Automatischer Sync</span>
+            </div>
+            <h2 class="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white mb-4">
+                Leads direkt in dein E-Mail-Tool
+            </h2>
+            <p class="text-gray-600 dark:text-gray-400 text-lg max-w-2xl mx-auto">
+                Jeder neue Empfehler landet automatisch in deiner E-Mail-Liste – mit allen relevanten Tags.
+            </p>
+        </div>
+        
+        <!-- Interactive Tool Selector -->
+        <div class="max-w-4xl mx-auto">
+            <div class="bg-white dark:bg-slate-700 rounded-2xl shadow-xl overflow-hidden">
+                <!-- Tool Selection -->
+                <div class="p-6 border-b border-gray-200 dark:border-slate-600">
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-4 text-center">Welches E-Mail-Tool nutzt du?</p>
+                    <div class="flex flex-wrap justify-center gap-3" id="emailToolSelector">
+                        <button type="button" data-tool="klicktipp" class="email-tool-btn active px-5 py-3 rounded-xl font-semibold transition-all bg-indigo-600 text-white shadow-lg">
+                            KlickTipp
+                        </button>
+                        <button type="button" data-tool="activecampaign" class="email-tool-btn px-5 py-3 rounded-xl font-semibold transition-all bg-gray-100 dark:bg-slate-600 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-slate-500">
+                            ActiveCampaign
+                        </button>
+                        <button type="button" data-tool="mailchimp" class="email-tool-btn px-5 py-3 rounded-xl font-semibold transition-all bg-gray-100 dark:bg-slate-600 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-slate-500">
+                            Mailchimp
+                        </button>
+                        <button type="button" data-tool="getresponse" class="email-tool-btn px-5 py-3 rounded-xl font-semibold transition-all bg-gray-100 dark:bg-slate-600 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-slate-500">
+                            GetResponse
+                        </button>
+                        <button type="button" data-tool="other" class="email-tool-btn px-5 py-3 rounded-xl font-semibold transition-all bg-gray-100 dark:bg-slate-600 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-slate-500">
+                            Anderes Tool
+                        </button>
                     </div>
-                    <h3 class="text-2xl md:text-3xl font-bold mb-4">
-                        Funktioniert mit Digistore24 & Co.
-                    </h3>
-                    <p class="text-white/90 text-lg mb-6">
-                        Verbinden Sie Leadbusiness mit Ihrer bestehenden Infrastruktur:
-                    </p>
-                    <ul class="space-y-3">
-                        <li class="flex items-center gap-3">
-                            <i class="fas fa-check-circle text-green-300"></i>
-                            <span>Digistore24 IPN-Webhook</span>
-                        </li>
-                        <li class="flex items-center gap-3">
-                            <i class="fas fa-check-circle text-green-300"></i>
-                            <span>CopeCart Integration</span>
-                        </li>
-                        <li class="flex items-center gap-3">
-                            <i class="fas fa-check-circle text-green-300"></i>
-                            <span>Elopage Anbindung</span>
-                        </li>
-                        <li class="flex items-center gap-3">
-                            <i class="fas fa-check-circle text-green-300"></i>
-                            <span>KlickTipp & andere E-Mail-Tools</span>
-                        </li>
-                    </ul>
                 </div>
-                <div class="text-center">
-                    <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20 inline-block">
-                        <div class="grid grid-cols-2 gap-4">
-                            <div class="bg-white rounded-xl p-4 flex items-center justify-center">
-                                <span class="font-bold text-gray-800">Digistore24</span>
+                
+                <!-- Animated Flow Visualization -->
+                <div class="p-8 bg-gradient-to-br from-indigo-50 to-violet-50 dark:from-slate-800 dark:to-slate-700">
+                    <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+                        <!-- Step 1: New Lead -->
+                        <div class="flex-1 text-center">
+                            <div class="w-20 h-20 mx-auto bg-white dark:bg-slate-600 rounded-2xl shadow-lg flex items-center justify-center mb-4 animate-pulse-slow">
+                                <i class="fas fa-user-plus text-3xl text-indigo-600 dark:text-indigo-400"></i>
                             </div>
-                            <div class="bg-white rounded-xl p-4 flex items-center justify-center">
-                                <span class="font-bold text-gray-800">CopeCart</span>
+                            <h4 class="font-bold text-gray-900 dark:text-white mb-1">Neuer Lead</h4>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">meldet sich an</p>
+                        </div>
+                        
+                        <!-- Arrow -->
+                        <div class="hidden md:flex items-center text-indigo-400">
+                            <div class="w-12 h-0.5 bg-indigo-300 dark:bg-indigo-600"></div>
+                            <i class="fas fa-chevron-right text-xl -ml-1 animate-bounce-horizontal"></i>
+                        </div>
+                        <div class="md:hidden text-indigo-400">
+                            <i class="fas fa-chevron-down text-xl animate-bounce"></i>
+                        </div>
+                        
+                        <!-- Step 2: Leadbusiness -->
+                        <div class="flex-1 text-center">
+                            <div class="w-20 h-20 mx-auto bg-gradient-to-br from-indigo-500 to-violet-500 rounded-2xl shadow-lg flex items-center justify-center mb-4">
+                                <i class="fas fa-bolt text-3xl text-white"></i>
                             </div>
-                            <div class="bg-white rounded-xl p-4 flex items-center justify-center">
-                                <span class="font-bold text-gray-800">Elopage</span>
+                            <h4 class="font-bold text-gray-900 dark:text-white mb-1">Leadbusiness</h4>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">trackt & tagged</p>
+                        </div>
+                        
+                        <!-- Arrow -->
+                        <div class="hidden md:flex items-center text-indigo-400">
+                            <div class="w-12 h-0.5 bg-indigo-300 dark:bg-indigo-600"></div>
+                            <i class="fas fa-chevron-right text-xl -ml-1 animate-bounce-horizontal"></i>
+                        </div>
+                        <div class="md:hidden text-indigo-400">
+                            <i class="fas fa-chevron-down text-xl animate-bounce"></i>
+                        </div>
+                        
+                        <!-- Step 3: Email Tool (Dynamic) -->
+                        <div class="flex-1 text-center">
+                            <div class="w-20 h-20 mx-auto bg-white dark:bg-slate-600 rounded-2xl shadow-lg flex items-center justify-center mb-4" id="emailToolIcon">
+                                <span class="text-2xl font-bold text-green-600">KT</span>
                             </div>
-                            <div class="bg-white rounded-xl p-4 flex items-center justify-center">
-                                <span class="font-bold text-gray-800">KlickTipp</span>
+                            <h4 class="font-bold text-gray-900 dark:text-white mb-1" id="emailToolName">KlickTipp</h4>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">empfängt Lead</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Tags Preview -->
+                    <div class="mt-8 p-4 bg-white dark:bg-slate-600 rounded-xl border border-gray-200 dark:border-slate-500">
+                        <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Automatisch gesetzte Tags:</p>
+                        <div class="flex flex-wrap gap-2">
+                            <span class="px-3 py-1 bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 rounded-full text-sm font-medium">
+                                empfehlungsprogramm
+                            </span>
+                            <span class="px-3 py-1 bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 rounded-full text-sm font-medium">
+                                empfohlen-von-max-m
+                            </span>
+                            <span class="px-3 py-1 bg-yellow-100 dark:bg-yellow-900/50 text-yellow-700 dark:text-yellow-300 rounded-full text-sm font-medium">
+                                kampagne-launch-2024
+                            </span>
+                            <span class="px-3 py-1 bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 rounded-full text-sm font-medium" id="toolSpecificTag">
+                                quelle-klicktipp
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Features List -->
+                <div class="p-6 bg-white dark:bg-slate-700">
+                    <div class="grid sm:grid-cols-3 gap-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <i class="fas fa-check text-green-600 dark:text-green-400"></i>
                             </div>
+                            <span class="text-sm text-gray-700 dark:text-gray-300">Echtzeit-Sync</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <i class="fas fa-check text-green-600 dark:text-green-400"></i>
+                            </div>
+                            <span class="text-sm text-gray-700 dark:text-gray-300">Automatische Tags</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <i class="fas fa-check text-green-600 dark:text-green-400"></i>
+                            </div>
+                            <span class="text-sm text-gray-700 dark:text-gray-300">Double-Opt-In ready</span>
                         </div>
                     </div>
                 </div>
             </div>
+            
+            <!-- Additional Info -->
+            <div class="mt-6 text-center">
+                <p class="text-gray-500 dark:text-gray-400 text-sm">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    Dein Tool ist nicht dabei? Wir unterstützen jeden Anbieter mit Webhook/API-Schnittstelle.
+                </p>
+            </div>
         </div>
     </div>
 </section>
+
+<style>
+@keyframes bounce-horizontal {
+    0%, 100% { transform: translateX(0); }
+    50% { transform: translateX(4px); }
+}
+.animate-bounce-horizontal {
+    animation: bounce-horizontal 1s ease-in-out infinite;
+}
+.animate-pulse-slow {
+    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const toolSelector = document.getElementById('emailToolSelector');
+    const toolIcon = document.getElementById('emailToolIcon');
+    const toolName = document.getElementById('emailToolName');
+    const toolTag = document.getElementById('toolSpecificTag');
+    
+    const toolData = {
+        klicktipp: { name: 'KlickTipp', icon: 'KT', color: 'green', tag: 'quelle-klicktipp' },
+        activecampaign: { name: 'ActiveCampaign', icon: 'AC', color: 'blue', tag: 'quelle-activecampaign' },
+        mailchimp: { name: 'Mailchimp', icon: 'MC', color: 'yellow', tag: 'quelle-mailchimp' },
+        getresponse: { name: 'GetResponse', icon: 'GR', color: 'cyan', tag: 'quelle-getresponse' },
+        other: { name: 'Dein Tool', icon: '?', color: 'gray', tag: 'quelle-webhook' }
+    };
+    
+    const colorClasses = {
+        green: 'text-green-600',
+        blue: 'text-blue-600',
+        yellow: 'text-yellow-600',
+        cyan: 'text-cyan-600',
+        gray: 'text-gray-600'
+    };
+    
+    toolSelector.addEventListener('click', function(e) {
+        const btn = e.target.closest('.email-tool-btn');
+        if (!btn) return;
+        
+        // Update button states
+        document.querySelectorAll('.email-tool-btn').forEach(b => {
+            b.classList.remove('active', 'bg-indigo-600', 'text-white', 'shadow-lg');
+            b.classList.add('bg-gray-100', 'dark:bg-slate-600', 'text-gray-700', 'dark:text-gray-200');
+        });
+        btn.classList.add('active', 'bg-indigo-600', 'text-white', 'shadow-lg');
+        btn.classList.remove('bg-gray-100', 'dark:bg-slate-600', 'text-gray-700', 'dark:text-gray-200');
+        
+        // Update visualization
+        const tool = btn.dataset.tool;
+        const data = toolData[tool];
+        
+        // Reset color classes
+        Object.values(colorClasses).forEach(cls => toolIcon.querySelector('span')?.classList.remove(cls));
+        
+        toolIcon.innerHTML = `<span class="text-2xl font-bold ${colorClasses[data.color]}">${data.icon}</span>`;
+        toolName.textContent = data.name;
+        toolTag.textContent = data.tag;
+        
+        // Add subtle animation
+        toolIcon.classList.add('scale-110');
+        setTimeout(() => toolIcon.classList.remove('scale-110'), 200);
+    });
+});
+</script>
 
 <!-- Testimonial Section -->
 <section class="py-12 md:py-20 bg-white dark:bg-slate-900">
@@ -468,7 +622,7 @@ $stats = [
             </a>
         </div>
         <p class="text-white/70 mt-6 text-sm">
-            Keine Kreditkarte erforderlich · Digistore24-kompatibel · DSGVO-konform
+            Keine Kreditkarte erforderlich · E-Mail-Tool Export inklusive · DSGVO-konform
         </p>
     </div>
 </section>
