@@ -386,11 +386,11 @@ $theme = $_COOKIE['site_theme'] ?? 'light';
         </div>
     </div>
     
-    <!-- Theme Toggle Script -->
+    <!-- Theme Toggle Script - dispatcht Custom Event für Slider-Reset -->
     <script>
         function toggleTheme() {
-            const html = document.documentElement;
-            const isDark = html.classList.contains('dark');
+            var html = document.documentElement;
+            var isDark = html.classList.contains('dark');
             
             if (isDark) {
                 html.classList.remove('dark');
@@ -399,6 +399,11 @@ $theme = $_COOKIE['site_theme'] ?? 'light';
                 html.classList.add('dark');
                 document.cookie = 'site_theme=dark;path=/;max-age=31536000';
             }
+            
+            // Custom Event auslösen - Slider und andere Komponenten können darauf reagieren
+            window.dispatchEvent(new CustomEvent('themechange', { 
+                detail: { theme: isDark ? 'light' : 'dark' } 
+            }));
         }
     </script>
     
