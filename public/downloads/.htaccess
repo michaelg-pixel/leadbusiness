@@ -1,0 +1,13 @@
+# Downloads Verzeichnis - .htaccess
+# Stellt sicher, dass PDFs korrekt ausgeliefert werden
+
+# PDF-Dateien direkt ausliefern
+<FilesMatch "\.pdf$">
+    Header set Content-Type "application/pdf"
+    Header set Content-Disposition "inline"
+</FilesMatch>
+
+# Wenn avv-leadbusiness.pdf nicht existiert, auf PHP-Script weiterleiten
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^avv-leadbusiness\.pdf$ avv-leadbusiness.php [L]
