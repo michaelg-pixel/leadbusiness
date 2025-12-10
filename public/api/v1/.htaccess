@@ -1,0 +1,31 @@
+# API v1 Routing
+# Ermöglicht saubere URLs wie /api/v1/leads/123
+
+RewriteEngine On
+RewriteBase /api/v1/
+
+# Leads Endpoint
+RewriteRule ^leads/?(.*)$ leads.php/$1 [L,QSA]
+
+# Referrers Endpoint  
+RewriteRule ^referrers/?(.*)$ referrers.php/$1 [L,QSA]
+
+# Stats Endpoint
+RewriteRule ^stats/?$ stats.php [L,QSA]
+
+# Rewards Endpoint
+RewriteRule ^rewards/?$ rewards.php [L,QSA]
+
+# Docs
+RewriteRule ^docs/?$ docs.php [L,QSA]
+
+# CORS Headers für alle Requests
+<IfModule mod_headers.c>
+    Header always set Access-Control-Allow-Origin "*"
+    Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+    Header always set Access-Control-Allow-Headers "Content-Type, X-API-Key, X-API-Secret"
+</IfModule>
+
+# OPTIONS Requests sofort beantworten
+RewriteCond %{REQUEST_METHOD} OPTIONS
+RewriteRule ^(.*)$ $1 [R=200,L]
