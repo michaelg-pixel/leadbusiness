@@ -171,19 +171,21 @@ try {
             'contact_name' => $send['contact_name'],
         ]);
         
-        // E-Mail senden
+        // E-Mail senden mit korrekter Signatur: send($to, $subject, $html, $options)
         try {
             $result = $mailgun->send(
                 $send['email'],
-                $send['contact_name'] ?? $send['company_name'],
                 $subject,
                 $html,
-                $send['from_name'],
-                $send['from_email'],
                 [
-                    'sequence_id' => $send['sequence_id'],
-                    'step_id' => $send['step_id'],
-                    'send_id' => $send['id'],
+                    'from_name' => $send['from_name'],
+                    'from_email' => $send['from_email'],
+                    'variables' => [
+                        'sequence_id' => $send['sequence_id'],
+                        'step_id' => $send['step_id'],
+                        'send_id' => $send['id'],
+                    ],
+                    'tags' => ['sequence', 'sequence_' . $send['sequence_id']],
                 ]
             );
             
