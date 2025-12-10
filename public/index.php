@@ -655,11 +655,11 @@ $heroSlides = [
                     <i class="fas fa-industry mr-2 text-blue-500"></i>Ihre Branche
                 </label>
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-3" id="industry-selector">
-                    <button type="button" data-industry="zahnarzt" data-cpl="120" class="industry-btn active flex flex-col items-center gap-2 p-4 rounded-xl border-2 border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 transition-all">
+                    <button type="button" data-industry="zahnarzt" data-cpl="95" class="industry-btn active flex flex-col items-center gap-2 p-4 rounded-xl border-2 border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 transition-all">
                         <i class="fas fa-tooth text-2xl"></i>
                         <span class="text-sm font-medium">Zahnarzt</span>
                     </button>
-                    <button type="button" data-industry="handwerker" data-cpl="100" class="industry-btn flex flex-col items-center gap-2 p-4 rounded-xl border-2 border-gray-200 dark:border-slate-600 hover:border-blue-400 bg-white dark:bg-slate-700 text-gray-600 dark:text-gray-300 transition-all">
+                    <button type="button" data-industry="handwerker" data-cpl="80" class="industry-btn flex flex-col items-center gap-2 p-4 rounded-xl border-2 border-gray-200 dark:border-slate-600 hover:border-blue-400 bg-white dark:bg-slate-700 text-gray-600 dark:text-gray-300 transition-all">
                         <i class="fas fa-hammer text-2xl"></i>
                         <span class="text-sm font-medium">Handwerker</span>
                     </button>
@@ -671,7 +671,7 @@ $heroSlides = [
                         <i class="fas fa-dumbbell text-2xl"></i>
                         <span class="text-sm font-medium">Fitness</span>
                     </button>
-                    <button type="button" data-industry="friseur" data-cpl="40" class="industry-btn flex flex-col items-center gap-2 p-4 rounded-xl border-2 border-gray-200 dark:border-slate-600 hover:border-blue-400 bg-white dark:bg-slate-700 text-gray-600 dark:text-gray-300 transition-all">
+                    <button type="button" data-industry="friseur" data-cpl="45" class="industry-btn flex flex-col items-center gap-2 p-4 rounded-xl border-2 border-gray-200 dark:border-slate-600 hover:border-blue-400 bg-white dark:bg-slate-700 text-gray-600 dark:text-gray-300 transition-all">
                         <i class="fas fa-cut text-2xl"></i>
                         <span class="text-sm font-medium">Friseur</span>
                     </button>
@@ -726,13 +726,13 @@ $heroSlides = [
                             </div>
                             <span class="text-sm text-gray-500 dark:text-gray-400">Meta, Google, TikTok, etc.</span>
                         </div>
-                        <div class="text-4xl md:text-5xl font-extrabold text-red-600 dark:text-red-400" id="ads-cost">2.400€</div>
+                        <div class="text-4xl md:text-5xl font-extrabold text-red-600 dark:text-red-400" id="ads-cost">1.900€</div>
                         <div class="text-sm text-gray-500 dark:text-gray-400 mt-1">pro Monat</div>
                     </div>
                     <div class="pt-4 border-t border-red-200 dark:border-red-800">
                         <div class="flex justify-between text-sm">
                             <span class="text-gray-600 dark:text-gray-400">Ø Kosten pro Lead:</span>
-                            <span class="font-semibold text-red-600 dark:text-red-400" id="cpl-value">120€</span>
+                            <span class="font-semibold text-red-600 dark:text-red-400" id="cpl-value">95€</span>
                         </div>
                     </div>
                     
@@ -764,7 +764,7 @@ $heroSlides = [
                     
                     <!-- Balken -->
                     <div class="mt-4 h-4 bg-green-200 dark:bg-green-900/50 rounded-full overflow-hidden">
-                        <div class="h-full bg-gradient-to-r from-green-500 to-emerald-500 rounded-full transition-all duration-500" id="lb-bar" style="width: 4%"></div>
+                        <div class="h-full bg-gradient-to-r from-green-500 to-emerald-500 rounded-full transition-all duration-500" id="lb-bar" style="width: 5%"></div>
                     </div>
                 </div>
             </div>
@@ -778,10 +778,10 @@ $heroSlides = [
                         <i class="fas fa-piggy-bank text-amber-300 text-2xl"></i>
                         <span class="text-lg font-medium text-white/90">Ihre monatliche Ersparnis</span>
                     </div>
-                    <div class="text-5xl md:text-6xl font-extrabold text-amber-300" id="savings-value">2.301€</div>
-                    <div class="text-white/80 mt-2">Das sind <span class="font-bold text-white" id="savings-percent">96%</span> weniger Kosten!</div>
+                    <div class="text-5xl md:text-6xl font-extrabold text-amber-300" id="savings-value">1.801€</div>
+                    <div class="text-white/80 mt-2">Das sind <span class="font-bold text-white" id="savings-percent">95%</span> weniger Kosten!</div>
                     <div class="mt-6 text-sm text-white/70">
-                        <span class="font-semibold text-white" id="yearly-savings">27.612€</span> Ersparnis pro Jahr
+                        <span class="font-semibold text-white" id="yearly-savings">21.612€</span> Ersparnis pro Jahr
                     </div>
                 </div>
             </div>
@@ -798,7 +798,7 @@ $heroSlides = [
             <div class="mt-8 p-4 bg-gray-50 dark:bg-slate-700/50 rounded-xl border border-gray-200 dark:border-slate-600">
                 <p class="text-xs text-gray-500 dark:text-gray-400 text-center">
                     <i class="fas fa-info-circle mr-1"></i>
-                    <strong>Hinweis:</strong> Die angezeigten Kosten pro Lead (CPL) für bezahlte Werbung sind Durchschnittswerte basierend auf Branchendaten für den deutschen Markt (Stand 2024). 
+                    <strong>Hinweis:</strong> Die angezeigten Kosten pro Lead (CPL) für bezahlte Werbung sind Durchschnittswerte basierend auf Branchendaten für den deutschen Markt (Quellen: WordStream, LocaliQ Benchmarks 2024/2025). 
                     Die tatsächlichen Kosten können je nach Zielgruppe, Region, Wettbewerb und Kampagnenqualität variieren. 
                     Leadbusiness garantiert keine bestimmte Anzahl von Empfehlungen – der Erfolg hängt von der Aktivierung Ihrer Bestandskunden ab.
                 </p>
@@ -811,12 +811,13 @@ $heroSlides = [
         'use strict';
         
         // CPL-Daten pro Branche (Durchschnitt aus Meta, Google, etc.)
+        // Quellen: WordStream, LocaliQ Facebook/Google Ads Benchmarks 2024/2025
         var industryData = {
-            zahnarzt: { cpl: 120, name: 'Zahnarzt' },
-            handwerker: { cpl: 100, name: 'Handwerker' },
+            zahnarzt: { cpl: 95, name: 'Zahnarzt' },
+            handwerker: { cpl: 80, name: 'Handwerker' },
             coach: { cpl: 65, name: 'Coach' },
             fitness: { cpl: 50, name: 'Fitness' },
-            friseur: { cpl: 40, name: 'Friseur' },
+            friseur: { cpl: 45, name: 'Friseur' },
             onlineshop: { cpl: 35, name: 'Online-Shop' },
             restaurant: { cpl: 25, name: 'Restaurant' },
             marketing: { cpl: 85, name: 'Marketing' }
