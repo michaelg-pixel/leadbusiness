@@ -401,6 +401,7 @@ $theme = $_COOKIE['site_theme'] ?? 'light';
             }
             
             // Custom Event auslösen - Slider und andere Komponenten können darauf reagieren
+            console.log('[Theme] Toggle aufgerufen, neues Theme:', isDark ? 'light' : 'dark');
             window.dispatchEvent(new CustomEvent('themechange', { 
                 detail: { theme: isDark ? 'light' : 'dark' } 
             }));
