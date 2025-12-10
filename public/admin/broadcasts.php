@@ -310,6 +310,9 @@ $industries = $db->fetchAll("SELECT DISTINCT industry FROM customers WHERE indus
 // Unsubscribes
 $unsubscribeCount = $db->fetchColumn("SELECT COUNT(*) FROM admin_broadcast_unsubscribes") ?? 0;
 
+// Admin E-Mail für Test
+$adminEmail = $db->fetchColumn("SELECT email FROM admin_users WHERE id = ?", [$_SESSION['admin_id']]) ?? '';
+
 // Status Config
 $statusConfig = [
     'draft' => ['label' => 'Entwurf', 'color' => 'slate', 'icon' => 'fa-file-alt'],
@@ -323,6 +326,9 @@ $statusConfig = [
 include __DIR__ . '/../../includes/admin-header.php';
 ?>
 
+<!-- TinyMCE Editor -->
+<script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
+
 <?php if (isset($_SESSION['flash_success'])): ?>
 <div class="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-300 px-4 py-3 rounded-lg mb-6">
     <i class="fas fa-check-circle mr-2"></i><?= e($_SESSION['flash_success']) ?>
@@ -331,9 +337,12 @@ include __DIR__ . '/../../includes/admin-header.php';
 
 <?php if ($composeMode): ?>
 <!-- COMPOSE MODE -->
-<div class="mb-6">
+<div class="mb-6 flex items-center justify-between">
     <a href="/admin/broadcasts.php" class="text-slate-500 hover:text-primary-600">
         <i class="fas fa-arrow-left mr-2"></i>Zurück zur Übersicht
+    </a>
+    <a href="/admin/sequences.php" class="text-sm text-primary-600 hover:text-primary-700">
+        <i class="fas fa-stream mr-1"></i>E-Mail Sequenzen
     </a>
 </div>
 
@@ -365,14 +374,14 @@ include __DIR__ . '/../../includes/admin-header.php';
                             <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                                 Absender Name
                             </label>
-                            <input type="text" name="from_name" value="<?= e($editBroadcast['from_name'] ?? 'Leadbusiness') ?>"
+                            <input type="text" name="from_name" id="fromName" value="<?= e($editBroadcast['from_name'] ?? 'Leadbusiness') ?>"
                                    class="w-full px-4 py-2 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                                 Absender E-Mail
                             </label>
-                            <input type="email" name="from_email" value="<?= e($editBroadcast['from_email'] ?? 'info@empfehlungen.cloud') ?>"
+                            <input type="email" name="from_email" id="fromEmail" value="<?= e($editBroadcast['from_email'] ?? 'info@empfehlungen.cloud') ?>"
                                    class="w-full px-4 py-2 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white">
                         </div>
                     </div>
@@ -390,28 +399,35 @@ include __DIR__ . '/../../includes/admin-header.php';
                         <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                             Betreff *
                         </label>
-                        <input type="text" name="subject" required value="<?= e($editBroadcast['subject'] ?? '') ?>"
+                        <input type="text" name="subject" id="subjectField" required value="<?= e($editBroadcast['subject'] ?? '') ?>"
                                placeholder="Ihr Betreff hier..."
                                class="w-full px-4 py-2 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white">
-                        <p class="text-xs text-slate-500 mt-1">
-                            Variablen: <code class="bg-slate-100 dark:bg-slate-700 px-1 rounded">{company_name}</code>, 
-                            <code class="bg-slate-100 dark:bg-slate-700 px-1 rounded">{contact_name}</code>
-                        </p>
+                        <div class="flex flex-wrap gap-1 mt-1">
+                            <span class="text-xs text-slate-500">Variablen:</span>
+                            <button type="button" onclick="insertIntoField('subjectField', '{company_name}')" class="text-xs text-primary-600 hover:underline">{company_name}</button>
+                            <button type="button" onclick="insertIntoField('subjectField', '{contact_name}')" class="text-xs text-primary-600 hover:underline">{contact_name}</button>
+                        </div>
                     </div>
                     
                     <div>
-                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                            Inhalt (HTML) *
-                        </label>
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                                Inhalt *
+                            </label>
+                            <button type="button" onclick="toggleEditor()" id="toggleEditorBtn" class="text-xs text-primary-600 hover:text-primary-700">
+                                <i class="fas fa-code mr-1"></i><span id="toggleEditorText">HTML-Modus</span>
+                            </button>
+                        </div>
                         <textarea name="body_html" id="bodyHtml" rows="15" required
-                                  class="w-full px-4 py-2 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white font-mono text-sm"><?= e($editBroadcast['body_html'] ?? '') ?></textarea>
-                        <p class="text-xs text-slate-500 mt-1">
-                            Variablen: <code class="bg-slate-100 dark:bg-slate-700 px-1 rounded">{company_name}</code>, 
-                            <code class="bg-slate-100 dark:bg-slate-700 px-1 rounded">{contact_name}</code>,
-                            <code class="bg-slate-100 dark:bg-slate-700 px-1 rounded">{email}</code>,
-                            <code class="bg-slate-100 dark:bg-slate-700 px-1 rounded">{subdomain}</code>,
-                            <code class="bg-slate-100 dark:bg-slate-700 px-1 rounded">{unsubscribe_link}</code>
-                        </p>
+                                  class="w-full px-4 py-2 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white"><?= e($editBroadcast['body_html'] ?? '') ?></textarea>
+                        <div class="flex flex-wrap items-center gap-2 mt-2">
+                            <span class="text-xs text-slate-500">Variablen einfügen:</span>
+                            <button type="button" onclick="insertVariable('{company_name}')" class="px-2 py-0.5 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 rounded text-xs">{company_name}</button>
+                            <button type="button" onclick="insertVariable('{contact_name}')" class="px-2 py-0.5 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 rounded text-xs">{contact_name}</button>
+                            <button type="button" onclick="insertVariable('{email}')" class="px-2 py-0.5 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 rounded text-xs">{email}</button>
+                            <button type="button" onclick="insertVariable('{subdomain}')" class="px-2 py-0.5 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 rounded text-xs">{subdomain}</button>
+                            <button type="button" onclick="insertVariable('{unsubscribe_link}')" class="px-2 py-0.5 bg-red-100 dark:bg-red-900/30 hover:bg-red-200 text-red-700 rounded text-xs">{unsubscribe_link}</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -423,23 +439,59 @@ include __DIR__ . '/../../includes/admin-header.php';
                 </h3>
                 <div class="flex flex-wrap gap-2">
                     <button type="button" onclick="insertTemplate('welcome')" class="px-3 py-1.5 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg text-sm">
-                        Willkommen
+                        <i class="fas fa-hand-wave mr-1 text-amber-500"></i>Willkommen
                     </button>
                     <button type="button" onclick="insertTemplate('update')" class="px-3 py-1.5 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg text-sm">
-                        Produkt-Update
+                        <i class="fas fa-rocket mr-1 text-blue-500"></i>Produkt-Update
                     </button>
                     <button type="button" onclick="insertTemplate('tip')" class="px-3 py-1.5 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg text-sm">
-                        Tipp der Woche
+                        <i class="fas fa-lightbulb mr-1 text-yellow-500"></i>Tipp der Woche
                     </button>
                     <button type="button" onclick="insertTemplate('promo')" class="px-3 py-1.5 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg text-sm">
-                        Sonderangebot
+                        <i class="fas fa-gift mr-1 text-green-500"></i>Sonderangebot
                     </button>
+                    <button type="button" onclick="insertTemplate('reminder')" class="px-3 py-1.5 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg text-sm">
+                        <i class="fas fa-bell mr-1 text-red-500"></i>Erinnerung
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Vorschau -->
+            <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-sm font-semibold text-slate-800 dark:text-white">
+                        <i class="fas fa-eye text-cyan-500 mr-2"></i>Live-Vorschau
+                    </h3>
+                    <button type="button" onclick="updatePreview()" class="text-xs text-primary-600 hover:text-primary-700">
+                        <i class="fas fa-sync-alt mr-1"></i>Aktualisieren
+                    </button>
+                </div>
+                <div class="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden bg-white">
+                    <iframe id="previewFrame" class="w-full h-64" style="border: none;"></iframe>
                 </div>
             </div>
         </div>
         
         <!-- Rechte Spalte: Targeting & Aktionen -->
         <div class="space-y-6">
+            <!-- Test-E-Mail -->
+            <div class="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-xl shadow-sm border border-amber-200 dark:border-amber-800 p-6">
+                <h3 class="text-sm font-semibold text-slate-800 dark:text-white mb-3">
+                    <i class="fas fa-flask text-amber-500 mr-2"></i>Test-E-Mail senden
+                </h3>
+                <div class="space-y-3">
+                    <input type="email" id="testEmail" value="<?= e($adminEmail) ?>" placeholder="test@example.com"
+                           class="w-full px-3 py-2 border border-amber-200 dark:border-amber-700 rounded-lg bg-white dark:bg-slate-800 text-sm">
+                    <button type="button" onclick="sendTestEmail()" id="testEmailBtn" 
+                            class="w-full px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition-all text-sm">
+                        <i class="fas fa-paper-plane mr-2"></i>Test senden
+                    </button>
+                    <p class="text-xs text-amber-700 dark:text-amber-400">
+                        Sendet eine Vorschau mit Beispieldaten an die angegebene Adresse.
+                    </p>
+                </div>
+            </div>
+            
             <!-- Empfänger -->
             <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
                 <h3 class="text-sm font-semibold text-slate-800 dark:text-white mb-4">
@@ -575,6 +627,95 @@ include __DIR__ . '/../../includes/admin-header.php';
 </form>
 
 <script>
+let editorActive = false;
+
+// TinyMCE initialisieren
+document.addEventListener('DOMContentLoaded', function() {
+    initEditor();
+    updatePreview();
+});
+
+function initEditor() {
+    tinymce.init({
+        selector: '#bodyHtml',
+        height: 400,
+        menubar: false,
+        plugins: 'lists link image code table hr',
+        toolbar: 'undo redo | blocks | bold italic underline | forecolor backcolor | alignleft aligncenter alignright | bullist numlist | link image | table hr | code',
+        content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 14px; line-height: 1.6; }',
+        branding: false,
+        promotion: false,
+        setup: function(editor) {
+            editor.on('change', function() {
+                editor.save();
+                updatePreview();
+            });
+        }
+    });
+    editorActive = true;
+}
+
+function toggleEditor() {
+    if (editorActive) {
+        tinymce.get('bodyHtml').remove();
+        document.getElementById('bodyHtml').style.fontFamily = 'monospace';
+        document.getElementById('bodyHtml').style.fontSize = '12px';
+        document.getElementById('toggleEditorText').textContent = 'Visual-Modus';
+        editorActive = false;
+    } else {
+        initEditor();
+        document.getElementById('toggleEditorText').textContent = 'HTML-Modus';
+    }
+}
+
+function insertVariable(variable) {
+    if (editorActive && tinymce.get('bodyHtml')) {
+        tinymce.get('bodyHtml').execCommand('mceInsertContent', false, variable);
+    } else {
+        const textarea = document.getElementById('bodyHtml');
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        textarea.value = textarea.value.substring(0, start) + variable + textarea.value.substring(end);
+        textarea.selectionStart = textarea.selectionEnd = start + variable.length;
+        textarea.focus();
+    }
+    updatePreview();
+}
+
+function insertIntoField(fieldId, text) {
+    const field = document.getElementById(fieldId);
+    const start = field.selectionStart;
+    const end = field.selectionEnd;
+    field.value = field.value.substring(0, start) + text + field.value.substring(end);
+    field.selectionStart = field.selectionEnd = start + text.length;
+    field.focus();
+}
+
+function updatePreview() {
+    let content = '';
+    if (editorActive && tinymce.get('bodyHtml')) {
+        content = tinymce.get('bodyHtml').getContent();
+    } else {
+        content = document.getElementById('bodyHtml').value;
+    }
+    
+    // Variablen durch Beispieldaten ersetzen
+    const testData = {
+        '{company_name}': '<span style="background:#fef3c7;padding:2px 4px;border-radius:3px;">Test Firma GmbH</span>',
+        '{contact_name}': '<span style="background:#fef3c7;padding:2px 4px;border-radius:3px;">Max Mustermann</span>',
+        '{email}': '<span style="background:#fef3c7;padding:2px 4px;border-radius:3px;">test@example.com</span>',
+        '{subdomain}': '<span style="background:#fef3c7;padding:2px 4px;border-radius:3px;">test-firma</span>',
+        '{unsubscribe_link}': '<span style="background:#fee2e2;padding:2px 4px;border-radius:3px;">#unsubscribe</span>'
+    };
+    
+    for (const [key, value] of Object.entries(testData)) {
+        content = content.split(key).join(value);
+    }
+    
+    const frame = document.getElementById('previewFrame');
+    frame.srcdoc = `<!DOCTYPE html><html><head><style>body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:14px;line-height:1.6;padding:15px;margin:0;}</style></head><body>${content}</body></html>`;
+}
+
 function updateTargetUI() {
     const targetType = document.querySelector('input[name="target_type"]:checked').value;
     
@@ -592,6 +733,11 @@ function updateTargetUI() {
 }
 
 function submitForm(action) {
+    // TinyMCE Inhalt sichern
+    if (editorActive && tinymce.get('bodyHtml')) {
+        tinymce.get('bodyHtml').save();
+    }
+    
     document.getElementById('formAction').value = action;
     
     if (action === 'schedule') {
@@ -605,50 +751,131 @@ function submitForm(action) {
     document.getElementById('broadcastForm').submit();
 }
 
+function sendTestEmail() {
+    const testEmail = document.getElementById('testEmail').value;
+    const subject = document.getElementById('subjectField').value;
+    const fromName = document.getElementById('fromName').value;
+    const fromEmail = document.getElementById('fromEmail').value;
+    
+    let bodyHtml = '';
+    if (editorActive && tinymce.get('bodyHtml')) {
+        bodyHtml = tinymce.get('bodyHtml').getContent();
+    } else {
+        bodyHtml = document.getElementById('bodyHtml').value;
+    }
+    
+    if (!testEmail) {
+        alert('Bitte geben Sie eine E-Mail-Adresse ein.');
+        return;
+    }
+    
+    if (!subject || !bodyHtml) {
+        alert('Bitte füllen Sie Betreff und Inhalt aus.');
+        return;
+    }
+    
+    const btn = document.getElementById('testEmailBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Senden...';
+    
+    const formData = new FormData();
+    formData.append('test_email', testEmail);
+    formData.append('subject', subject);
+    formData.append('body_html', bodyHtml);
+    formData.append('from_name', fromName);
+    formData.append('from_email', fromEmail);
+    
+    fetch('/admin/api/send-test-email.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('✅ ' + data.message);
+        } else {
+            alert('❌ Fehler: ' + data.error);
+        }
+    })
+    .catch(error => {
+        alert('❌ Fehler: ' + error.message);
+    })
+    .finally(() => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Test senden';
+    });
+}
+
 function insertTemplate(type) {
     const templates = {
-        welcome: `<h2>Willkommen bei Leadbusiness, {contact_name}!</h2>
+        welcome: `<h2 style="color: #1e293b; margin-bottom: 20px;">Willkommen bei Leadbusiness, {contact_name}!</h2>
 <p>Vielen Dank, dass Sie sich für Leadbusiness entschieden haben.</p>
-<p>Ihr Empfehlungsprogramm ist jetzt aktiv unter: <a href="https://{subdomain}.empfehlungen.cloud">https://{subdomain}.empfehlungen.cloud</a></p>
+<p>Ihr Empfehlungsprogramm ist jetzt aktiv unter:<br>
+<a href="https://{subdomain}.empfehlungen.cloud" style="color: #667eea;">https://{subdomain}.empfehlungen.cloud</a></p>
 <p>Bei Fragen stehen wir Ihnen gerne zur Verfügung.</p>
-<p>Mit freundlichen Grüßen,<br>Ihr Leadbusiness Team</p>
-<p style="font-size: 12px; color: #666;"><a href="{unsubscribe_link}">Abmelden</a></p>`,
+<p>Mit freundlichen Grüßen,<br><strong>Ihr Leadbusiness Team</strong></p>
+<hr style="border: none; border-top: 1px solid #e2e8f0; margin: 30px 0;">
+<p style="font-size: 12px; color: #64748b;"><a href="{unsubscribe_link}" style="color: #64748b;">Von diesem Newsletter abmelden</a></p>`,
         
-        update: `<h2>Neues Feature: {FEATURE_NAME}</h2>
+        update: `<h2 style="color: #1e293b; margin-bottom: 20px;">🚀 Neues Feature verfügbar!</h2>
 <p>Hallo {contact_name},</p>
-<p>wir freuen uns, Ihnen ein neues Feature vorzustellen:</p>
-<ul>
-<li>Feature 1</li>
-<li>Feature 2</li>
+<p>wir freuen uns, Ihnen ein spannendes neues Feature vorzustellen:</p>
+<div style="background: #f0f9ff; padding: 20px; border-radius: 8px; margin: 20px 0;">
+<h3 style="color: #0369a1; margin-top: 0;">Feature-Name</h3>
+<ul style="color: #475569;">
+<li>Vorteil 1</li>
+<li>Vorteil 2</li>
+<li>Vorteil 3</li>
 </ul>
-<p>Probieren Sie es gleich aus in Ihrem <a href="https://empfehlungen.cloud/dashboard">Dashboard</a>!</p>
-<p>Mit freundlichen Grüßen,<br>Ihr Leadbusiness Team</p>
-<p style="font-size: 12px; color: #666;"><a href="{unsubscribe_link}">Abmelden</a></p>`,
+</div>
+<p>Probieren Sie es gleich aus in Ihrem <a href="https://empfehlungen.cloud/dashboard" style="color: #667eea;">Dashboard</a>!</p>
+<p>Mit freundlichen Grüßen,<br><strong>Ihr Leadbusiness Team</strong></p>
+<hr style="border: none; border-top: 1px solid #e2e8f0; margin: 30px 0;">
+<p style="font-size: 12px; color: #64748b;"><a href="{unsubscribe_link}" style="color: #64748b;">Von diesem Newsletter abmelden</a></p>`,
         
-        tip: `<h2>💡 Tipp der Woche</h2>
+        tip: `<h2 style="color: #1e293b; margin-bottom: 20px;">💡 Tipp der Woche</h2>
 <p>Hallo {contact_name},</p>
 <p>diese Woche möchten wir Ihnen einen wertvollen Tipp geben:</p>
-<blockquote style="border-left: 3px solid #667eea; padding-left: 15px; color: #555;">
-Ihr Tipp hier...
+<blockquote style="border-left: 4px solid #667eea; padding: 15px 20px; margin: 20px 0; background: #f8fafc; color: #475569; font-style: italic;">
+"Hier kommt Ihr Tipp..."
 </blockquote>
-<p>Viel Erfolg!</p>
-<p>Mit freundlichen Grüßen,<br>Ihr Leadbusiness Team</p>
-<p style="font-size: 12px; color: #666;"><a href="{unsubscribe_link}">Abmelden</a></p>`,
+<p>Viel Erfolg bei der Umsetzung!</p>
+<p>Mit freundlichen Grüßen,<br><strong>Ihr Leadbusiness Team</strong></p>
+<hr style="border: none; border-top: 1px solid #e2e8f0; margin: 30px 0;">
+<p style="font-size: 12px; color: #64748b;"><a href="{unsubscribe_link}" style="color: #64748b;">Von diesem Newsletter abmelden</a></p>`,
         
-        promo: `<h2>🎉 Exklusives Angebot für Sie!</h2>
+        promo: `<h2 style="color: #1e293b; margin-bottom: 20px;">🎉 Exklusives Angebot für Sie!</h2>
 <p>Hallo {contact_name},</p>
 <p>als geschätzter Kunde erhalten Sie ein exklusives Angebot:</p>
-<div style="background: #f0f9ff; padding: 20px; border-radius: 8px; text-align: center;">
-<h3 style="color: #0369a1;">XX% Rabatt auf Ihr Upgrade</h3>
-<p>Nur bis zum XX.XX.XXXX</p>
-<a href="#" style="display: inline-block; background: #0ea5e9; color: white; padding: 10px 20px; border-radius: 5px; text-decoration: none;">Jetzt upgraden</a>
+<div style="background: linear-gradient(135deg, #667eea, #764ba2); padding: 30px; border-radius: 12px; text-align: center; margin: 20px 0;">
+<h3 style="color: white; font-size: 28px; margin: 0;">XX% Rabatt</h3>
+<p style="color: rgba(255,255,255,0.9); margin: 10px 0;">auf Ihr Upgrade zum Professional-Plan</p>
+<p style="color: rgba(255,255,255,0.8); font-size: 14px;">Nur bis zum XX.XX.XXXX</p>
+<a href="#" style="display: inline-block; background: white; color: #667eea; padding: 12px 30px; border-radius: 6px; text-decoration: none; font-weight: bold; margin-top: 15px;">Jetzt upgraden</a>
 </div>
-<p>Mit freundlichen Grüßen,<br>Ihr Leadbusiness Team</p>
-<p style="font-size: 12px; color: #666;"><a href="{unsubscribe_link}">Abmelden</a></p>`
+<p>Mit freundlichen Grüßen,<br><strong>Ihr Leadbusiness Team</strong></p>
+<hr style="border: none; border-top: 1px solid #e2e8f0; margin: 30px 0;">
+<p style="font-size: 12px; color: #64748b;"><a href="{unsubscribe_link}" style="color: #64748b;">Von diesem Newsletter abmelden</a></p>`,
+        
+        reminder: `<h2 style="color: #1e293b; margin-bottom: 20px;">⏰ Freundliche Erinnerung</h2>
+<p>Hallo {contact_name},</p>
+<p>wir möchten Sie kurz daran erinnern:</p>
+<div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px 20px; margin: 20px 0;">
+<p style="color: #92400e; margin: 0;"><strong>Ihre Erinnerung hier...</strong></p>
+</div>
+<p>Bei Fragen stehen wir Ihnen gerne zur Verfügung.</p>
+<p>Mit freundlichen Grüßen,<br><strong>Ihr Leadbusiness Team</strong></p>
+<hr style="border: none; border-top: 1px solid #e2e8f0; margin: 30px 0;">
+<p style="font-size: 12px; color: #64748b;"><a href="{unsubscribe_link}" style="color: #64748b;">Von diesem Newsletter abmelden</a></p>`
     };
     
     if (templates[type]) {
-        document.getElementById('bodyHtml').value = templates[type];
+        if (editorActive && tinymce.get('bodyHtml')) {
+            tinymce.get('bodyHtml').setContent(templates[type]);
+        } else {
+            document.getElementById('bodyHtml').value = templates[type];
+        }
+        updatePreview();
     }
 }
 
@@ -676,6 +903,9 @@ updateTargetUI();
         <p class="text-slate-500">Marketing-E-Mails an Ihre Kunden senden</p>
     </div>
     <div class="flex items-center gap-3">
+        <a href="/admin/sequences.php" class="px-4 py-2 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-white rounded-lg transition-all">
+            <i class="fas fa-stream mr-2"></i>Sequenzen
+        </a>
         <a href="/admin/tags.php" class="px-4 py-2 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-white rounded-lg transition-all">
             <i class="fas fa-tags mr-2"></i>Tags
         </a>
