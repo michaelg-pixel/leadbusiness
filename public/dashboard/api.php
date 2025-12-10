@@ -3,6 +3,7 @@
  * Leadbusiness - API Dashboard
  * 
  * API-Key Management für Professional und Enterprise Kunden
+ * Enterprise: E-Mail-Versand Kontrolle
  */
 
 require_once __DIR__ . '/../../config/database.php';
@@ -33,7 +34,7 @@ $isEnterprise = $customer['plan'] === 'enterprise';
 $success = '';
 $error = '';
 
-// API-Key Aktionen
+// API-Key und E-Mail Aktionen
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $hasApiAccess) {
     $action = $_POST['action'] ?? '';
     $csrf = $_POST['csrf_token'] ?? '';
@@ -43,7 +44,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $hasApiAccess) {
     } else {
         switch ($action) {
             case 'generate':
-                // Neuen API-Key generieren
                 $apiKey = ApiHandler::generateApiKey();
                 $apiSecret = ApiHandler::generateApiSecret();
                 
@@ -61,7 +61,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $hasApiAccess) {
                 break;
                 
             case 'regenerate':
-                // Nur API-Key neu generieren (Secret bleibt gleich)
                 $apiKey = ApiHandler::generateApiKey();
                 
                 $db->query(
@@ -74,7 +73,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $hasApiAccess) {
                 break;
                 
             case 'regenerate_secret':
-                // Nur Secret neu generieren
                 $apiSecret = ApiHandler::generateApiSecret();
                 
                 $db->query(
@@ -106,6 +104,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $hasApiAccess) {
                 $customer['api_secret'] = null;
                 $customer['api_enabled'] = 0;
                 $success = 'API-Zugang wurde vollständig widerrufen.';
+                break;
+            
+            // Enterprise: E-Mail-Einstellungen
+            case 'save_email_settings':
+                if ($isEnterprise) {
+                    $emailMode = $_POST['email_mode'] ?? 'leadbusiness';
+                    
+                    if ($emailMode === 'leadbusiness') {
+                        // Leadbusiness versendet alle E-Mails
+                        $db->query(
+                            "UPDATE customers SET email_notifications_enabled = 1, email_self_managed = 0, webhook_email_events = 0 WHERE id = ?",
+                            [$customerId]
+                        );
+                        $success = 'E-Mail-Versand wird jetzt von Leadbusiness übernommen.';
+                        
+                    } elseif ($emailMode === 'self_managed') {
+                        // Kunde versendet selbst - nur Webhook-Events
+                        $db->query(
+                            "UPDATE customers SET email_notifications_enabled = 0, email_self_managed = 1, webhook_email_events = 1 WHERE id = ?",
+                            [$customerId]
+                        );
+                        $success = 'E-Mail-Versand ist jetzt deaktiviert. Sie erhalten alle Events per Webhook.';
+                        
+                    } elseif ($emailMode === 'hybrid') {
+                        // Hybrid: Leadbusiness sendet + Webhook-Events
+                        $db->query(
+                            "UPDATE customers SET email_notifications_enabled = 1, email_self_managed = 0, webhook_email_events = 1 WHERE id = ?",
+                            [$customerId]
+                        );
+                        $success = 'Hybrid-Modus aktiviert. Leadbusiness sendet E-Mails UND Sie erhalten Webhook-Events.';
+                    }
+                }
                 break;
         }
         
@@ -144,6 +174,14 @@ $currentLimits = $rateLimits[$customer['plan']] ?? $rateLimits['professional'];
 // Secret zum Anzeigen (nur nach Generierung)
 $showSecret = $_SESSION['show_secret'] ?? null;
 unset($_SESSION['show_secret']);
+
+// Aktueller E-Mail-Modus ermitteln
+$emailMode = 'leadbusiness'; // Standard
+if (!empty($customer['email_self_managed'])) {
+    $emailMode = 'self_managed';
+} elseif (!empty($customer['webhook_email_events']) && !empty($customer['email_notifications_enabled'])) {
+    $emailMode = 'hybrid';
+}
 
 $pageTitle = 'API-Zugang';
 include __DIR__ . '/../../includes/dashboard-header.php';
@@ -267,20 +305,18 @@ include __DIR__ . '/../../includes/dashboard-header.php';
             </div>
         </div>
         
-        <!-- API Secret (nur nach Generierung sichtbar) -->
+        <!-- API Secret -->
         <?php if ($showSecret): ?>
         <div class="mb-4 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl">
             <div class="flex items-start gap-3 mb-3">
                 <i class="fas fa-exclamation-triangle text-amber-500 mt-1"></i>
                 <div>
                     <p class="font-medium text-amber-800 dark:text-amber-300">Wichtig: API-Secret speichern!</p>
-                    <p class="text-sm text-amber-700 dark:text-amber-400">Dieses Secret wird nur einmal angezeigt. Speichern Sie es sicher ab!</p>
+                    <p class="text-sm text-amber-700 dark:text-amber-400">Dieses Secret wird nur einmal angezeigt.</p>
                 </div>
             </div>
             <div class="flex items-center gap-2">
-                <input type="text" 
-                       value="<?= e($showSecret) ?>" 
-                       readonly 
+                <input type="text" value="<?= e($showSecret) ?>" readonly 
                        class="flex-1 px-4 py-3 bg-white dark:bg-slate-700 border border-amber-300 dark:border-amber-700 rounded-lg font-mono text-sm text-slate-800 dark:text-white">
                 <button onclick="copyToClipboard('<?= e($showSecret) ?>', this)" 
                         class="p-3 bg-amber-100 dark:bg-amber-900/50 rounded-lg hover:bg-amber-200 transition">
@@ -410,6 +446,149 @@ include __DIR__ . '/../../includes/dashboard-header.php';
     </div>
 </div>
 
+<?php if ($isEnterprise): ?>
+<!-- ENTERPRISE: E-Mail-Versand Kontrolle -->
+<div class="bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 rounded-2xl p-6 border border-purple-200 dark:border-purple-800 mb-8">
+    <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 bg-purple-500 rounded-xl flex items-center justify-center">
+            <i class="fas fa-envelope text-white"></i>
+        </div>
+        <div>
+            <h2 class="text-xl font-bold text-slate-800 dark:text-white">E-Mail-Versand Kontrolle</h2>
+            <p class="text-sm text-slate-600 dark:text-slate-400">Enterprise-Funktion: Wählen Sie, wer E-Mails an Ihre Empfehler versendet</p>
+        </div>
+        <span class="ml-auto px-3 py-1 bg-purple-500 text-white text-xs font-bold rounded-full">ENTERPRISE</span>
+    </div>
+    
+    <form method="POST">
+        <input type="hidden" name="csrf_token" value="<?= e($_SESSION['csrf_token'] ?? '') ?>">
+        <input type="hidden" name="action" value="save_email_settings">
+        
+        <div class="grid md:grid-cols-3 gap-4 mb-6">
+            
+            <!-- Option 1: Leadbusiness versendet -->
+            <label class="relative cursor-pointer">
+                <input type="radio" name="email_mode" value="leadbusiness" <?= $emailMode === 'leadbusiness' ? 'checked' : '' ?> class="peer sr-only">
+                <div class="p-5 bg-white dark:bg-slate-800 rounded-xl border-2 border-slate-200 dark:border-slate-700 peer-checked:border-purple-500 peer-checked:bg-purple-50 dark:peer-checked:bg-purple-900/30 transition-all hover:border-purple-300">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-paper-plane text-green-500"></i>
+                        </div>
+                        <div class="w-5 h-5 rounded-full border-2 border-slate-300 peer-checked:border-purple-500 peer-checked:bg-purple-500 flex items-center justify-center">
+                            <i class="fas fa-check text-white text-xs hidden peer-checked:block"></i>
+                        </div>
+                    </div>
+                    <h3 class="font-semibold text-slate-800 dark:text-white mb-1">Leadbusiness versendet</h3>
+                    <p class="text-sm text-slate-500 dark:text-slate-400">Wir kümmern uns um alle E-Mails an Ihre Empfehler (Willkommen, Belohnungen, etc.)</p>
+                    <div class="mt-3 flex items-center gap-2 text-xs text-green-600 dark:text-green-400">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Empfohlen - Keine Arbeit für Sie</span>
+                    </div>
+                </div>
+            </label>
+            
+            <!-- Option 2: Selbst verwaltet -->
+            <label class="relative cursor-pointer">
+                <input type="radio" name="email_mode" value="self_managed" <?= $emailMode === 'self_managed' ? 'checked' : '' ?> class="peer sr-only">
+                <div class="p-5 bg-white dark:bg-slate-800 rounded-xl border-2 border-slate-200 dark:border-slate-700 peer-checked:border-purple-500 peer-checked:bg-purple-50 dark:peer-checked:bg-purple-900/30 transition-all hover:border-purple-300">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-10 h-10 bg-amber-100 dark:bg-amber-900/30 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-cogs text-amber-500"></i>
+                        </div>
+                    </div>
+                    <h3 class="font-semibold text-slate-800 dark:text-white mb-1">Ich versende selbst</h3>
+                    <p class="text-sm text-slate-500 dark:text-slate-400">Leadbusiness sendet KEINE E-Mails. Sie erhalten alle Events per Webhook.</p>
+                    <div class="mt-3 flex items-center gap-2 text-xs text-amber-600 dark:text-amber-400">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span>Erfordert eigenes E-Mail-System</span>
+                    </div>
+                </div>
+            </label>
+            
+            <!-- Option 3: Hybrid -->
+            <label class="relative cursor-pointer">
+                <input type="radio" name="email_mode" value="hybrid" <?= $emailMode === 'hybrid' ? 'checked' : '' ?> class="peer sr-only">
+                <div class="p-5 bg-white dark:bg-slate-800 rounded-xl border-2 border-slate-200 dark:border-slate-700 peer-checked:border-purple-500 peer-checked:bg-purple-50 dark:peer-checked:bg-purple-900/30 transition-all hover:border-purple-300">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-arrows-split-up-and-left text-blue-500"></i>
+                        </div>
+                    </div>
+                    <h3 class="font-semibold text-slate-800 dark:text-white mb-1">Hybrid-Modus</h3>
+                    <p class="text-sm text-slate-500 dark:text-slate-400">Leadbusiness sendet E-Mails UND Sie erhalten zusätzlich Webhook-Events.</p>
+                    <div class="mt-3 flex items-center gap-2 text-xs text-blue-600 dark:text-blue-400">
+                        <i class="fas fa-layer-group"></i>
+                        <span>Beides gleichzeitig</span>
+                    </div>
+                </div>
+            </label>
+        </div>
+        
+        <!-- Info-Box je nach Auswahl -->
+        <div id="email-info" class="p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 mb-4">
+            <div id="info-leadbusiness" class="<?= $emailMode !== 'leadbusiness' ? 'hidden' : '' ?>">
+                <h4 class="font-medium text-slate-800 dark:text-white mb-2"><i class="fas fa-info-circle text-green-500 mr-2"></i>Automatischer E-Mail-Versand</h4>
+                <p class="text-sm text-slate-600 dark:text-slate-400">Folgende E-Mails werden automatisch von Leadbusiness versendet:</p>
+                <ul class="mt-2 space-y-1 text-sm text-slate-500 dark:text-slate-400">
+                    <li><i class="fas fa-check text-green-500 mr-2"></i>Willkommens-E-Mail bei Registrierung</li>
+                    <li><i class="fas fa-check text-green-500 mr-2"></i>Benachrichtigung bei neuer Empfehlung</li>
+                    <li><i class="fas fa-check text-green-500 mr-2"></i>Belohnungs-E-Mail bei freigeschalteter Stufe</li>
+                    <li><i class="fas fa-check text-green-500 mr-2"></i>Wöchentlicher Status-Bericht (optional)</li>
+                </ul>
+            </div>
+            
+            <div id="info-self" class="<?= $emailMode !== 'self_managed' ? 'hidden' : '' ?>">
+                <h4 class="font-medium text-slate-800 dark:text-white mb-2"><i class="fas fa-exclamation-triangle text-amber-500 mr-2"></i>Sie sind verantwortlich für E-Mails</h4>
+                <p class="text-sm text-slate-600 dark:text-slate-400 mb-3">Leadbusiness sendet KEINE E-Mails an Ihre Empfehler. Stattdessen erhalten Sie Webhook-Events:</p>
+                <div class="grid sm:grid-cols-2 gap-2 text-sm">
+                    <code class="bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded">referrer.created</code>
+                    <code class="bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded">conversion.created</code>
+                    <code class="bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded">reward.unlocked</code>
+                    <code class="bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded">reward.claimed</code>
+                </div>
+                <p class="mt-3 text-sm text-amber-600 dark:text-amber-400">
+                    <i class="fas fa-arrow-right mr-1"></i>
+                    Stellen Sie sicher, dass Sie <a href="/dashboard/webhooks.php" class="underline">Webhooks konfiguriert</a> haben!
+                </p>
+            </div>
+            
+            <div id="info-hybrid" class="<?= $emailMode !== 'hybrid' ? 'hidden' : '' ?>">
+                <h4 class="font-medium text-slate-800 dark:text-white mb-2"><i class="fas fa-layer-group text-blue-500 mr-2"></i>Beides gleichzeitig</h4>
+                <p class="text-sm text-slate-600 dark:text-slate-400">Perfekt für zusätzliche Automationen:</p>
+                <ul class="mt-2 space-y-1 text-sm text-slate-500 dark:text-slate-400">
+                    <li><i class="fas fa-envelope text-green-500 mr-2"></i>Leadbusiness sendet alle Standard-E-Mails</li>
+                    <li><i class="fas fa-bolt text-blue-500 mr-2"></i>Sie erhalten zusätzlich Webhook-Events</li>
+                    <li><i class="fas fa-cog text-purple-500 mr-2"></i>Ideal für: CRM-Updates, Slack-Benachrichtigungen, eigene Dashboards</li>
+                </ul>
+            </div>
+        </div>
+        
+        <button type="submit" class="px-6 py-3 bg-purple-500 text-white rounded-xl hover:bg-purple-600 transition font-medium">
+            <i class="fas fa-save mr-2"></i>Einstellungen speichern
+        </button>
+    </form>
+</div>
+
+<script>
+// Info-Box bei Auswahl wechseln
+document.querySelectorAll('input[name="email_mode"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        document.getElementById('info-leadbusiness').classList.add('hidden');
+        document.getElementById('info-self').classList.add('hidden');
+        document.getElementById('info-hybrid').classList.add('hidden');
+        
+        if (this.value === 'leadbusiness') {
+            document.getElementById('info-leadbusiness').classList.remove('hidden');
+        } else if (this.value === 'self_managed') {
+            document.getElementById('info-self').classList.remove('hidden');
+        } else if (this.value === 'hybrid') {
+            document.getElementById('info-hybrid').classList.remove('hidden');
+        }
+    });
+});
+</script>
+<?php endif; ?>
+
 <!-- Quick Start Guide -->
 <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700 mb-8">
     <h2 class="text-xl font-bold text-slate-800 dark:text-white mb-6">
@@ -472,11 +651,6 @@ $response = json_decode(curl_exec($ch), true);</code></pre>
                     </tr>
                     <tr class="border-t border-slate-100 dark:border-slate-700">
                         <td class="py-3"><span class="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded text-xs font-mono">GET</span></td>
-                        <td class="py-3 font-mono text-xs">/api/v1/referrers/{id}</td>
-                        <td class="py-3">Einzelnen Empfehler abrufen</td>
-                    </tr>
-                    <tr class="border-t border-slate-100 dark:border-slate-700">
-                        <td class="py-3"><span class="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded text-xs font-mono">GET</span></td>
                         <td class="py-3 font-mono text-xs">/api/v1/conversions</td>
                         <td class="py-3">Alle Conversions abrufen</td>
                     </tr>
@@ -490,28 +664,23 @@ $response = json_decode(curl_exec($ch), true);</code></pre>
                         <td class="py-3 font-mono text-xs">/api/v1/stats</td>
                         <td class="py-3">Statistiken abrufen</td>
                     </tr>
-                    <tr class="border-t border-slate-100 dark:border-slate-700">
-                        <td class="py-3"><span class="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded text-xs font-mono">GET</span></td>
-                        <td class="py-3 font-mono text-xs">/api/v1/rewards</td>
-                        <td class="py-3">Belohnungsstufen abrufen</td>
-                    </tr>
                     <?php if ($isEnterprise): ?>
                     <tr class="border-t border-slate-100 dark:border-slate-700 bg-purple-50 dark:bg-purple-900/10">
                         <td class="py-3"><span class="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded text-xs font-mono">POST</span></td>
                         <td class="py-3 font-mono text-xs">/api/v1/webhooks</td>
-                        <td class="py-3"><i class="fas fa-building text-purple-500 mr-1"></i>Webhook URL registrieren</td>
+                        <td class="py-3"><i class="fas fa-building text-purple-500 mr-1"></i>Webhook registrieren</td>
                     </tr>
                     <tr class="border-t border-slate-100 dark:border-slate-700 bg-purple-50 dark:bg-purple-900/10">
                         <td class="py-3"><span class="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded text-xs font-mono">GET</span></td>
                         <td class="py-3 font-mono text-xs">/api/v1/export</td>
-                        <td class="py-3"><i class="fas fa-building text-purple-500 mr-1"></i>Daten exportieren (CSV/JSON)</td>
+                        <td class="py-3"><i class="fas fa-building text-purple-500 mr-1"></i>Daten exportieren</td>
                     </tr>
                     <?php endif; ?>
                 </tbody>
             </table>
         </div>
         
-        <a href="/api/docs" class="mt-4 inline-flex items-center text-primary-500 hover:text-primary-600 font-medium">
+        <a href="/api/v1/docs" class="mt-4 inline-flex items-center text-primary-500 hover:text-primary-600 font-medium">
             <i class="fas fa-book mr-2"></i>Vollständige API-Dokumentation
             <i class="fas fa-arrow-right ml-2 text-sm"></i>
         </a>
@@ -533,8 +702,7 @@ $response = json_decode(curl_exec($ch), true);</code></pre>
                     <th class="pb-3 font-medium">Methode</th>
                     <th class="pb-3 font-medium">Endpunkt</th>
                     <th class="pb-3 font-medium">Status</th>
-                    <th class="pb-3 font-medium">Antwortzeit</th>
-                    <th class="pb-3 font-medium">IP</th>
+                    <th class="pb-3 font-medium">Zeit</th>
                 </tr>
             </thead>
             <tbody class="text-slate-700 dark:text-slate-300">
@@ -551,23 +719,16 @@ $response = json_decode(curl_exec($ch), true);</code></pre>
                                 case 'DELETE': echo 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'; break;
                                 default: echo 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300';
                             }
-                            ?>">
-                            <?= e($req['method']) ?>
-                        </span>
+                            ?>"><?= e($req['method']) ?></span>
                     </td>
                     <td class="py-3 font-mono text-xs"><?= e($req['endpoint']) ?></td>
                     <td class="py-3">
                         <span class="px-2 py-1 rounded text-xs
                             <?= $req['status_code'] < 300 
                                 ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' 
-                                : ($req['status_code'] < 500 
-                                    ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'
-                                    : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300') ?>">
-                            <?= $req['status_code'] ?>
-                        </span>
+                                : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300' ?>"><?= $req['status_code'] ?></span>
                     </td>
-                    <td class="py-3 text-slate-500 dark:text-slate-400"><?= $req['response_time_ms'] ?> ms</td>
-                    <td class="py-3 font-mono text-xs text-slate-500 dark:text-slate-400"><?= e($req['ip_address']) ?></td>
+                    <td class="py-3 text-slate-500 dark:text-slate-400"><?= $req['response_time_ms'] ?>ms</td>
                 </tr>
                 <?php endforeach; ?>
             </tbody>
@@ -583,9 +744,7 @@ function copyToClipboard(text, button) {
     navigator.clipboard.writeText(text).then(() => {
         const originalIcon = button.innerHTML;
         button.innerHTML = '<i class="fas fa-check text-green-500"></i>';
-        setTimeout(() => {
-            button.innerHTML = originalIcon;
-        }, 2000);
+        setTimeout(() => { button.innerHTML = originalIcon; }, 2000);
     });
 }
 </script>
