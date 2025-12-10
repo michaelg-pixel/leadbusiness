@@ -1,157 +1,183 @@
 <?php
 /**
- * API v1 - Stats Endpoint
+ * Leadbusiness REST API v1 - Stats Endpoint
  * 
- * GET /api/v1/stats - Statistiken abrufen
+ * GET /api/v1/stats - Gesamtstatistiken
+ * GET /api/v1/stats/daily - Tägliche Statistiken
+ * GET /api/v1/stats/top - Top Empfehler
  */
 
-require_once __DIR__ . '/../../../config/database.php';
-require_once __DIR__ . '/../../../includes/Database.php';
-require_once __DIR__ . '/../../../includes/api/ApiMiddleware.php';
+use Leadbusiness\Database;
 
-use Leadbusiness\Api\ApiMiddleware;
-use function Leadbusiness\Api\setCorsHeaders;
-use function Leadbusiness\Api\setApiHeaders;
-
-// Headers
-setCorsHeaders();
-setApiHeaders();
-
-// Middleware
-$api = new ApiMiddleware();
-
-// Authentifizierung
-if (!$api->authenticate()) {
-    $api->logRequest('/stats', 401, 'Authentication failed');
-    exit;
-}
-
-// Rate-Limiting
-if (!$api->checkRateLimit()) {
-    $api->logRequest('/stats', 429, 'Rate limit exceeded');
-    exit;
-}
-
-$db = \Leadbusiness\Database::getInstance();
+$db = Database::getInstance();
 $customerId = $api->getCustomerId();
+$method = $_SERVER['REQUEST_METHOD'];
 
-// Nur GET erlaubt
-if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
-    $api->error(405, 'Method not allowed', 'METHOD_NOT_ALLOWED');
-    $api->logRequest('/stats', 405, 'Method not allowed');
-    exit;
+if ($method !== 'GET') {
+    $api->errorResponse(405, 'Method not allowed', 'METHOD_NOT_ALLOWED');
 }
 
-// Permission prüfen
-if (!$api->requirePermission('stats', 'read')) {
-    $api->logRequest('/stats', 403, 'Permission denied');
-    exit;
+// Sub-Resource bestimmen
+$subEndpoint = $resourceId ?? 'overview';
+
+switch ($subEndpoint) {
+    
+    case 'overview':
+    default:
+        // Gesamtstatistiken
+        $stats = $db->fetch(
+            "SELECT 
+                (SELECT COUNT(*) FROM leads WHERE customer_id = ? AND status IN ('active', 'pending')) as total_referrers,
+                (SELECT COUNT(*) FROM leads WHERE customer_id = ? AND status = 'active') as active_referrers,
+                (SELECT SUM(conversions) FROM leads WHERE customer_id = ?) as total_conversions,
+                (SELECT SUM(clicks) FROM leads WHERE customer_id = ?) as total_clicks,
+                (SELECT COUNT(*) FROM leads WHERE customer_id = ? AND DATE(created_at) = CURDATE()) as referrers_today,
+                (SELECT COUNT(*) FROM leads WHERE customer_id = ? AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)) as referrers_week,
+                (SELECT COUNT(*) FROM leads WHERE customer_id = ? AND created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)) as referrers_month,
+                (SELECT COUNT(*) FROM conversions c JOIN leads l ON c.referrer_id = l.id WHERE l.customer_id = ? AND DATE(c.created_at) = CURDATE()) as conversions_today,
+                (SELECT COUNT(*) FROM conversions c JOIN leads l ON c.referrer_id = l.id WHERE l.customer_id = ? AND c.created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)) as conversions_week,
+                (SELECT COUNT(*) FROM conversions c JOIN leads l ON c.referrer_id = l.id WHERE l.customer_id = ? AND c.created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)) as conversions_month,
+                (SELECT AVG(conversions) FROM leads WHERE customer_id = ? AND conversions > 0) as avg_conversions_per_referrer
+            ",
+            [$customerId, $customerId, $customerId, $customerId, $customerId, $customerId, $customerId, $customerId, $customerId, $customerId, $customerId]
+        );
+        
+        // Conversion Rate berechnen
+        $conversionRate = $stats['total_clicks'] > 0 
+            ? round(($stats['total_conversions'] / $stats['total_clicks']) * 100, 2) 
+            : 0;
+        
+        $api->successResponse([
+            'overview' => [
+                'total_referrers' => (int)($stats['total_referrers'] ?? 0),
+                'active_referrers' => (int)($stats['active_referrers'] ?? 0),
+                'total_conversions' => (int)($stats['total_conversions'] ?? 0),
+                'total_clicks' => (int)($stats['total_clicks'] ?? 0),
+                'conversion_rate' => $conversionRate,
+                'avg_conversions_per_referrer' => round($stats['avg_conversions_per_referrer'] ?? 0, 2)
+            ],
+            'today' => [
+                'new_referrers' => (int)($stats['referrers_today'] ?? 0),
+                'conversions' => (int)($stats['conversions_today'] ?? 0)
+            ],
+            'this_week' => [
+                'new_referrers' => (int)($stats['referrers_week'] ?? 0),
+                'conversions' => (int)($stats['conversions_week'] ?? 0)
+            ],
+            'this_month' => [
+                'new_referrers' => (int)($stats['referrers_month'] ?? 0),
+                'conversions' => (int)($stats['conversions_month'] ?? 0)
+            ]
+        ]);
+        break;
+        
+    case 'daily':
+        // Tägliche Statistiken (letzte 30 Tage)
+        $days = min(90, max(7, (int)$api->getQueryParam('days', 30)));
+        
+        $dailyReferrers = $db->fetchAll(
+            "SELECT DATE(created_at) as date, COUNT(*) as count 
+             FROM leads 
+             WHERE customer_id = ? AND created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
+             GROUP BY DATE(created_at) 
+             ORDER BY date ASC",
+            [$customerId, $days]
+        );
+        
+        $dailyConversions = $db->fetchAll(
+            "SELECT DATE(c.created_at) as date, COUNT(*) as count 
+             FROM conversions c
+             JOIN leads l ON c.referrer_id = l.id
+             WHERE l.customer_id = ? AND c.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
+             GROUP BY DATE(c.created_at) 
+             ORDER BY date ASC",
+            [$customerId, $days]
+        );
+        
+        $dailyClicks = $db->fetchAll(
+            "SELECT DATE(created_at) as date, COUNT(*) as count 
+             FROM link_clicks 
+             WHERE customer_id = ? AND created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
+             GROUP BY DATE(created_at) 
+             ORDER BY date ASC",
+            [$customerId, $days]
+        );
+        
+        // In assoziatives Array umwandeln für einfacheren Zugriff
+        $refByDate = array_column($dailyReferrers, 'count', 'date');
+        $convByDate = array_column($dailyConversions, 'count', 'date');
+        $clicksByDate = array_column($dailyClicks, 'count', 'date');
+        
+        // Daten für jeden Tag zusammenstellen
+        $dailyData = [];
+        for ($i = $days - 1; $i >= 0; $i--) {
+            $date = date('Y-m-d', strtotime("-$i days"));
+            $dailyData[] = [
+                'date' => $date,
+                'new_referrers' => (int)($refByDate[$date] ?? 0),
+                'conversions' => (int)($convByDate[$date] ?? 0),
+                'clicks' => (int)($clicksByDate[$date] ?? 0)
+            ];
+        }
+        
+        $api->successResponse([
+            'period' => [
+                'days' => $days,
+                'from' => date('Y-m-d', strtotime("-$days days")),
+                'to' => date('Y-m-d')
+            ],
+            'daily' => $dailyData
+        ]);
+        break;
+        
+    case 'top':
+        // Top Empfehler
+        $limit = min(50, max(5, (int)$api->getQueryParam('limit', 10)));
+        $metric = $api->getQueryParam('by', 'conversions');
+        
+        $allowedMetrics = ['conversions', 'clicks'];
+        if (!in_array($metric, $allowedMetrics)) {
+            $metric = 'conversions';
+        }
+        
+        $topReferrers = $db->fetchAll(
+            "SELECT id, name, email, referral_code, clicks, conversions,
+                    CASE WHEN clicks > 0 THEN ROUND((conversions / clicks) * 100, 2) ELSE 0 END as conversion_rate
+             FROM leads 
+             WHERE customer_id = ? AND status = 'active' AND $metric > 0
+             ORDER BY $metric DESC 
+             LIMIT ?",
+            [$customerId, $limit]
+        );
+        
+        $api->successResponse([
+            'metric' => $metric,
+            'top_referrers' => $topReferrers
+        ]);
+        break;
+        
+    case 'rewards':
+        // Belohnungs-Statistiken
+        $rewardStats = $db->fetchAll(
+            "SELECT 
+                current_reward_level as level,
+                COUNT(*) as referrer_count
+             FROM leads 
+             WHERE customer_id = ? AND status = 'active'
+             GROUP BY current_reward_level
+             ORDER BY current_reward_level ASC",
+            [$customerId]
+        );
+        
+        $pendingRewards = $db->fetch(
+            "SELECT COUNT(*) as count FROM reward_claims 
+             WHERE customer_id = ? AND status = 'pending'",
+            [$customerId]
+        );
+        
+        $api->successResponse([
+            'referrers_by_level' => $rewardStats,
+            'pending_reward_claims' => (int)($pendingRewards['count'] ?? 0)
+        ]);
+        break;
 }
-
-// Zeitraum (Standard: 30 Tage)
-$days = $api->getIntParam('days', 30, 1, 365);
-$since = date('Y-m-d', strtotime("-{$days} days"));
-
-// Gesamt-Statistiken
-$totals = $db->fetch(
-    "SELECT 
-        (SELECT COUNT(*) FROM leads WHERE customer_id = ?) as total_leads,
-        (SELECT COUNT(*) FROM leads WHERE customer_id = ? AND status = 'converted') as total_conversions,
-        (SELECT COUNT(*) FROM referrers WHERE customer_id = ?) as total_referrers,
-        (SELECT COUNT(*) FROM referrer_rewards WHERE referrer_id IN (SELECT id FROM referrers WHERE customer_id = ?)) as total_rewards_earned",
-    [$customerId, $customerId, $customerId, $customerId]
-);
-
-// Leads im Zeitraum
-$periodStats = $db->fetch(
-    "SELECT 
-        COUNT(*) as leads,
-        SUM(CASE WHEN status = 'converted' THEN 1 ELSE 0 END) as conversions
-     FROM leads 
-     WHERE customer_id = ? AND created_at >= ?",
-    [$customerId, $since]
-);
-
-// Konversionsrate
-$conversionRate = $totals['total_leads'] > 0 
-    ? round(($totals['total_conversions'] / $totals['total_leads']) * 100, 2) 
-    : 0;
-
-// Leads pro Tag (für Chart)
-$dailyLeads = $db->fetchAll(
-    "SELECT DATE(created_at) as date, 
-            COUNT(*) as leads,
-            SUM(CASE WHEN status = 'converted' THEN 1 ELSE 0 END) as conversions
-     FROM leads 
-     WHERE customer_id = ? AND created_at >= ?
-     GROUP BY DATE(created_at)
-     ORDER BY date ASC",
-    [$customerId, $since]
-);
-
-// Top Empfehler
-$topReferrers = $db->fetchAll(
-    "SELECT r.referral_code, r.name, 
-            COUNT(l.id) as total_leads,
-            SUM(CASE WHEN l.status = 'converted' THEN 1 ELSE 0 END) as conversions
-     FROM referrers r
-     LEFT JOIN leads l ON r.id = l.referrer_id
-     WHERE r.customer_id = ?
-     GROUP BY r.id
-     ORDER BY total_leads DESC
-     LIMIT 10",
-    [$customerId]
-);
-
-// Lead-Quellen
-$sources = $db->fetchAll(
-    "SELECT COALESCE(source, 'unknown') as source, COUNT(*) as count
-     FROM leads 
-     WHERE customer_id = ? AND created_at >= ?
-     GROUP BY source
-     ORDER BY count DESC",
-    [$customerId, $since]
-);
-
-// Response
-$api->success([
-    'period' => [
-        'days' => $days,
-        'from' => $since,
-        'to' => date('Y-m-d')
-    ],
-    'totals' => [
-        'leads' => (int)$totals['total_leads'],
-        'conversions' => (int)$totals['total_conversions'],
-        'referrers' => (int)$totals['total_referrers'],
-        'rewards_earned' => (int)$totals['total_rewards_earned'],
-        'conversion_rate' => $conversionRate
-    ],
-    'period_stats' => [
-        'leads' => (int)$periodStats['leads'],
-        'conversions' => (int)$periodStats['conversions']
-    ],
-    'daily' => array_map(function($d) {
-        return [
-            'date' => $d['date'],
-            'leads' => (int)$d['leads'],
-            'conversions' => (int)$d['conversions']
-        ];
-    }, $dailyLeads),
-    'top_referrers' => array_map(function($r) {
-        return [
-            'code' => $r['referral_code'],
-            'name' => $r['name'],
-            'leads' => (int)$r['total_leads'],
-            'conversions' => (int)$r['conversions']
-        ];
-    }, $topReferrers),
-    'sources' => array_map(function($s) {
-        return [
-            'source' => $s['source'],
-            'count' => (int)$s['count']
-        ];
-    }, $sources)
-]);
-
-$api->logRequest('/stats', 200);
