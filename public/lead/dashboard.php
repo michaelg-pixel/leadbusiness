@@ -64,16 +64,19 @@ if ($customer['leaderboard_enabled']) {
     $rank = $leaderboardService->getLeadRank($lead['id']);
 }
 
-// Belohnungen
+// Belohnungen (mit Alias für Kompatibilität)
 $rewards = $db->fetchAll(
-    "SELECT * FROM rewards WHERE campaign_id = ? AND is_active = 1 ORDER BY level ASC",
+    "SELECT *, conversions_required as required_conversions 
+     FROM rewards WHERE campaign_id = ? AND is_active = 1 ORDER BY level ASC",
     [$lead['campaign_id']]
 );
 
 // Freigeschaltete Belohnungen
 $unlockedRewards = $db->fetchAll(
-    "SELECT rd.*, r.description, r.reward_type, r.level, r.required_conversions,
-            r.download_file_path, r.download_file_name, r.instructions
+    "SELECT rd.*, r.description, r.reward_type, r.level, 
+            r.conversions_required as required_conversions,
+            r.download_file_path, r.download_file_name, r.instructions,
+            r.coupon_code
      FROM reward_deliveries rd
      JOIN rewards r ON rd.reward_id = r.id
      WHERE rd.lead_id = ?
@@ -599,6 +602,7 @@ $pageTitle = 'Mein Empfehlungs-Dashboard';
 // Helper function
 function adjustBrightness($hex, $percent) {
     $hex = ltrim($hex, '#');
+    if (strlen($hex) < 6) return '#667eea';
     $r = hexdec(substr($hex, 0, 2));
     $g = hexdec(substr($hex, 2, 2));
     $b = hexdec(substr($hex, 4, 2));
