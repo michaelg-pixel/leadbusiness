@@ -3,7 +3,8 @@
  * Lead Authentication Service
  * 
  * Handles lead login via:
- * - Magic Link (E-Mail)
+ * - One-Click Token (permanent, in E-Mails)
+ * - Magic Link (E-Mail, 15 Min gültig)
  * - Password (optional)
  * - Session management
  */
@@ -65,6 +66,64 @@ class LeadAuthService {
         }
         
         return null;
+    }
+    
+    /**
+     * One-Click Login mit permanentem Token
+     * Wird aus E-Mail-Links aufgerufen
+     */
+    public function loginWithToken(int $leadId): array {
+        // Session erstellen
+        $session = $this->createSession($leadId);
+        
+        // Activity Log
+        $this->logActivity($leadId, 'login', ['method' => 'one_click_token']);
+        
+        return [
+            'success' => true,
+            'lead' => $this->getLeadData($leadId),
+            'redirect' => '/lead/dashboard.php'
+        ];
+    }
+    
+    /**
+     * Generiert einen permanenten Login-Token für einen Lead
+     */
+    public function generateLoginToken(int $leadId): string {
+        $token = bin2hex(random_bytes(32));
+        
+        $this->db->execute(
+            "UPDATE leads SET login_token = ? WHERE id = ?",
+            [$token, $leadId]
+        );
+        
+        return $token;
+    }
+    
+    /**
+     * Gibt die One-Click Login URL für einen Lead zurück
+     */
+    public function getOneClickLoginUrl(int $leadId, string $subdomain): ?string {
+        $lead = $this->db->fetch(
+            "SELECT login_token FROM leads WHERE id = ? AND status = 'active'",
+            [$leadId]
+        );
+        
+        if (!$lead || empty($lead['login_token'])) {
+            // Token generieren falls nicht vorhanden
+            $token = $this->generateLoginToken($leadId);
+        } else {
+            $token = $lead['login_token'];
+        }
+        
+        return "https://{$subdomain}.empfehlungen.cloud/lead/auth?token={$token}";
+    }
+    
+    /**
+     * Statische Helper-Methode für E-Mail-Templates
+     */
+    public static function buildOneClickUrl(string $loginToken, string $subdomain): string {
+        return "https://{$subdomain}.empfehlungen.cloud/lead/auth?token={$loginToken}";
     }
     
     /**
@@ -334,14 +393,14 @@ class LeadAuthService {
     }
     
     /**
-     * Magic Link E-Mail senden
+     * Magic Link E-Mail senden (temporär, 15 Min)
      */
     private function sendMagicLinkEmail(array $lead, array $customer, string $token): void {
         require_once __DIR__ . '/MailgunService.php';
         
         $mailgun = new MailgunService();
         
-        $loginUrl = "https://{$customer['subdomain']}.empfohlen.de/lead/verify.php?token=" . $token;
+        $loginUrl = "https://{$customer['subdomain']}.empfehlungen.cloud/lead/verify.php?token=" . $token;
         
         $subject = "Ihr Login-Link für das Empfehlungsprogramm";
         
@@ -413,5 +472,22 @@ class LeadAuthService {
         $this->logActivity($leadId, 'notifications_updated', $settings);
         
         return ['success' => true, 'message' => 'Einstellungen gespeichert'];
+    }
+    
+    /**
+     * Token bei Registrierung generieren (für neue Leads)
+     * Sollte beim Lead-Erstellen aufgerufen werden
+     */
+    public function ensureLoginToken(int $leadId): string {
+        $lead = $this->db->fetch(
+            "SELECT login_token FROM leads WHERE id = ?",
+            [$leadId]
+        );
+        
+        if ($lead && !empty($lead['login_token'])) {
+            return $lead['login_token'];
+        }
+        
+        return $this->generateLoginToken($leadId);
     }
 }
