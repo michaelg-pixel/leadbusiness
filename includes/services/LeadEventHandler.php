@@ -93,12 +93,14 @@ class LeadEventHandler
         if (!$lead) return;
         
         // Nächste nicht-freigeschaltete Belohnung finden
+        // Verwendet conversions_required (korrekter Spaltenname)
         $nextReward = $db->fetch(
-            "SELECT r.* FROM rewards r
+            "SELECT r.*, r.conversions_required as required_conversions 
+             FROM rewards r
              LEFT JOIN reward_deliveries rd ON rd.reward_id = r.id AND rd.lead_id = ?
              WHERE r.campaign_id = ? 
                AND r.is_active = 1 
-               AND r.required_conversions <= ?
+               AND r.conversions_required <= ?
                AND rd.id IS NULL
              ORDER BY r.level ASC
              LIMIT 1",
