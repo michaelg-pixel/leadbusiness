@@ -14,6 +14,8 @@ require_once __DIR__ . '/../../includes/helpers.php';
 require_once __DIR__ . '/../../includes/services/LeadAuthService.php';
 require_once __DIR__ . '/../../includes/DomainResolver.php';
 
+use Leadbusiness\DomainResolver;
+
 $db = Database::getInstance();
 $auth = new LeadAuthService();
 
@@ -25,11 +27,63 @@ if ($lead) {
 }
 
 // Kunde ermitteln (über Subdomain)
-$resolver = new DomainResolver();
-$customer = $resolver->resolve();
+$customer = DomainResolver::init();
 
+// Wenn kein Kunde gefunden -> Info-Seite anzeigen
 if (!$customer) {
-    header('Location: /');
+    ?>
+    <!DOCTYPE html>
+    <html lang="de">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Lead Portal | empfehlungen.cloud</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+        <style>body { font-family: 'Inter', sans-serif; }</style>
+    </head>
+    <body class="min-h-screen bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center">
+            <div class="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i class="fas fa-users text-2xl text-indigo-600"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-gray-900 mb-4">Lead Portal</h1>
+            <p class="text-gray-600 mb-6">
+                Um sich in Ihr Empfehlungs-Dashboard einzuloggen, nutzen Sie bitte den Link, 
+                den Sie per E-Mail erhalten haben, oder besuchen Sie die Empfehlungsseite 
+                des Unternehmens direkt.
+            </p>
+            
+            <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 text-left">
+                <div class="flex items-start gap-3">
+                    <i class="fas fa-lightbulb text-amber-500 mt-1"></i>
+                    <div class="text-sm text-amber-800">
+                        <p class="font-medium mb-1">So funktioniert's:</p>
+                        <p>Das Lead-Portal ist kundenspezifisch. Die URL sieht so aus:</p>
+                        <code class="block mt-2 bg-amber-100 px-2 py-1 rounded text-xs">
+                            https://firmenname.empfehlungen.cloud/lead/
+                        </code>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="space-y-3">
+                <a href="/" class="block w-full py-3 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition">
+                    <i class="fas fa-home mr-2"></i>Zur Startseite
+                </a>
+                <a href="/kontakt.php" class="block w-full py-3 border-2 border-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition">
+                    <i class="fas fa-envelope mr-2"></i>Kontakt
+                </a>
+            </div>
+            
+            <p class="mt-6 text-sm text-gray-500">
+                Sie sind Unternehmer? <a href="/preise.php" class="text-indigo-600 hover:underline">Starten Sie Ihr eigenes Empfehlungsprogramm</a>
+            </p>
+        </div>
+    </body>
+    </html>
+    <?php
     exit;
 }
 
@@ -65,14 +119,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     } elseif ($action === 'check_password') {
         // Prüfen ob Lead Passwort hat
-        $lead = $db->fetch(
+        $leadCheck = $db->fetch(
             "SELECT l.password_hash FROM leads l
              JOIN campaigns c ON l.campaign_id = c.id
              WHERE l.email = ? AND c.customer_id = ? AND l.status = 'active'",
             [$email, $customer['id']]
         );
         
-        if ($lead && !empty($lead['password_hash'])) {
+        if ($leadCheck && !empty($leadCheck['password_hash'])) {
             $showPasswordForm = true;
         } else {
             // Kein Passwort -> Magic Link senden
@@ -121,7 +175,7 @@ $primaryColor = $customer['primary_color'] ?? '#667eea';
         
         <!-- Logo/Header -->
         <div class="text-center mb-8">
-            <?php if ($customer['logo_url']): ?>
+            <?php if (!empty($customer['logo_url'])): ?>
             <img src="<?= htmlspecialchars($customer['logo_url']) ?>" 
                  alt="<?= htmlspecialchars($customer['company_name']) ?>" 
                  class="h-12 mx-auto mb-4">
@@ -167,7 +221,7 @@ $primaryColor = $customer['primary_color'] ?? '#667eea';
                     <input type="email" name="email" required autofocus
                            placeholder="ihre@email.de"
                            value="<?= htmlspecialchars($_POST['email'] ?? '') ?>"
-                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary">
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
                 </div>
                 
                 <button type="submit" 
@@ -193,7 +247,7 @@ $primaryColor = $customer['primary_color'] ?? '#667eea';
                     </label>
                     <input type="password" name="password" required autofocus
                            placeholder="••••••••"
-                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary">
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
                 </div>
                 
                 <button type="submit" 
@@ -262,7 +316,7 @@ $primaryColor = $customer['primary_color'] ?? '#667eea';
         <!-- Info -->
         <div class="mt-6 text-center text-sm text-gray-500">
             <p>Noch nicht registriert?</p>
-            <a href="https://<?= htmlspecialchars($customer['subdomain']) ?>.empfohlen.de/r/" 
+            <a href="https://<?= htmlspecialchars($customer['subdomain']) ?>.empfehlungen.cloud/r/" 
                class="text-primary hover:underline">
                 Jetzt am Empfehlungsprogramm teilnehmen
             </a>
