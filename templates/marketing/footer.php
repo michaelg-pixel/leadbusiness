@@ -5,10 +5,10 @@
         
         <!-- Main Footer -->
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12">
                 
                 <!-- Company Info -->
-                <div class="space-y-6">
+                <div class="lg:col-span-2 space-y-6">
                     <a href="/" class="flex items-center space-x-3">
                         <div class="w-10 h-10 gradient-bg rounded-xl flex items-center justify-center">
                             <i class="fas fa-paper-plane text-white text-lg"></i>
@@ -32,6 +32,18 @@
                         <a href="#" class="w-10 h-10 rounded-lg bg-gray-800 flex items-center justify-center hover:bg-primary-500 transition-colors">
                             <i class="fab fa-youtube"></i>
                         </a>
+                    </div>
+                    
+                    <!-- Trust Badges -->
+                    <div class="flex flex-wrap gap-3">
+                        <div class="trust-badge">
+                            <i class="fas fa-shield-alt text-green-500"></i>
+                            <span>DSGVO-konform</span>
+                        </div>
+                        <div class="trust-badge">
+                            <i class="fas fa-server text-blue-500"></i>
+                            <span>Hosting in DE</span>
+                        </div>
                     </div>
                 </div>
                 
@@ -62,33 +74,33 @@
                     </ul>
                 </div>
                 
-                <!-- Branchen -->
+                <!-- Wissen -->
                 <div>
-                    <h3 class="text-white font-semibold text-lg mb-6">Branchen</h3>
+                    <h3 class="text-white font-semibold text-lg mb-6">Wissen</h3>
                     <ul class="space-y-4">
                         <li>
-                            <a href="/branchen/zahnarzt" class="text-gray-400 hover:text-white transition-colors">
-                                Zahnärzte
+                            <a href="/wissen" class="text-gray-400 hover:text-white transition-colors">
+                                Ratgeber & Guides
                             </a>
                         </li>
                         <li>
-                            <a href="/branchen/friseur" class="text-gray-400 hover:text-white transition-colors">
-                                Friseure
+                            <a href="/wissen/case-study-zahnarztpraxis" class="text-gray-400 hover:text-white transition-colors">
+                                Case Studies
                             </a>
                         </li>
                         <li>
-                            <a href="/branchen/fitness" class="text-gray-400 hover:text-white transition-colors">
-                                Fitnessstudios
+                            <a href="/wissen/empfehlungsmarketing-zahnarzt" class="text-gray-400 hover:text-white transition-colors">
+                                Für Zahnärzte
                             </a>
                         </li>
                         <li>
-                            <a href="/branchen/coach" class="text-gray-400 hover:text-white transition-colors">
-                                Coaches & Berater
+                            <a href="/wissen/empfehlungsmarketing-friseur" class="text-gray-400 hover:text-white transition-colors">
+                                Für Friseure
                             </a>
                         </li>
                         <li>
-                            <a href="/branchen/onlineshop" class="text-gray-400 hover:text-white transition-colors">
-                                Online-Shops
+                            <a href="/wissen/empfehlungsmarketing-fitness" class="text-gray-400 hover:text-white transition-colors">
+                                Für Fitnessstudios
                             </a>
                         </li>
                     </ul>
@@ -118,16 +130,11 @@
                         </li>
                     </ul>
                     
-                    <!-- Trust Badges -->
-                    <div class="mt-8 flex flex-wrap gap-3">
-                        <div class="trust-badge">
-                            <i class="fas fa-shield-alt text-green-500"></i>
-                            <span>DSGVO-konform</span>
-                        </div>
-                        <div class="trust-badge">
-                            <i class="fas fa-server text-blue-500"></i>
-                            <span>Hosting in DE</span>
-                        </div>
+                    <!-- Branchen Link -->
+                    <div class="mt-6 pt-6 border-t border-gray-800">
+                        <a href="/branchen" class="text-primary-400 hover:text-primary-300 transition-colors font-medium">
+                            <i class="fas fa-building mr-2"></i>Alle Branchen ansehen →
+                        </a>
                     </div>
                 </div>
             </div>
