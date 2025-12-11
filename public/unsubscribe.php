@@ -10,7 +10,7 @@
  * - GET-Request (Klick auf Abmeldelink in E-Mail)
  */
 
-require_once __DIR__ . '/includes/Database.php';
+require_once __DIR__ . '/../includes/Database.php';
 
 // CORS für One-Click
 header('Access-Control-Allow-Origin: *');
