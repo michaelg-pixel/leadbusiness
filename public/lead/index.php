@@ -5,6 +5,19 @@
  * Leitet zum Dashboard oder Login weiter
  */
 
+// WICHTIG: Zuerst prüfen ob wir auf der Hauptdomain sind
+// BEVOR wir Database-Verbindungen etc. laden
+$host = $_SERVER['HTTP_HOST'] ?? '';
+$host = strtolower(preg_replace('/^www\./', '', $host));
+
+// Hauptdomains ohne Subdomain -> Zur Login-Seite (die zeigt Info)
+$mainDomains = ['empfehlungen.cloud', 'empfohlen.de', 'leadbusiness.de'];
+if (in_array($host, $mainDomains)) {
+    header('Location: /lead/login.php');
+    exit;
+}
+
+// Jetzt erst Dependencies laden
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../includes/Database.php';
 require_once __DIR__ . '/../../includes/services/LeadAuthService.php';
