@@ -3,16 +3,18 @@
  * Leadbusiness - Lead Event Handler
  * 
  * Wird nach Lead-Erstellung aufgerufen und führt alle notwendigen
- * Aktionen durch (E-Mail-Tool Sync, etc.)
+ * Aktionen durch (E-Mail-Tool Sync, Benachrichtigungen, etc.)
  */
 
 require_once __DIR__ . '/EmailIntegrationService.php';
+require_once __DIR__ . '/LeadNotificationService.php';
 
 use Leadbusiness\Services\EmailIntegrationService;
 
 class LeadEventHandler
 {
     private static $instance = null;
+    private $notificationService = null;
     
     public static function getInstance()
     {
@@ -20,6 +22,14 @@ class LeadEventHandler
             self::$instance = new self();
         }
         return self::$instance;
+    }
+    
+    private function getNotificationService()
+    {
+        if ($this->notificationService === null) {
+            $this->notificationService = new LeadNotificationService();
+        }
+        return $this->notificationService;
     }
     
     /**
@@ -40,10 +50,86 @@ class LeadEventHandler
     
     /**
      * Wird aufgerufen wenn eine Conversion stattfindet
+     * 
+     * @param int $leadId Der neue Lead (der sich angemeldet hat)
+     * @param int $referrerId Der werbende Lead (der die Empfehlung gemacht hat)
+     * @param int $customerId Der Kunde
+     * @param array $conversionData Zusätzliche Conversion-Daten
      */
-    public function onConversion($leadId, $referrerId, $customerId)
+    public function onConversion($leadId, $referrerId, $customerId, $conversionData = [])
     {
-        // Bei Conversion ggf. Tag im E-Mail-Tool setzen
+        // Benachrichtigung an den Werber senden
+        if ($referrerId) {
+            try {
+                $this->getNotificationService()->notifyNewConversion($referrerId, [
+                    'referred_lead_id' => $leadId,
+                    'customer_id' => $customerId
+                ]);
+            } catch (Exception $e) {
+                error_log("Conversion notification error: " . $e->getMessage());
+            }
+            
+            // Prüfen ob Belohnung freigeschaltet wurde
+            $this->checkAndNotifyReward($referrerId);
+        }
+    }
+    
+    /**
+     * Prüft ob eine neue Belohnung freigeschaltet wurde und sendet Benachrichtigung
+     */
+    private function checkAndNotifyReward($leadId)
+    {
+        $db = Database::getInstance();
+        
+        // Lead-Daten mit Conversions holen
+        $lead = $db->fetch(
+            "SELECT l.*, ca.id as campaign_id 
+             FROM leads l 
+             JOIN campaigns ca ON l.campaign_id = ca.id
+             WHERE l.id = ?",
+            [$leadId]
+        );
+        
+        if (!$lead) return;
+        
+        // Nächste nicht-freigeschaltete Belohnung finden
+        $nextReward = $db->fetch(
+            "SELECT r.* FROM rewards r
+             LEFT JOIN reward_deliveries rd ON rd.reward_id = r.id AND rd.lead_id = ?
+             WHERE r.campaign_id = ? 
+               AND r.is_active = 1 
+               AND r.required_conversions <= ?
+               AND rd.id IS NULL
+             ORDER BY r.level ASC
+             LIMIT 1",
+            [$leadId, $lead['campaign_id'], $lead['conversions']]
+        );
+        
+        if ($nextReward) {
+            // Reward Delivery erstellen
+            $downloadToken = bin2hex(random_bytes(32));
+            $expiresAt = date('Y-m-d H:i:s', strtotime('+30 days'));
+            
+            $db->execute(
+                "INSERT INTO reward_deliveries 
+                 (lead_id, reward_id, status, download_token, download_expires_at, created_at)
+                 VALUES (?, ?, 'sent', ?, ?, NOW())",
+                [$leadId, $nextReward['id'], $downloadToken, $expiresAt]
+            );
+            
+            // Lead Reward Level aktualisieren
+            $db->execute(
+                "UPDATE leads SET current_reward_level = ? WHERE id = ?",
+                [$nextReward['level'], $leadId]
+            );
+            
+            // Benachrichtigung senden
+            try {
+                $this->getNotificationService()->notifyRewardUnlocked($leadId, $nextReward);
+            } catch (Exception $e) {
+                error_log("Reward notification error: " . $e->getMessage());
+            }
+        }
     }
     
     /**
@@ -78,7 +164,7 @@ function triggerLeadConfirmed($leadId, $customerId, $leadData)
     LeadEventHandler::getInstance()->onLeadConfirmed($leadId, $customerId, $leadData);
 }
 
-function triggerConversion($leadId, $referrerId, $customerId)
+function triggerConversion($leadId, $referrerId, $customerId, $conversionData = [])
 {
-    LeadEventHandler::getInstance()->onConversion($leadId, $referrerId, $customerId);
+    LeadEventHandler::getInstance()->onConversion($leadId, $referrerId, $customerId, $conversionData);
 }
