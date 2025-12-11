@@ -164,8 +164,9 @@ usort($sortedRewards, function($a, $b) {
         <div class="card overflow-hidden">
             <div class="divide-y">
                 <?php foreach ($rewards as $index => $reward): 
-                    $isUnlocked = $stats['conversions'] >= $reward['required_conversions'];
-                    $progressPercent = min(100, ($stats['conversions'] / $reward['required_conversions']) * 100);
+                    $reqConversions = $reward['required_conversions'] ?? $reward['conversions_required'] ?? 0;
+                    $isUnlocked = $stats['conversions'] >= $reqConversions;
+                    $progressPercent = $reqConversions > 0 ? min(100, ($stats['conversions'] / $reqConversions) * 100) : 0;
                 ?>
                 <div class="p-5 flex items-center gap-4 <?= $isUnlocked ? 'bg-green-50' : '' ?>">
                     <!-- Level Badge -->
@@ -185,7 +186,7 @@ usort($sortedRewards, function($a, $b) {
                         
                         <div class="flex items-center gap-4 mt-2">
                             <span class="text-sm text-gray-500">
-                                <?= $reward['required_conversions'] ?> Empfehlungen benötigt
+                                <?= $reqConversions ?> Empfehlungen benötigt
                             </span>
                             
                             <?php if (!$isUnlocked): ?>
@@ -197,7 +198,7 @@ usort($sortedRewards, function($a, $b) {
                                 </div>
                             </div>
                             <span class="text-xs text-gray-400">
-                                <?= $stats['conversions'] ?>/<?= $reward['required_conversions'] ?>
+                                <?= $stats['conversions'] ?>/<?= $reqConversions ?>
                             </span>
                             <?php endif; ?>
                         </div>
@@ -209,7 +210,7 @@ usort($sortedRewards, function($a, $b) {
                         <a href="#" class="text-primary hover:underline text-sm">Details →</a>
                         <?php else: ?>
                         <span class="text-sm text-gray-400">
-                            Noch <?= $reward['required_conversions'] - $stats['conversions'] ?>
+                            Noch <?= $reqConversions - $stats['conversions'] ?>
                         </span>
                         <?php endif; ?>
                     </div>
