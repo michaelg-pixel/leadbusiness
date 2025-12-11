@@ -290,6 +290,9 @@ $theme = $_COOKIE['site_theme'] ?? 'light';
                     <a href="/preise" class="nav-link font-medium <?= $currentPage === 'preise' ? 'active' : '' ?>">
                         Preise
                     </a>
+                    <a href="/wissen" class="nav-link font-medium <?= $currentPage === 'wissen' ? 'active' : '' ?>">
+                        Wissen
+                    </a>
                     <a href="/faq" class="nav-link font-medium <?= $currentPage === 'faq' ? 'active' : '' ?>">
                         FAQ
                     </a>
@@ -365,6 +368,9 @@ $theme = $_COOKIE['site_theme'] ?? 'light';
                     </a>
                     <a href="/preise" class="block py-3 px-4 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 font-medium text-lg text-gray-800 dark:text-gray-100 <?= $currentPage === 'preise' ? 'bg-primary-50 dark:bg-primary-900/30' : '' ?>">
                         <i class="fas fa-tags w-8 text-primary-500 dark:text-primary-400"></i> Preise
+                    </a>
+                    <a href="/wissen" class="block py-3 px-4 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 font-medium text-lg text-gray-800 dark:text-gray-100 <?= $currentPage === 'wissen' ? 'bg-primary-50 dark:bg-primary-900/30' : '' ?>">
+                        <i class="fas fa-graduation-cap w-8 text-primary-500 dark:text-primary-400"></i> Wissen
                     </a>
                     <a href="/faq" class="block py-3 px-4 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 font-medium text-lg text-gray-800 dark:text-gray-100 <?= $currentPage === 'faq' ? 'bg-primary-50 dark:bg-primary-900/30' : '' ?>">
                         <i class="fas fa-question-circle w-8 text-primary-500 dark:text-primary-400"></i> FAQ
