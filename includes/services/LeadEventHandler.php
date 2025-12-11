@@ -3,7 +3,7 @@
  * Leadbusiness - Lead Event Handler
  * 
  * Wird nach Lead-Erstellung aufgerufen und führt alle notwendigen
- * Aktionen durch (E-Mail-Tool Sync, Benachrichtigungen, etc.)
+ * Aktionen durch (E-Mail-Tool Sync, Benachrichtigungen, Login-Token, etc.)
  */
 
 require_once __DIR__ . '/EmailIntegrationService.php';
@@ -37,7 +37,39 @@ class LeadEventHandler
      */
     public function onLeadCreated($leadId, $customerId, $leadData)
     {
+        // 1. One-Click Login Token generieren
+        $this->ensureLoginToken($leadId);
+        
+        // 2. E-Mail-Tool Sync
         $this->syncToEmailTool($customerId, array_merge($leadData, ['id' => $leadId]));
+    }
+    
+    /**
+     * Generiert einen permanenten One-Click Login Token für den Lead
+     */
+    private function ensureLoginToken($leadId)
+    {
+        $db = Database::getInstance();
+        
+        // Prüfen ob bereits vorhanden
+        $lead = $db->fetch(
+            "SELECT login_token FROM leads WHERE id = ?",
+            [$leadId]
+        );
+        
+        if ($lead && empty($lead['login_token'])) {
+            // Token generieren (64 Zeichen hex = 32 bytes)
+            $token = bin2hex(random_bytes(32));
+            
+            $db->execute(
+                "UPDATE leads SET login_token = ? WHERE id = ?",
+                [$token, $leadId]
+            );
+            
+            return $token;
+        }
+        
+        return $lead['login_token'] ?? null;
     }
     
     /**
@@ -45,6 +77,9 @@ class LeadEventHandler
      */
     public function onLeadConfirmed($leadId, $customerId, $leadData)
     {
+        // Sicherstellen dass Login-Token existiert
+        $this->ensureLoginToken($leadId);
+        
         // Bei Bestaetigung ggf. Tag im E-Mail-Tool aktualisieren
     }
     
@@ -151,6 +186,41 @@ class LeadEventHandler
             error_log("Email sync error for customer {$customerId}: " . $e->getMessage());
         }
     }
+    
+    /**
+     * Gibt die One-Click Login URL für einen Lead zurück
+     */
+    public function getOneClickLoginUrl($leadId)
+    {
+        $db = Database::getInstance();
+        
+        // Lead mit Subdomain holen
+        $lead = $db->fetch(
+            "SELECT l.login_token, c.subdomain 
+             FROM leads l
+             JOIN campaigns ca ON l.campaign_id = ca.id
+             JOIN customers c ON ca.customer_id = c.id
+             WHERE l.id = ?",
+            [$leadId]
+        );
+        
+        if (!$lead || empty($lead['login_token'])) {
+            // Token generieren falls nicht vorhanden
+            $token = $this->ensureLoginToken($leadId);
+            if (!$token) return null;
+            
+            $lead = $db->fetch(
+                "SELECT l.login_token, c.subdomain 
+                 FROM leads l
+                 JOIN campaigns ca ON l.campaign_id = ca.id
+                 JOIN customers c ON ca.customer_id = c.id
+                 WHERE l.id = ?",
+                [$leadId]
+            );
+        }
+        
+        return "https://{$lead['subdomain']}.empfehlungen.cloud/lead/auth?token={$lead['login_token']}";
+    }
 }
 
 /**
@@ -169,4 +239,12 @@ function triggerLeadConfirmed($leadId, $customerId, $leadData)
 function triggerConversion($leadId, $referrerId, $customerId, $conversionData = [])
 {
     LeadEventHandler::getInstance()->onConversion($leadId, $referrerId, $customerId, $conversionData);
+}
+
+/**
+ * Gibt die One-Click Login URL für einen Lead zurück
+ */
+function getOneClickLoginUrl($leadId)
+{
+    return LeadEventHandler::getInstance()->getOneClickLoginUrl($leadId);
 }
