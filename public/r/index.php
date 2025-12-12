@@ -233,6 +233,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isAjax()) {
         
         $db->insert('email_queue', [
             'customer_id' => $customer['id'],
+            'lead_id' => $leadId,
             'recipient_email' => $email,
             'recipient_name' => $name,
             'template' => 'confirmation',
@@ -280,6 +281,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isAjax()) {
         ]);
         exit;
     }
+}
+
+// Impressum-Adresse zusammenbauen
+$impressumAddress = '';
+if (!empty($customer['address_street'])) {
+    $impressumAddress = $customer['address_street'];
+}
+if (!empty($customer['address_zip']) && !empty($customer['address_city'])) {
+    $impressumAddress .= ', ' . $customer['address_zip'] . ' ' . $customer['address_city'];
 }
 
 // Page Title
@@ -554,16 +564,45 @@ $pageTitle = "Empfehlen Sie {$customer['company_name']} und erhalten Sie tolle B
     </section>
     <?php endif; ?>
     
-    <!-- Footer -->
+    <!-- Footer mit vollständigem Impressum -->
     <footer class="py-8 bg-gray-900 text-gray-400">
         <div class="max-w-4xl mx-auto px-4 text-center text-sm">
-            <p class="mb-4">&copy; <?= date('Y') ?> <?= htmlspecialchars($customer['company_name']) ?>. Alle Rechte vorbehalten.</p>
+            <!-- Firmenname -->
+            <p class="text-white font-semibold mb-2"><?= htmlspecialchars($customer['company_name']) ?></p>
+            
+            <!-- Adresse -->
+            <?php if (!empty($impressumAddress)): ?>
+            <p class="mb-1"><?= htmlspecialchars($impressumAddress) ?></p>
+            <?php endif; ?>
+            
+            <!-- USt-IdNr. -->
+            <?php if (!empty($customer['tax_id'])): ?>
+            <p class="mb-3">USt-IdNr.: <?= htmlspecialchars($customer['tax_id']) ?></p>
+            <?php endif; ?>
+            
+            <!-- Kontakt (falls vorhanden) -->
+            <?php if (!empty($customer['phone']) || !empty($customer['email'])): ?>
+            <p class="mb-3">
+                <?php if (!empty($customer['phone'])): ?>
+                Tel: <?= htmlspecialchars($customer['phone']) ?>
+                <?php endif; ?>
+                <?php if (!empty($customer['phone']) && !empty($customer['email'])): ?> | <?php endif; ?>
+                <?php if (!empty($customer['email'])): ?>
+                E-Mail: <?= htmlspecialchars($customer['email']) ?>
+                <?php endif; ?>
+            </p>
+            <?php endif; ?>
+            
+            <!-- Copyright und Links -->
+            <p class="text-gray-500 mb-3">&copy; <?= date('Y') ?> <?= htmlspecialchars($customer['company_name']) ?>. Alle Rechte vorbehalten.</p>
+            
             <div class="space-x-4">
                 <a href="#impressum" class="hover:text-white">Impressum</a>
                 <a href="#datenschutz" class="hover:text-white">Datenschutz</a>
             </div>
-            <p class="mt-4 text-xs text-gray-600">
-                Powered by <a href="https://empfohlen.de" class="hover:text-gray-400">Leadbusiness</a>
+            
+            <p class="mt-6 text-xs text-gray-600">
+                Powered by <a href="https://empfehlungen.cloud" class="hover:text-gray-400">Leadbusiness</a>
             </p>
         </div>
     </footer>
@@ -571,14 +610,78 @@ $pageTitle = "Empfehlen Sie {$customer['company_name']} und erhalten Sie tolle B
     <!-- Impressum Modal -->
     <div id="impressumModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50 p-4">
         <div class="bg-white rounded-2xl max-w-lg w-full p-6 max-h-[80vh] overflow-y-auto">
-            <h3 class="text-xl font-bold mb-4">Impressum</h3>
-            <p class="text-gray-600 mb-2"><strong><?= htmlspecialchars($customer['company_name']) ?></strong></p>
-            <p class="text-gray-600 mb-2"><?= htmlspecialchars($customer['address_street']) ?></p>
-            <p class="text-gray-600 mb-2"><?= htmlspecialchars($customer['address_zip']) ?> <?= htmlspecialchars($customer['address_city']) ?></p>
-            <?php if ($customer['tax_id']): ?>
-            <p class="text-gray-600 mb-2">USt-IdNr.: <?= htmlspecialchars($customer['tax_id']) ?></p>
-            <?php endif; ?>
-            <button onclick="closeModal('impressumModal')" class="mt-4 px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">Schliessen</button>
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-xl font-bold">Impressum</h3>
+                <button onclick="closeModal('impressumModal')" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <div class="text-gray-600 space-y-2">
+                <p><strong><?= htmlspecialchars($customer['company_name']) ?></strong></p>
+                
+                <?php if (!empty($customer['contact_name'])): ?>
+                <p>Vertreten durch: <?= htmlspecialchars($customer['contact_name']) ?></p>
+                <?php endif; ?>
+                
+                <?php if (!empty($customer['address_street'])): ?>
+                <p><?= htmlspecialchars($customer['address_street']) ?></p>
+                <?php endif; ?>
+                
+                <?php if (!empty($customer['address_zip']) || !empty($customer['address_city'])): ?>
+                <p><?= htmlspecialchars($customer['address_zip']) ?> <?= htmlspecialchars($customer['address_city']) ?></p>
+                <?php endif; ?>
+                
+                <?php if (!empty($customer['phone'])): ?>
+                <p class="mt-4">Telefon: <?= htmlspecialchars($customer['phone']) ?></p>
+                <?php endif; ?>
+                
+                <?php if (!empty($customer['email'])): ?>
+                <p>E-Mail: <?= htmlspecialchars($customer['email']) ?></p>
+                <?php endif; ?>
+                
+                <?php if (!empty($customer['tax_id'])): ?>
+                <p class="mt-4">USt-IdNr.: <?= htmlspecialchars($customer['tax_id']) ?></p>
+                <?php endif; ?>
+            </div>
+            
+            <button onclick="closeModal('impressumModal')" class="mt-6 w-full px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">
+                Schließen
+            </button>
+        </div>
+    </div>
+    
+    <!-- Datenschutz Modal -->
+    <div id="datenschutzModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 max-h-[80vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-xl font-bold">Datenschutzerklärung</h3>
+                <button onclick="closeModal('datenschutzModal')" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <div class="text-gray-600 space-y-4 text-sm">
+                <p><strong>Verantwortlich für die Datenverarbeitung:</strong></p>
+                <p><?= htmlspecialchars($customer['company_name']) ?><br>
+                   <?= htmlspecialchars($impressumAddress) ?></p>
+                
+                <p><strong>Erhobene Daten:</strong></p>
+                <p>Im Rahmen des Empfehlungsprogramms werden folgende Daten erhoben: Name (optional), E-Mail-Adresse, IP-Adresse (anonymisiert), Zeitstempel der Anmeldung.</p>
+                
+                <p><strong>Zweck der Verarbeitung:</strong></p>
+                <p>Die Daten werden ausschließlich zur Durchführung des Empfehlungsprogramms verwendet, um Ihnen Ihren persönlichen Empfehlungslink bereitzustellen und Belohnungen zuzuweisen.</p>
+                
+                <p><strong>Ihre Rechte:</strong></p>
+                <p>Sie haben das Recht auf Auskunft, Berichtigung, Löschung und Einschränkung der Verarbeitung Ihrer personenbezogenen Daten. Kontaktieren Sie uns unter: <?= htmlspecialchars($customer['email']) ?></p>
+                
+                <p><strong>E-Mail-Kommunikation:</strong></p>
+                <p>Sie können sich jederzeit von unseren E-Mails abmelden, indem Sie den Abmeldelink in jeder E-Mail nutzen.</p>
+            </div>
+            
+            <button onclick="closeModal('datenschutzModal')" class="mt-6 w-full px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">
+                Schließen
+            </button>
         </div>
     </div>
     
@@ -635,15 +738,35 @@ $pageTitle = "Empfehlen Sie {$customer['company_name']} und erhalten Sie tolle B
         document.querySelectorAll('a[href="#impressum"]').forEach(link => {
             link.addEventListener('click', e => {
                 e.preventDefault();
-                document.getElementById('impressumModal').classList.remove('hidden');
-                document.getElementById('impressumModal').classList.add('flex');
+                openModal('impressumModal');
             });
         });
+        
+        document.querySelectorAll('a[href="#datenschutz"]').forEach(link => {
+            link.addEventListener('click', e => {
+                e.preventDefault();
+                openModal('datenschutzModal');
+            });
+        });
+        
+        function openModal(id) {
+            document.getElementById(id).classList.remove('hidden');
+            document.getElementById(id).classList.add('flex');
+        }
         
         function closeModal(id) {
             document.getElementById(id).classList.add('hidden');
             document.getElementById(id).classList.remove('flex');
         }
+        
+        // Modal schließen bei Klick außerhalb
+        document.querySelectorAll('#impressumModal, #datenschutzModal').forEach(modal => {
+            modal.addEventListener('click', e => {
+                if (e.target === modal) {
+                    closeModal(modal.id);
+                }
+            });
+        });
     </script>
     
 </body>
