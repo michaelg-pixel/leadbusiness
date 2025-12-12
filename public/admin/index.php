@@ -149,6 +149,24 @@ $expiringTrials = $db->fetchAll("
 $lastCronRun = $db->fetchColumn("SELECT MAX(created_at) FROM email_queue WHERE status = 'sent'");
 $cronHealthy = $lastCronRun && strtotime($lastCronRun) > strtotime('-1 hour');
 
+// === VOLLSTÄNDIGE KUNDENLISTE ===
+$allCustomers = $db->fetchAll("
+    SELECT c.*,
+           (SELECT COUNT(*) FROM leads WHERE customer_id = c.id) as lead_count,
+           (SELECT COUNT(*) FROM campaigns WHERE customer_id = c.id) as campaign_count,
+           (SELECT COUNT(*) FROM conversions cv 
+            JOIN campaigns camp ON cv.campaign_id = camp.id 
+            WHERE camp.customer_id = c.id AND cv.status = 'confirmed') as conversion_count,
+           CASE 
+               WHEN c.subscription_status = 'trial' AND c.subscription_ends_at IS NOT NULL 
+               THEN DATEDIFF(c.subscription_ends_at, NOW())
+               ELSE NULL 
+           END as trial_days_left
+    FROM customers c
+    ORDER BY c.created_at DESC
+    LIMIT 50
+");
+
 include __DIR__ . '/../../includes/admin-header.php';
 ?>
 
@@ -349,7 +367,7 @@ include __DIR__ . '/../../includes/admin-header.php';
 </div>
 
 <!-- Tables Row -->
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
     
     <!-- Top Kunden -->
     <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
@@ -466,6 +484,263 @@ include __DIR__ . '/../../includes/admin-header.php';
         </div>
     </div>
 </div>
+
+<!-- VOLLSTÄNDIGE KUNDENLISTE -->
+<div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 mb-8">
+    <div class="p-4 border-b border-slate-200 dark:border-slate-700">
+        <div class="flex items-center justify-between">
+            <h3 class="text-lg font-semibold text-slate-800 dark:text-white">
+                <i class="fas fa-address-book text-primary-500 mr-2"></i>Alle Kunden (Vollständige Daten)
+            </h3>
+            <a href="/admin/customers.php" class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm rounded-lg transition-all">
+                <i class="fas fa-external-link mr-2"></i>Zur Kundenverwaltung
+            </a>
+        </div>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead class="bg-slate-50 dark:bg-slate-700/50">
+                <tr>
+                    <th class="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300">Firma</th>
+                    <th class="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300">Kontakt</th>
+                    <th class="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300">E-Mail / Telefon</th>
+                    <th class="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300">Adresse</th>
+                    <th class="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300">Subdomain</th>
+                    <th class="px-4 py-3 text-center font-semibold text-slate-600 dark:text-slate-300">Plan</th>
+                    <th class="px-4 py-3 text-center font-semibold text-slate-600 dark:text-slate-300">Status</th>
+                    <th class="px-4 py-3 text-center font-semibold text-slate-600 dark:text-slate-300">Leads</th>
+                    <th class="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300">Registriert</th>
+                    <th class="px-4 py-3 text-right font-semibold text-slate-600 dark:text-slate-300">Aktionen</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+                <?php foreach ($allCustomers as $customer): ?>
+                <?php
+                $isOnline = $customer['last_login_at'] && strtotime($customer['last_login_at']) > strtotime('-15 minutes');
+                ?>
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
+                    <td class="px-4 py-3">
+                        <div class="flex items-center gap-3">
+                            <div class="relative">
+                                <?php if (!empty($customer['logo_url'])): ?>
+                                <img src="<?= e($customer['logo_url']) ?>" alt="" class="w-10 h-10 rounded-lg object-cover">
+                                <?php else: ?>
+                                <div class="w-10 h-10 bg-primary-100 dark:bg-primary-900/30 rounded-lg flex items-center justify-center">
+                                    <span class="text-primary-600 dark:text-primary-400 font-medium text-xs">
+                                        <?= strtoupper(substr($customer['company_name'], 0, 2)) ?>
+                                    </span>
+                                </div>
+                                <?php endif; ?>
+                                <?php if ($isOnline): ?>
+                                <span class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-white dark:border-slate-800" title="Online"></span>
+                                <?php endif; ?>
+                            </div>
+                            <div>
+                                <p class="font-medium text-slate-800 dark:text-white"><?= e($customer['company_name']) ?></p>
+                                <p class="text-xs text-slate-500"><?= e(ucfirst($customer['industry'] ?? '-')) ?></p>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-4 py-3">
+                        <p class="text-slate-800 dark:text-white"><?= e($customer['contact_name']) ?></p>
+                    </td>
+                    <td class="px-4 py-3">
+                        <p class="text-slate-800 dark:text-white"><?= e($customer['email']) ?></p>
+                        <?php if (!empty($customer['phone'])): ?>
+                        <p class="text-xs text-slate-500 mt-1">
+                            <i class="fas fa-phone text-[10px] mr-1"></i><?= e($customer['phone']) ?>
+                        </p>
+                        <?php endif; ?>
+                    </td>
+                    <td class="px-4 py-3">
+                        <?php if (!empty($customer['address_street'])): ?>
+                        <p class="text-slate-600 dark:text-slate-300 text-xs"><?= e($customer['address_street']) ?></p>
+                        <p class="text-slate-600 dark:text-slate-300 text-xs"><?= e($customer['address_zip']) ?> <?= e($customer['address_city']) ?></p>
+                        <?php else: ?>
+                        <span class="text-slate-400 text-xs">-</span>
+                        <?php endif; ?>
+                    </td>
+                    <td class="px-4 py-3">
+                        <a href="https://<?= e($customer['subdomain']) ?>.empfehlungen.cloud" target="_blank" 
+                           class="text-primary-600 hover:text-primary-700 hover:underline">
+                            <?= e($customer['subdomain']) ?>
+                            <i class="fas fa-external-link text-[10px] ml-1"></i>
+                        </a>
+                        <?php if (!empty($customer['custom_domain'])): ?>
+                        <p class="text-xs text-slate-400 mt-1"><?= e($customer['custom_domain']) ?></p>
+                        <?php endif; ?>
+                    </td>
+                    <td class="px-4 py-3 text-center">
+                        <?php
+                        $planColors = [
+                            'starter' => 'bg-slate-100 text-slate-700 dark:bg-slate-600 dark:text-slate-200',
+                            'professional' => 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300',
+                            'enterprise' => 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
+                        ];
+                        ?>
+                        <span class="px-2 py-1 text-xs font-medium rounded-full <?= $planColors[$customer['plan']] ?? $planColors['starter'] ?>">
+                            <?= ucfirst($customer['plan']) ?>
+                        </span>
+                    </td>
+                    <td class="px-4 py-3 text-center">
+                        <?php
+                        $statusColors = [
+                            'active' => 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
+                            'trial' => 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
+                            'cancelled' => 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
+                            'paused' => 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
+                        ];
+                        $statusLabels = ['active' => 'Aktiv', 'trial' => 'Trial', 'cancelled' => 'Gekündigt', 'paused' => 'Pausiert'];
+                        ?>
+                        <span class="px-2 py-1 text-xs font-medium rounded-full <?= $statusColors[$customer['subscription_status']] ?? $statusColors['trial'] ?>">
+                            <?= $statusLabels[$customer['subscription_status']] ?? $customer['subscription_status'] ?>
+                        </span>
+                        <?php if ($customer['subscription_status'] === 'trial' && $customer['trial_days_left'] !== null): ?>
+                        <p class="text-xs mt-1 <?= $customer['trial_days_left'] <= 3 ? 'text-red-500' : 'text-slate-400' ?>">
+                            <?= $customer['trial_days_left'] ?> Tage
+                        </p>
+                        <?php endif; ?>
+                    </td>
+                    <td class="px-4 py-3 text-center">
+                        <span class="font-semibold text-slate-800 dark:text-white"><?= number_format($customer['lead_count'], 0, ',', '.') ?></span>
+                        <span class="text-slate-400">/</span>
+                        <span class="text-slate-500"><?= number_format($customer['conversion_count'], 0, ',', '.') ?></span>
+                    </td>
+                    <td class="px-4 py-3">
+                        <p class="text-xs text-slate-600 dark:text-slate-300"><?= date('d.m.Y', strtotime($customer['created_at'])) ?></p>
+                        <p class="text-xs text-slate-400"><?= timeAgo($customer['created_at']) ?></p>
+                    </td>
+                    <td class="px-4 py-3 text-right">
+                        <div class="flex items-center justify-end gap-1">
+                            <a href="/admin/customer-detail.php?id=<?= $customer['id'] ?>" 
+                               class="p-2 text-slate-400 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-all" 
+                               title="Details">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="/admin/login-as-customer.php?id=<?= $customer['id'] ?>" 
+                               class="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-all" 
+                               title="Als Kunde einloggen">
+                                <i class="fas fa-user-secret"></i>
+                            </a>
+                            <a href="https://<?= e($customer['subdomain']) ?>.empfehlungen.cloud" target="_blank"
+                               class="p-2 text-slate-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-all" 
+                               title="Seite öffnen">
+                                <i class="fas fa-external-link"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                <?php endforeach; ?>
+                
+                <?php if (empty($allCustomers)): ?>
+                <tr>
+                    <td colspan="10" class="px-6 py-12 text-center text-slate-500">
+                        <i class="fas fa-inbox text-4xl mb-3"></i>
+                        <p>Noch keine Kunden vorhanden</p>
+                    </td>
+                </tr>
+                <?php endif; ?>
+            </tbody>
+        </table>
+    </div>
+    <?php if (count($allCustomers) >= 50): ?>
+    <div class="p-4 border-t border-slate-200 dark:border-slate-700 text-center">
+        <a href="/admin/customers.php" class="text-primary-600 hover:text-primary-700 font-medium">
+            <i class="fas fa-arrow-right mr-2"></i>Alle <?= $stats['total_customers'] ?> Kunden anzeigen
+        </a>
+    </div>
+    <?php endif; ?>
+</div>
+
+<!-- FOOTER -->
+<footer class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 mt-8">
+    <div class="p-6">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <!-- Brand -->
+            <div>
+                <div class="flex items-center gap-2 mb-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-rocket text-white"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-slate-800 dark:text-white">Leadbusiness</h4>
+                        <p class="text-xs text-slate-500">Admin Panel</p>
+                    </div>
+                </div>
+                <p class="text-sm text-slate-500">
+                    Empfehlungsprogramm-Plattform für professionelle Kundenakquise.
+                </p>
+            </div>
+            
+            <!-- Schnellzugriff -->
+            <div>
+                <h5 class="font-semibold text-slate-800 dark:text-white mb-3">Schnellzugriff</h5>
+                <ul class="space-y-2 text-sm">
+                    <li><a href="/admin/customers.php" class="text-slate-500 hover:text-primary-600 transition-colors"><i class="fas fa-building w-5"></i>Kunden</a></li>
+                    <li><a href="/admin/leads.php" class="text-slate-500 hover:text-primary-600 transition-colors"><i class="fas fa-users w-5"></i>Leads</a></li>
+                    <li><a href="/admin/broadcasts.php" class="text-slate-500 hover:text-primary-600 transition-colors"><i class="fas fa-bullhorn w-5"></i>Broadcasts</a></li>
+                    <li><a href="/admin/payments.php" class="text-slate-500 hover:text-primary-600 transition-colors"><i class="fas fa-credit-card w-5"></i>Zahlungen</a></li>
+                </ul>
+            </div>
+            
+            <!-- System -->
+            <div>
+                <h5 class="font-semibold text-slate-800 dark:text-white mb-3">System</h5>
+                <ul class="space-y-2 text-sm">
+                    <li><a href="/admin/settings.php" class="text-slate-500 hover:text-primary-600 transition-colors"><i class="fas fa-cog w-5"></i>Einstellungen</a></li>
+                    <li><a href="/admin/logs.php" class="text-slate-500 hover:text-primary-600 transition-colors"><i class="fas fa-file-alt w-5"></i>Logs</a></li>
+                    <li><a href="/admin/email-queue.php" class="text-slate-500 hover:text-primary-600 transition-colors"><i class="fas fa-envelope w-5"></i>E-Mail Queue</a></li>
+                    <li><a href="/admin/fraud-review.php" class="text-slate-500 hover:text-primary-600 transition-colors"><i class="fas fa-shield w-5"></i>Fraud Review</a></li>
+                </ul>
+            </div>
+            
+            <!-- Status -->
+            <div>
+                <h5 class="font-semibold text-slate-800 dark:text-white mb-3">Status</h5>
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between text-sm">
+                        <span class="text-slate-500">Cron-Jobs</span>
+                        <?php if ($cronHealthy): ?>
+                        <span class="flex items-center gap-1 text-green-500">
+                            <span class="w-2 h-2 bg-green-500 rounded-full"></span>OK
+                        </span>
+                        <?php else: ?>
+                        <span class="flex items-center gap-1 text-amber-500">
+                            <span class="w-2 h-2 bg-amber-500 rounded-full"></span>Prüfen
+                        </span>
+                        <?php endif; ?>
+                    </div>
+                    <div class="flex items-center justify-between text-sm">
+                        <span class="text-slate-500">Kunden aktiv</span>
+                        <span class="text-slate-800 dark:text-white font-medium"><?= $stats['active_customers'] ?></span>
+                    </div>
+                    <div class="flex items-center justify-between text-sm">
+                        <span class="text-slate-500">MRR</span>
+                        <span class="text-green-600 font-medium"><?= number_format($stats['mrr'], 0, ',', '.') ?> €</span>
+                    </div>
+                    <div class="flex items-center justify-between text-sm">
+                        <span class="text-slate-500">PHP Version</span>
+                        <span class="text-slate-800 dark:text-white"><?= phpversion() ?></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Trennlinie und Copyright -->
+        <div class="mt-6 pt-6 border-t border-slate-200 dark:border-slate-700">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+                <p class="text-sm text-slate-500">
+                    &copy; <?= date('Y') ?> Leadbusiness. Alle Rechte vorbehalten.
+                </p>
+                <div class="flex items-center gap-4 text-sm text-slate-500">
+                    <span><i class="fas fa-clock mr-1"></i><?= date('d.m.Y H:i') ?></span>
+                    <span><i class="fas fa-database mr-1"></i>MySQL</span>
+                    <span><i class="fab fa-php mr-1"></i>PHP <?= PHP_MAJOR_VERSION ?>.<?= PHP_MINOR_VERSION ?></span>
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>
 
 <script>
 const ctx = document.getElementById('customersChart').getContext('2d');
