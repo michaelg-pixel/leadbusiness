@@ -191,10 +191,19 @@ class MailgunService {
         $privacyUrl = $lead['whitelabel_custom_privacy_url'] 
             ?: "https://{$lead['subdomain']}.empfohlen.de/datenschutz";
         
-        // Impressum zusammenbauen
-        $footerAddress = $lead['address_street'] . ', ' . $lead['address_zip'] . ' ' . $lead['address_city'];
-        if ($lead['company_phone']) {
+        // Impressum zusammenbauen (Straße, PLZ, Stadt, optional USt-IdNr.)
+        $footerAddress = '';
+        if (!empty($lead['address_street'])) {
+            $footerAddress = $lead['address_street'];
+        }
+        if (!empty($lead['address_zip']) && !empty($lead['address_city'])) {
+            $footerAddress .= ', ' . $lead['address_zip'] . ' ' . $lead['address_city'];
+        }
+        if (!empty($lead['company_phone'])) {
             $footerAddress .= ' | Tel: ' . $lead['company_phone'];
+        }
+        if (!empty($lead['tax_id'])) {
+            $footerAddress .= ' | USt-IdNr.: ' . $lead['tax_id'];
         }
         
         // Basis-Variablen
@@ -227,7 +236,7 @@ class MailgunService {
         // Zusätzliche Variablen mergen
         $variables = array_merge($baseVariables, $additionalVariables);
         
-        // Template laden
+        // Template laden (sucht nach slug oder name)
         $template = $this->loadTemplate($templateName);
         if (!$template) {
             throw new Exception("E-Mail-Template '{$templateName}' nicht gefunden.");
@@ -344,7 +353,7 @@ class MailgunService {
                     }
                 }
                 
-                // Wenn lead_id vorhanden, sendLeadEmail nutzen
+                // Wenn lead_id vorhanden, sendLeadEmail nutzen (mit Impressum im Footer)
                 if (!empty($email['lead_id'])) {
                     $result = $this->sendLeadEmail($email['lead_id'], $email['template'], $variables);
                 } else {
@@ -409,13 +418,24 @@ class MailgunService {
     }
     
     /**
-     * Template laden
+     * Template laden (sucht nach slug oder name für Kompatibilität)
      */
-    private function loadTemplate($name) {
-        return $this->db->fetch(
-            "SELECT * FROM email_templates WHERE name = ? AND is_active = 1",
-            [$name]
+    private function loadTemplate($templateIdentifier) {
+        // Erst nach slug suchen (bevorzugt)
+        $template = $this->db->fetch(
+            "SELECT * FROM email_templates WHERE slug = ? AND is_active = 1",
+            [$templateIdentifier]
         );
+        
+        // Falls nicht gefunden, nach name suchen (Fallback)
+        if (!$template) {
+            $template = $this->db->fetch(
+                "SELECT * FROM email_templates WHERE name = ? AND is_active = 1",
+                [$templateIdentifier]
+            );
+        }
+        
+        return $template;
     }
     
     /**
