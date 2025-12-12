@@ -25,8 +25,9 @@ $mailgun = new MailgunService();
 
 try {
     // Alle aktiven Leads mit bestätigten Conversions abrufen
+    // WICHTIG: customer_id muss explizit selektiert werden für queue()
     $leads = $db->fetchAll(
-        "SELECT l.*, c.company_name, c.subdomain, ca.id as campaign_id
+        "SELECT l.*, c.id as customer_id, c.company_name, c.subdomain, ca.id as campaign_id
          FROM leads l
          JOIN campaigns ca ON l.campaign_id = ca.id
          JOIN customers c ON ca.customer_id = c.id
@@ -87,6 +88,8 @@ try {
                 ], 'id = ?', [$lead['id']]);
                 
                 // E-Mail Queue
+                // WICHTIG: lead_id als letzten Parameter übergeben,
+                // damit sendLeadEmail() verwendet wird (mit Impressum im Footer)
                 $referralLink = "https://{$lead['subdomain']}.empfohlen.de/r/{$lead['referral_code']}";
                 $dashboardLink = "https://{$lead['subdomain']}.empfohlen.de/lead?code={$lead['referral_code']}";
                 
@@ -106,7 +109,9 @@ try {
                         'dashboard_link' => $dashboardLink,
                         'conversions' => $lead['conversions']
                     ],
-                    10 // Hohe Priorität
+                    10, // Hohe Priorität
+                    null, // scheduledAt
+                    $lead['id'] // lead_id - wichtig für Impressum im Footer!
                 );
                 
                 // Delivery als gesendet markieren
