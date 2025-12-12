@@ -31,7 +31,7 @@ try {
     // 1. Reminder: 3 Tage ohne Share
     // ============================================
     $noShareLeads = $db->fetchAll(
-        "SELECT l.*, c.company_name, c.subdomain
+        "SELECT l.*, c.id as customer_id, c.company_name, c.subdomain
          FROM leads l
          JOIN campaigns ca ON l.campaign_id = ca.id
          JOIN customers c ON ca.customer_id = c.id
@@ -64,7 +64,9 @@ try {
                 'referral_link' => $referralLink,
                 'dashboard_link' => "https://{$lead['subdomain']}.empfohlen.de/lead?code={$lead['referral_code']}"
             ],
-            5
+            5, // priority
+            null, // scheduledAt
+            $lead['id'] // lead_id - für Impressum im Footer
         );
         $processed++;
     }
@@ -73,7 +75,7 @@ try {
     // 2. "Fast geschafft" - 1 Conversion vor nächster Stufe
     // ============================================
     $nearRewardLeads = $db->fetchAll(
-        "SELECT l.*, c.company_name, c.subdomain, r.description as next_reward, r.required_conversions
+        "SELECT l.*, c.id as customer_id, c.company_name, c.subdomain, r.description as next_reward, r.required_conversions
          FROM leads l
          JOIN campaigns ca ON l.campaign_id = ca.id
          JOIN customers c ON ca.customer_id = c.id
@@ -110,7 +112,9 @@ try {
                 'next_reward' => $lead['next_reward'],
                 'referral_link' => $referralLink
             ],
-            8
+            8, // priority
+            null, // scheduledAt
+            $lead['id'] // lead_id - für Impressum im Footer
         );
         $processed++;
     }
@@ -119,7 +123,7 @@ try {
     // 3. Inaktivität: 30 Tage keine Aktivität
     // ============================================
     $inactiveLeads = $db->fetchAll(
-        "SELECT l.*, c.company_name, c.subdomain
+        "SELECT l.*, c.id as customer_id, c.company_name, c.subdomain
          FROM leads l
          JOIN campaigns ca ON l.campaign_id = ca.id
          JOIN customers c ON ca.customer_id = c.id
@@ -153,7 +157,9 @@ try {
                 'conversions' => $lead['conversions'],
                 'days_inactive' => 30
             ],
-            3
+            3, // priority
+            null, // scheduledAt
+            $lead['id'] // lead_id - für Impressum im Footer
         );
         $processed++;
     }
