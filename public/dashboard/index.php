@@ -1,7 +1,12 @@
 <?php
 /**
  * Leadbusiness - Kunden-Dashboard
- * Mit Dark/Light Mode und Setup-Wizard
+ * Branchenspezifisches, modulares Dashboard mit Tarif-Unterstützung
+ * 
+ * Dashboard-Varianten:
+ * - offline_local: QR-Code fokussiert (Handwerker, Friseur, Zahnarzt)
+ * - online_business: Link fokussiert (Coach, Online-Shop, Newsletter)
+ * - hybrid: Beides (Agentur, Sonstiges)
  */
 
 require_once __DIR__ . '/../../config/database.php';
@@ -10,6 +15,7 @@ require_once __DIR__ . '/../../includes/Database.php';
 require_once __DIR__ . '/../../includes/Auth.php';
 require_once __DIR__ . '/../../includes/SetupWizard.php';
 require_once __DIR__ . '/../../includes/helpers.php';
+require_once __DIR__ . '/../../includes/services/DashboardLayoutService.php';
 
 use Leadbusiness\Auth;
 use Leadbusiness\Database;
@@ -24,17 +30,28 @@ if (!$auth->isLoggedIn() || $auth->getUserType() !== 'customer') {
 $customer = $auth->getCurrentCustomer();
 $customerId = $customer['id'];
 $db = Database::getInstance();
+$pdo = $db->getConnection();
+
+// Dashboard-Layout basierend auf Branche + Tarif laden
+$layoutService = new DashboardLayoutService($pdo);
+$dashboardLayout = $layoutService->getCustomerDashboard($customerId);
 
 // Setup-Wizard initialisieren
 $setupWizard = new SetupWizard($customer);
+
+// Kampagne laden
+$campaign = $db->fetch(
+    "SELECT * FROM campaigns WHERE customer_id = ? AND is_active = TRUE ORDER BY created_at ASC LIMIT 1",
+    [$customerId]
+) ?: [];
 
 // Statistiken laden
 $stats = $db->fetch(
     "SELECT 
         (SELECT COUNT(*) FROM leads WHERE customer_id = ? AND status IN ('active', 'pending')) as total_leads,
         (SELECT COUNT(*) FROM leads WHERE customer_id = ? AND status = 'active') as active_leads,
-        (SELECT SUM(conversions) FROM leads WHERE customer_id = ?) as total_conversions,
-        (SELECT SUM(clicks) FROM leads WHERE customer_id = ?) as total_clicks,
+        (SELECT COALESCE(SUM(conversions), 0) FROM leads WHERE customer_id = ?) as total_conversions,
+        (SELECT COALESCE(SUM(clicks), 0) FROM leads WHERE customer_id = ?) as total_clicks,
         (SELECT COUNT(*) FROM leads WHERE customer_id = ? AND DATE(created_at) = CURDATE()) as leads_today,
         (SELECT COUNT(*) FROM conversions c 
          JOIN leads l ON c.lead_id = l.id 
@@ -42,8 +59,6 @@ $stats = $db->fetch(
     ",
     [$customerId, $customerId, $customerId, $customerId, $customerId, $customerId]
 );
-
-$conversionRate = $stats['total_clicks'] > 0 ? round(($stats['total_conversions'] / $stats['total_clicks']) * 100, 1) : 0;
 
 // Letzte Aktivitäten
 $recentActivity = $db->fetchAll(
@@ -53,7 +68,7 @@ $recentActivity = $db->fetchAll(
      SELECT 'conversion' as type, l.name, l.email, c.created_at, 'Erfolgreiche Empfehlung' as action
      FROM conversions c JOIN leads l ON c.lead_id = l.id
      WHERE l.customer_id = ? AND c.status = 'confirmed'
-     ORDER BY created_at DESC LIMIT 10",
+     ORDER BY created_at DESC LIMIT 8",
     [$customerId, $customerId]
 );
 
@@ -65,29 +80,33 @@ $topLeads = $db->fetchAll(
     [$customerId]
 );
 
-// Chart-Daten
-$chartData = $db->fetchAll(
-    "SELECT DATE(created_at) as date, COUNT(*) as count FROM leads
-     WHERE customer_id = ? AND created_at >= DATE_SUB(NOW(), INTERVAL 14 DAY)
-     GROUP BY DATE(created_at) ORDER BY date ASC",
-    [$customerId]
-);
-
 $isNewCustomer = isset($_GET['welcome']);
 $pageTitle = 'Übersicht';
+
+// Branchenspezifische Variablen für Templates
+$businessType = $dashboardLayout['business_type'] ?? 'hybrid';
+$customerTerm = $dashboardLayout['customer_term'] ?? 'Kunden';
+$industryIcon = $dashboardLayout['industry_icon'] ?? 'fas fa-briefcase';
+$industryColor = $dashboardLayout['industry_color'] ?? '#6366f1';
+$primaryModule = $dashboardLayout['primary_module'] ?? 'referral_link';
 
 include __DIR__ . '/../../includes/dashboard-header.php';
 ?>
 
 <?php if ($isNewCustomer): ?>
-<!-- Welcome Banner (nur beim ersten Mal) -->
+<!-- Welcome Banner -->
 <div class="bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl p-6 text-white mb-6">
     <div class="flex items-start gap-4">
         <div class="text-4xl">🎉</div>
         <div>
             <h2 class="text-xl font-bold mb-2">Herzlichen Glückwunsch!</h2>
             <p class="text-white/90 mb-4">
-                Ihr Account wurde erfolgreich erstellt. Folgen Sie der Checkliste unten, um Ihr Empfehlungsprogramm zu vervollständigen.
+                Ihr Empfehlungsprogramm ist bereit. 
+                <?php if ($businessType === 'offline'): ?>
+                    Drucken Sie den QR-Code aus und zeigen Sie ihn Ihren <?= e($customerTerm) ?>!
+                <?php else: ?>
+                    Teilen Sie Ihren Empfehlungslink mit Ihren <?= e($customerTerm) ?>!
+                <?php endif; ?>
             </p>
             <div class="flex items-center gap-2 bg-white/20 rounded-lg px-4 py-2 inline-flex">
                 <code class="text-sm"><?= e($customer['subdomain']) ?>.empfehlungen.cloud</code>
@@ -101,237 +120,343 @@ include __DIR__ . '/../../includes/dashboard-header.php';
 <?php endif; ?>
 
 <?php 
-// Setup-Wizard anzeigen (wenn nicht versteckt oder nicht vollständig)
+// Setup-Wizard anzeigen
 if (!$setupWizard->isHidden() || !$setupWizard->isSetupComplete()):
     include __DIR__ . '/../../includes/components/setup-wizard-widget.php';
 endif;
 ?>
 
-<!-- Stats Grid -->
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+<!-- Dashboard Header mit Quick Actions -->
+<div class="dashboard-header mb-6">
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <!-- Titel & Branche -->
+        <div class="header-left flex items-center gap-4">
+            <div class="industry-icon w-14 h-14 rounded-xl flex items-center justify-center"
+                 style="background-color: <?= e($industryColor) ?>20">
+                <i class="<?= e($industryIcon) ?> text-2xl" style="color: <?= e($industryColor) ?>"></i>
+            </div>
+            <div>
+                <h1 class="text-2xl font-bold text-slate-800 dark:text-white">
+                    <?= e($customer['company_name']) ?>
+                </h1>
+                <p class="text-sm text-slate-500 dark:text-slate-400">
+                    <?= e($dashboardLayout['welcome_text'] ?? 'Willkommen in Ihrem Empfehlungsprogramm') ?>
+                </p>
+            </div>
+        </div>
+        
+        <!-- Quick Actions basierend auf Business-Typ -->
+        <div class="header-actions flex flex-wrap gap-2">
+            <?php if ($businessType === 'offline' || $businessType === 'hybrid'): ?>
+                <button onclick="downloadQR()" class="btn btn-primary">
+                    <i class="fas fa-qrcode mr-2"></i>
+                    QR-Code
+                </button>
+            <?php endif; ?>
+            
+            <?php if ($businessType === 'online' || $businessType === 'hybrid'): ?>
+                <button onclick="copyMainLink()" id="copyMainLinkBtn" class="btn <?= $businessType === 'online' ? 'btn-primary' : 'btn-outline' ?>">
+                    <i class="fas fa-copy mr-2"></i>
+                    Link kopieren
+                </button>
+            <?php endif; ?>
+            
+            <a href="/dashboard/share.php" class="btn btn-outline">
+                <i class="fas fa-share-alt mr-2"></i>
+                Teilen
+            </a>
+            
+            <?php if ($customer['plan'] !== 'starter'): ?>
+                <a href="/dashboard/leads.php" class="btn btn-outline">
+                    <i class="fas fa-users mr-2"></i>
+                    Empfehler
+                </a>
+            <?php endif; ?>
+        </div>
+    </div>
     
-    <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 hover:-translate-y-1 transition-transform">
-        <div class="flex items-center justify-between mb-4">
-            <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center">
-                <i class="fas fa-users text-blue-500 dark:text-blue-400 text-xl"></i>
+    <!-- Plan Badge -->
+    <div class="mt-4 flex items-center gap-3">
+        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
+            <?php 
+            switch($customer['plan']) {
+                case 'enterprise': echo 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300'; break;
+                case 'professional': echo 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'; break;
+                default: echo 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300';
+            }
+            ?>">
+            <i class="fas fa-<?= $customer['plan'] === 'starter' ? 'seedling' : ($customer['plan'] === 'professional' ? 'star' : 'crown') ?> mr-1"></i>
+            <?= ucfirst($customer['plan']) ?>
+        </span>
+        
+        <?php if ($customer['plan'] === 'starter'): ?>
+            <a href="/dashboard/upgrade.php" class="text-xs text-primary-600 dark:text-primary-400 hover:underline">
+                <i class="fas fa-arrow-up mr-1"></i>Upgrade für mehr Funktionen
+            </a>
+        <?php endif; ?>
+    </div>
+</div>
+
+<!-- PRIMÄRES MODUL (branchenspezifisch) -->
+<div class="primary-module-section mb-8">
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+        <?php
+        // Primäres Modul basierend auf Layout laden
+        $primaryModulePath = __DIR__ . "/../../includes/components/dashboard-modules/{$primaryModule}.php";
+        if (file_exists($primaryModulePath)) {
+            include $primaryModulePath;
+        } else {
+            // Fallback: Referral Link
+            include __DIR__ . "/../../includes/components/dashboard-modules/referral_link.php";
+        }
+        ?>
+    </div>
+</div>
+
+<!-- Stats Grid -->
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+    
+    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm border border-slate-200 dark:border-slate-700 hover:-translate-y-1 transition-transform">
+        <div class="flex items-center justify-between mb-3">
+            <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center">
+                <i class="fas fa-users text-blue-500 dark:text-blue-400"></i>
             </div>
             <?php if ($stats['leads_today'] > 0): ?>
-            <span class="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-xs font-medium rounded-full">
-                +<?= $stats['leads_today'] ?> heute
+            <span class="px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-xs font-medium rounded-full">
+                +<?= $stats['leads_today'] ?>
             </span>
             <?php endif; ?>
         </div>
-        <div class="text-3xl font-bold text-slate-800 dark:text-white"><?= number_format($stats['total_leads'] ?? 0, 0, ',', '.') ?></div>
-        <div class="text-sm text-slate-500 dark:text-slate-400">Empfehler gesamt</div>
+        <div class="text-2xl font-bold text-slate-800 dark:text-white"><?= number_format($stats['total_leads'] ?? 0, 0, ',', '.') ?></div>
+        <div class="text-sm text-slate-500 dark:text-slate-400">Empfehler</div>
     </div>
     
-    <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 hover:-translate-y-1 transition-transform">
-        <div class="flex items-center justify-between mb-4">
-            <div class="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-xl flex items-center justify-center">
-                <i class="fas fa-user-check text-green-500 dark:text-green-400 text-xl"></i>
+    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm border border-slate-200 dark:border-slate-700 hover:-translate-y-1 transition-transform">
+        <div class="flex items-center justify-between mb-3">
+            <div class="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-xl flex items-center justify-center">
+                <i class="fas fa-user-check text-green-500 dark:text-green-400"></i>
             </div>
             <?php if ($stats['conversions_today'] > 0): ?>
-            <span class="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-xs font-medium rounded-full">
-                +<?= $stats['conversions_today'] ?> heute
+            <span class="px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-xs font-medium rounded-full">
+                +<?= $stats['conversions_today'] ?>
             </span>
             <?php endif; ?>
         </div>
-        <div class="text-3xl font-bold text-slate-800 dark:text-white"><?= number_format($stats['total_conversions'] ?? 0, 0, ',', '.') ?></div>
-        <div class="text-sm text-slate-500 dark:text-slate-400">Erfolgreiche Empfehlungen</div>
+        <div class="text-2xl font-bold text-slate-800 dark:text-white"><?= number_format($stats['total_conversions'] ?? 0, 0, ',', '.') ?></div>
+        <div class="text-sm text-slate-500 dark:text-slate-400">Neue <?= e($customerTerm) ?></div>
     </div>
     
-    <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 hover:-translate-y-1 transition-transform">
-        <div class="flex items-center justify-between mb-4">
-            <div class="w-12 h-12 bg-amber-100 dark:bg-amber-900/30 rounded-xl flex items-center justify-center">
-                <i class="fas fa-mouse-pointer text-amber-500 dark:text-amber-400 text-xl"></i>
-            </div>
+    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm border border-slate-200 dark:border-slate-700 hover:-translate-y-1 transition-transform">
+        <div class="w-10 h-10 bg-amber-100 dark:bg-amber-900/30 rounded-xl flex items-center justify-center mb-3">
+            <i class="fas fa-mouse-pointer text-amber-500 dark:text-amber-400"></i>
         </div>
-        <div class="text-3xl font-bold text-slate-800 dark:text-white"><?= number_format($stats['total_clicks'] ?? 0, 0, ',', '.') ?></div>
+        <div class="text-2xl font-bold text-slate-800 dark:text-white"><?= number_format($stats['total_clicks'] ?? 0, 0, ',', '.') ?></div>
         <div class="text-sm text-slate-500 dark:text-slate-400">Link-Klicks</div>
     </div>
     
-    <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 hover:-translate-y-1 transition-transform">
-        <div class="flex items-center justify-between mb-4">
-            <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-xl flex items-center justify-center">
-                <i class="fas fa-percentage text-purple-500 dark:text-purple-400 text-xl"></i>
-            </div>
+    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm border border-slate-200 dark:border-slate-700 hover:-translate-y-1 transition-transform">
+        <div class="w-10 h-10 bg-purple-100 dark:bg-purple-900/30 rounded-xl flex items-center justify-center mb-3">
+            <i class="fas fa-percentage text-purple-500 dark:text-purple-400"></i>
         </div>
-        <div class="text-3xl font-bold text-slate-800 dark:text-white"><?= $conversionRate ?>%</div>
-        <div class="text-sm text-slate-500 dark:text-slate-400">Conversion-Rate</div>
+        <?php $conversionRate = $stats['total_clicks'] > 0 ? round(($stats['total_conversions'] / $stats['total_clicks']) * 100, 1) : 0; ?>
+        <div class="text-2xl font-bold text-slate-800 dark:text-white"><?= $conversionRate ?>%</div>
+        <div class="text-sm text-slate-500 dark:text-slate-400">Conversion</div>
     </div>
 </div>
 
-<!-- Quick Actions (wenn Setup nicht vollständig) -->
-<?php if (!$setupWizard->isSetupComplete()): ?>
-<div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-2xl p-4 mb-8">
-    <div class="flex items-center gap-3">
-        <div class="w-10 h-10 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center text-amber-600 dark:text-amber-400">
-            <i class="fas fa-lightbulb"></i>
-        </div>
-        <div class="flex-1">
-            <p class="text-amber-800 dark:text-amber-200 text-sm">
-                <strong>Tipp:</strong> Vervollständigen Sie die Einrichtung, um Ihre Conversion-Rate zu verbessern. 
-                Ein professionelles Logo und Design erhöhen das Vertrauen Ihrer Empfehler.
-            </p>
-        </div>
+<!-- Sekundäre Module Grid -->
+<div class="grid lg:grid-cols-2 gap-6 mb-8">
+    
+    <!-- Quick Share Modul -->
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+        <?php include __DIR__ . "/../../includes/components/dashboard-modules/quick_share.php"; ?>
+    </div>
+    
+    <!-- Belohnungen Modul -->
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+        <?php include __DIR__ . "/../../includes/components/dashboard-modules/rewards_overview.php"; ?>
     </div>
 </div>
-<?php endif; ?>
 
-<!-- Charts & Activity -->
+<!-- Activity & Top Leads -->
 <div class="grid lg:grid-cols-3 gap-6 mb-8">
     
-    <!-- Chart -->
+    <!-- Letzte Aktivitäten -->
     <div class="lg:col-span-2 bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700">
         <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-4">
-            <i class="fas fa-chart-line text-primary-500 mr-2"></i>Neue Empfehler (14 Tage)
+            <i class="fas fa-clock text-primary-500 mr-2"></i>Letzte Aktivitäten
         </h3>
-        <div class="h-64">
-            <canvas id="leadsChart"></canvas>
+        
+        <?php if (empty($recentActivity)): ?>
+        <div class="text-center py-8">
+            <div class="w-16 h-16 bg-slate-100 dark:bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-share-alt text-slate-400 dark:text-slate-500 text-2xl"></i>
+            </div>
+            <p class="text-slate-500 dark:text-slate-400 text-sm mb-4">Noch keine Aktivitäten.</p>
+            <?php if ($businessType === 'offline'): ?>
+            <p class="text-sm text-slate-600 dark:text-slate-300">
+                Drucken Sie Ihren QR-Code aus und zeigen Sie ihn Ihren <?= e($customerTerm) ?>!
+            </p>
+            <?php else: ?>
+            <a href="/dashboard/share.php" class="text-primary-600 dark:text-primary-400 text-sm font-medium hover:underline">
+                Jetzt Empfehlungslink teilen →
+            </a>
+            <?php endif; ?>
         </div>
+        <?php else: ?>
+        <div class="space-y-3">
+            <?php foreach ($recentActivity as $activity): ?>
+            <div class="flex items-center gap-4 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-xl">
+                <div class="w-10 h-10 rounded-full flex items-center justify-center
+                    <?= $activity['type'] === 'conversion' ? 'bg-green-100 dark:bg-green-900/30 text-green-500 dark:text-green-400' : 'bg-blue-100 dark:bg-blue-900/30 text-blue-500 dark:text-blue-400' ?>">
+                    <i class="fas <?= $activity['type'] === 'conversion' ? 'fa-check' : 'fa-user-plus' ?>"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <div class="font-medium text-slate-800 dark:text-white truncate"><?= e($activity['action']) ?></div>
+                    <div class="text-sm text-slate-500 dark:text-slate-400 truncate">
+                        <?= e($activity['name'] ?: $activity['email']) ?> · <?= timeAgo($activity['created_at']) ?>
+                    </div>
+                </div>
+            </div>
+            <?php endforeach; ?>
+        </div>
+        <?php endif; ?>
     </div>
     
-    <!-- Top Leads -->
+    <!-- Top Empfehler -->
     <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700">
         <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-4">
             <i class="fas fa-trophy text-amber-500 mr-2"></i>Top Empfehler
         </h3>
         
         <?php if (empty($topLeads)): ?>
-        <div class="text-center py-8">
-            <div class="w-16 h-16 bg-slate-100 dark:bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-4">
-                <i class="fas fa-users text-slate-400 dark:text-slate-500 text-2xl"></i>
+        <div class="text-center py-6">
+            <div class="w-14 h-14 bg-slate-100 dark:bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-3">
+                <i class="fas fa-medal text-slate-400 dark:text-slate-500 text-xl"></i>
             </div>
-            <p class="text-slate-500 dark:text-slate-400 text-sm mb-4">Noch keine aktiven Empfehler.</p>
-            <a href="/dashboard/share.php" class="text-primary-600 dark:text-primary-400 text-sm font-medium hover:underline">
-                Jetzt Empfehlungslink teilen →
-            </a>
+            <p class="text-slate-500 dark:text-slate-400 text-sm">
+                Noch keine aktiven Empfehler.
+            </p>
         </div>
         <?php else: ?>
-        <div class="space-y-4">
+        <div class="space-y-3">
             <?php foreach ($topLeads as $index => $lead): ?>
             <div class="flex items-center gap-3">
                 <div class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm
-                    <?= $index === 0 ? 'bg-amber-400 text-white' : 'bg-slate-200 dark:bg-slate-600 text-slate-600 dark:text-slate-300' ?>">
+                    <?= $index === 0 ? 'bg-amber-400 text-white' : ($index === 1 ? 'bg-slate-300 text-slate-700' : 'bg-amber-700 text-white') ?>">
                     <?= $index + 1 ?>
                 </div>
                 <div class="flex-1 min-w-0">
                     <div class="font-medium text-slate-800 dark:text-white truncate">
                         <?= e($lead['name'] ?: 'Anonymer Empfehler') ?>
                     </div>
-                    <div class="text-xs text-slate-500 dark:text-slate-400"><?= $lead['conversions'] ?> Empfehlungen</div>
+                    <div class="text-xs text-slate-500 dark:text-slate-400">
+                        <?= $lead['conversions'] ?> <?= $lead['conversions'] == 1 ? 'Empfehlung' : 'Empfehlungen' ?>
+                    </div>
                 </div>
             </div>
             <?php endforeach; ?>
         </div>
-        <?php endif; ?>
         
+        <?php if ($customer['plan'] !== 'starter'): ?>
         <a href="/dashboard/leads.php" class="mt-4 text-primary-600 dark:text-primary-400 text-sm font-medium hover:underline inline-block">
             Alle Empfehler ansehen →
         </a>
+        <?php else: ?>
+        <div class="mt-4 text-sm text-slate-500 dark:text-slate-400">
+            <i class="fas fa-lock text-xs mr-1"></i>
+            <a href="/dashboard/upgrade.php" class="text-primary-600 dark:text-primary-400 hover:underline">
+                Upgrade für vollständige Liste
+            </a>
+        </div>
+        <?php endif; ?>
+        <?php endif; ?>
     </div>
 </div>
 
-<!-- Recent Activity -->
-<div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700">
-    <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-4">
-        <i class="fas fa-clock text-primary-500 mr-2"></i>Letzte Aktivitäten
-    </h3>
-    
-    <?php if (empty($recentActivity)): ?>
-    <div class="text-center py-12">
-        <div class="w-20 h-20 bg-slate-100 dark:bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-4">
-            <i class="fas fa-share-alt text-slate-400 dark:text-slate-500 text-3xl"></i>
+<!-- Upgrade-Hinweis für Starter -->
+<?php if ($customer['plan'] === 'starter' && !empty($dashboardLayout['upgrade_modules'])): ?>
+<div class="upgrade-cta bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-2xl p-6 border border-blue-200 dark:border-blue-800">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+            <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-1">
+                <i class="fas fa-rocket text-blue-500 mr-2"></i>
+                Mehr Funktionen freischalten
+            </h3>
+            <p class="text-sm text-slate-600 dark:text-slate-300">
+                <?php if ($businessType === 'offline'): ?>
+                    Mit Professional: Druckvorlagen, Empfehler-Liste, detaillierte Statistiken und mehr.
+                <?php else: ?>
+                    Mit Professional: E-Mail-Vorlagen, Website-Widget, detaillierte Analytics und mehr.
+                <?php endif; ?>
+            </p>
         </div>
-        <p class="text-slate-600 dark:text-slate-300 font-medium mb-2">Noch keine Aktivitäten</p>
-        <p class="text-slate-500 dark:text-slate-400 text-sm mb-6">
-            Teilen Sie Ihren Empfehlungslink mit Ihren Kunden, um loszulegen.
-        </p>
-        <a href="/dashboard/share.php" class="inline-flex items-center gap-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg text-sm font-medium transition-colors">
-            <i class="fas fa-share-alt"></i>
-            Empfehlungslink teilen
+        <a href="/dashboard/upgrade.php" class="btn btn-primary whitespace-nowrap">
+            <i class="fas fa-arrow-up mr-2"></i>
+            Jetzt upgraden
         </a>
     </div>
-    <?php else: ?>
-    <div class="space-y-4">
-        <?php foreach ($recentActivity as $activity): ?>
-        <div class="flex items-center gap-4 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-xl">
-            <div class="w-10 h-10 rounded-full flex items-center justify-center
-                <?= $activity['type'] === 'conversion' ? 'bg-green-100 dark:bg-green-900/30 text-green-500 dark:text-green-400' : 'bg-blue-100 dark:bg-blue-900/30 text-blue-500 dark:text-blue-400' ?>">
-                <i class="fas <?= $activity['type'] === 'conversion' ? 'fa-check' : 'fa-user-plus' ?>"></i>
-            </div>
-            <div class="flex-1">
-                <div class="font-medium text-slate-800 dark:text-white"><?= e($activity['action']) ?></div>
-                <div class="text-sm text-slate-500 dark:text-slate-400">
-                    <?= e($activity['name'] ?: $activity['email']) ?> · <?= timeAgo($activity['created_at']) ?>
-                </div>
-            </div>
-        </div>
-        <?php endforeach; ?>
-    </div>
-    <?php endif; ?>
 </div>
+<?php endif; ?>
 
 <script>
-    // Chart
-    const chartData = <?= json_encode($chartData) ?>;
-    const isDark = document.documentElement.classList.contains('dark');
+    const referralUrl = 'https://<?= e($customer['subdomain']) ?>.empfehlungen.cloud';
     
-    // Labels für letzte 14 Tage generieren
-    const labels = [];
-    const data = [];
-    for (let i = 13; i >= 0; i--) {
-        const date = new Date();
-        date.setDate(date.getDate() - i);
-        const dateStr = date.toISOString().split('T')[0];
-        labels.push(date.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' }));
+    // QR-Code Download
+    function downloadQR() {
+        const downloadUrl = `/api/qr-code.php?url=${encodeURIComponent(referralUrl)}&size=1000&format=png&download=1`;
+        const a = document.createElement('a');
+        a.href = downloadUrl;
+        a.download = 'qr-code-<?= e($customer['subdomain']) ?>.png';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
         
-        const found = chartData.find(d => d.date === dateStr);
-        data.push(found ? parseInt(found.count) : 0);
+        // Track
+        trackAction('qr_download', { source: 'header_button' });
     }
     
-    new Chart(document.getElementById('leadsChart'), {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Neue Empfehler',
-                data: data,
-                borderColor: '#667eea',
-                backgroundColor: 'rgba(102, 126, 234, 0.1)',
-                tension: 0.4,
-                fill: true,
-                pointRadius: 3,
-                pointHoverRadius: 6
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: {
-                x: {
-                    grid: { display: false },
-                    ticks: { color: isDark ? '#94a3b8' : '#64748b' }
-                },
-                y: {
-                    beginAtZero: true,
-                    grid: { color: isDark ? '#334155' : '#e2e8f0' },
-                    ticks: { color: isDark ? '#94a3b8' : '#64748b', stepSize: 1 }
-                }
-            }
-        }
-    });
+    // Link kopieren
+    function copyMainLink() {
+        navigator.clipboard.writeText(referralUrl).then(() => {
+            const btn = document.getElementById('copyMainLinkBtn');
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-check mr-2"></i>Kopiert!';
+            btn.classList.add('btn-success');
+            btn.classList.remove('btn-primary', 'btn-outline');
+            
+            setTimeout(() => {
+                btn.innerHTML = originalHtml;
+                btn.classList.remove('btn-success');
+                btn.classList.add('<?= $businessType === 'online' ? 'btn-primary' : 'btn-outline' ?>');
+            }, 2000);
+            
+            trackAction('link_copy', { source: 'header_button' });
+        });
+    }
     
-    // Copy to clipboard function
+    // Allgemeiner Copy-Helper
     function copyToClipboard(text, btn) {
         navigator.clipboard.writeText(text).then(() => {
             const icon = btn.querySelector('i');
-            icon.className = 'fas fa-check';
-            setTimeout(() => {
-                icon.className = 'fas fa-copy';
-            }, 2000);
+            if (icon) {
+                icon.className = 'fas fa-check';
+                setTimeout(() => { icon.className = 'fas fa-copy'; }, 2000);
+            }
         });
+    }
+    
+    // Analytics Tracking
+    function trackAction(action, data = {}) {
+        fetch('/api/track-event.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                customer_id: <?= (int)$customerId ?>,
+                action: action,
+                ...data
+            })
+        }).catch(() => {});
     }
 </script>
 
