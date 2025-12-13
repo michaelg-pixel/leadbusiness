@@ -4,17 +4,16 @@
  * 
  * Begrenzt Anfragen pro IP/Aktion.
  * Verwendet Redis wenn verfügbar, sonst Datenbank.
+ * PHP 7.4+ kompatibel - ohne Namespace für Konsistenz
  */
-
-namespace Leadbusiness\Security;
 
 use Leadbusiness\Database;
 
 class RateLimiter
 {
-    private Database $db;
-    private array $config;
-    private bool $useDatabase = true;
+    private $db;
+    private $config;
+    private $useDatabase = true;
     
     public function __construct()
     {
