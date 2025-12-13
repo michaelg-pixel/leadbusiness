@@ -66,11 +66,37 @@ foreach ($backgrounds as $bg) {
 
 $pageTitle = 'Empfehlungsprogramm einrichten';
 
-// Plan-Check für Belohnungstypen
-$isProfessional = ($plan === 'professional');
+// Plan-Check für Belohnungstypen und Limits
+$isProfessional = ($plan === 'professional' || $plan === 'enterprise');
+$isEnterprise = ($plan === 'enterprise');
+
+// Plan-Limits für Belohnungsstufen
+$planLimits = [
+    'starter' => 3,
+    'professional' => 5,
+    'enterprise' => 10
+];
+$maxRewardLevels = $planLimits[$plan] ?? 3;
 
 // Branchen die den E-Mail-Tool-Schritt sehen
 $emailToolBranches = ['onlinemarketing', 'coach', 'onlineshop', 'newsletter', 'software'];
+
+// Default-Werte für Belohnungsstufen
+$defaultRewards = [
+    1 => ['threshold' => 3, 'type' => 'discount'],
+    2 => ['threshold' => 5, 'type' => 'coupon_code'],
+    3 => ['threshold' => 10, 'type' => 'free_product'],
+    4 => ['threshold' => 15, 'type' => 'voucher'],
+    5 => ['threshold' => 20, 'type' => 'free_service'],
+    6 => ['threshold' => 25, 'type' => 'discount'],
+    7 => ['threshold' => 30, 'type' => 'coupon_code'],
+    8 => ['threshold' => 40, 'type' => 'free_product'],
+    9 => ['threshold' => 50, 'type' => 'voucher'],
+    10 => ['threshold' => 75, 'type' => 'free_service'],
+];
+
+// Initiale Anzahl angezeigter Stufen
+$initialLevels = 3;
 ?>
 <!DOCTYPE html>
 <html lang="de" class="<?= $theme === 'dark' ? 'dark' : '' ?>">
@@ -151,6 +177,11 @@ $emailToolBranches = ['onlinemarketing', 'coach', 'onlineshop', 'newsletter', 's
             to { opacity: 1; transform: translateY(0); }
         }
         
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
         .industry-card {
             transition: all 0.2s ease;
             cursor: pointer;
@@ -188,6 +219,7 @@ $emailToolBranches = ['onlinemarketing', 'coach', 'onlineshop', 'newsletter', 's
         
         .reward-level {
             transition: all 0.2s ease;
+            animation: slideIn 0.3s ease;
         }
         
         .reward-level:hover {
@@ -213,6 +245,19 @@ $emailToolBranches = ['onlinemarketing', 'coach', 'onlineshop', 'newsletter', 's
             gap: 0.25rem;
             padding: 0.125rem 0.5rem;
             background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            font-size: 0.625rem;
+            font-weight: 600;
+            border-radius: 9999px;
+            margin-left: 0.5rem;
+        }
+        
+        .enterprise-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.125rem 0.5rem;
+            background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
             color: white;
             font-size: 0.625rem;
             font-weight: 600;
@@ -427,37 +472,59 @@ $emailToolBranches = ['onlinemarketing', 'coach', 'onlineshop', 'newsletter', 's
                         </div>
                     </div>
                     
-                    <!-- Step 5: Belohnungen - ERWEITERT mit URL-Feldern -->
+                    <!-- Step 5: Belohnungen - DYNAMISCH je nach Plan -->
                     <div class="wizard-panel" data-panel="5">
                         <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-4 sm:p-8 border border-gray-200 dark:border-slate-700">
-                            <h2 class="text-xl sm:text-2xl font-bold mb-2 text-gray-900 dark:text-white">Belohnungen für Empfehler</h2>
-                            <p class="text-gray-500 dark:text-slate-400 mb-6 sm:mb-8 text-sm sm:text-base">Definieren Sie, was Ihre Empfehler für erfolgreiche Empfehlungen bekommen.</p>
+                            <div class="flex items-center justify-between mb-2">
+                                <h2 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">Belohnungen für Empfehler</h2>
+                                <?php if ($isProfessional): ?>
+                                <span class="<?= $isEnterprise ? 'enterprise-badge' : 'pro-badge' ?>">
+                                    <i class="fas fa-crown text-xs"></i>
+                                    <?= $isEnterprise ? 'Enterprise' : 'Professional' ?>
+                                </span>
+                                <?php endif; ?>
+                            </div>
+                            <p class="text-gray-500 dark:text-slate-400 mb-4 text-sm sm:text-base">Definieren Sie, was Ihre Empfehler für erfolgreiche Empfehlungen bekommen.</p>
                             
-                            <div class="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-xl p-4 mb-6">
+                            <!-- Plan-Info Box -->
+                            <div class="bg-gradient-to-r <?= $isProfessional ? ($isEnterprise ? 'from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 border-purple-200 dark:border-purple-800' : 'from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border-amber-200 dark:border-amber-800') : 'from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 border-blue-200 dark:border-blue-800' ?> border rounded-xl p-4 mb-6">
                                 <div class="flex items-start gap-3">
-                                    <i class="fas fa-lightbulb text-blue-500 dark:text-blue-400 mt-1"></i>
-                                    <div class="text-sm text-blue-800 dark:text-blue-300">
-                                        <p><strong>Tipp:</strong> Je nach Belohnungstyp erscheinen automatisch die passenden Eingabefelder.</p>
-                                        <p class="mt-1 text-xs">Die URL wird in der Belohnungs-E-Mail an Ihre Empfehler als "Jetzt einlösen"-Button angezeigt.</p>
+                                    <i class="fas <?= $isProfessional ? 'fa-crown' : 'fa-lightbulb' ?> <?= $isProfessional ? ($isEnterprise ? 'text-purple-500' : 'text-amber-500') : 'text-blue-500' ?> mt-1"></i>
+                                    <div class="text-sm <?= $isProfessional ? ($isEnterprise ? 'text-purple-800 dark:text-purple-300' : 'text-amber-800 dark:text-amber-300') : 'text-blue-800 dark:text-blue-300' ?>">
+                                        <?php if ($isProfessional): ?>
+                                            <p><strong>Ihr <?= $isEnterprise ? 'Enterprise' : 'Professional' ?>-Tarif:</strong> Bis zu <strong><?= $maxRewardLevels ?> Belohnungsstufen</strong> möglich.</p>
+                                            <p class="mt-1 text-xs opacity-80">Sie können weitere Stufen hinzufügen, um Ihre Top-Empfehler noch besser zu belohnen.</p>
+                                        <?php else: ?>
+                                            <p><strong>Ihr Starter-Tarif:</strong> Bis zu <strong>3 Belohnungsstufen</strong> inklusive.</p>
+                                            <p class="mt-1 text-xs opacity-80">Upgrade auf Professional für bis zu 5 Stufen oder Enterprise für bis zu 10 Stufen.</p>
+                                        <?php endif; ?>
                                     </div>
                                 </div>
                             </div>
                             
+                            <!-- Rewards Container -->
                             <div id="rewardsContainer" class="space-y-6">
-                                <?php for ($i = 1; $i <= 3; $i++): 
-                                    $defaults = [1 => [3, 'discount'], 2 => [5, 'coupon_code'], 3 => [10, 'free_product']];
+                                <?php for ($i = 1; $i <= $initialLevels; $i++): 
+                                    $defaults = $defaultRewards[$i];
                                 ?>
                                 <div class="reward-level border border-gray-200 dark:border-slate-600 rounded-xl p-4 sm:p-6 bg-white dark:bg-slate-800" data-reward-level="<?= $i ?>">
-                                    <div class="flex items-center gap-3 sm:gap-4 mb-4">
-                                        <div class="w-8 h-8 sm:w-10 sm:h-10 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold"><?= $i ?></div>
-                                        <div>
-                                            <h3 class="font-semibold text-sm sm:text-base text-gray-900 dark:text-white">Stufe <?= $i ?></h3>
-                                            <p class="text-xs sm:text-sm text-gray-500 dark:text-slate-400">
-                                                Nach 
-                                                <input type="number" name="reward_<?= $i ?>_threshold" value="<?= $defaults[$i][0] ?>" min="1" max="100" class="w-12 sm:w-16 px-2 py-1 border border-gray-300 dark:border-slate-600 rounded text-center text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white"> 
-                                                erfolgreichen Empfehlungen
-                                            </p>
+                                    <div class="flex items-center justify-between mb-4">
+                                        <div class="flex items-center gap-3 sm:gap-4">
+                                            <div class="reward-level-number w-8 h-8 sm:w-10 sm:h-10 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold"><?= $i ?></div>
+                                            <div>
+                                                <h3 class="font-semibold text-sm sm:text-base text-gray-900 dark:text-white">Stufe <span class="reward-level-label"><?= $i ?></span></h3>
+                                                <p class="text-xs sm:text-sm text-gray-500 dark:text-slate-400">
+                                                    Nach 
+                                                    <input type="number" name="reward_<?= $i ?>_threshold" value="<?= $defaults['threshold'] ?>" min="1" max="100" class="w-12 sm:w-16 px-2 py-1 border border-gray-300 dark:border-slate-600 rounded text-center text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white"> 
+                                                    erfolgreichen Empfehlungen
+                                                </p>
+                                            </div>
                                         </div>
+                                        <?php if ($i > 1): ?>
+                                        <button type="button" class="remove-reward-btn text-gray-400 hover:text-red-500 dark:text-slate-500 dark:hover:text-red-400 p-2 transition-colors" title="Stufe entfernen">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                        <?php endif; ?>
                                     </div>
                                     
                                     <!-- Hauptfelder: Typ und Beschreibung -->
@@ -465,11 +532,11 @@ $emailToolBranches = ['onlinemarketing', 'coach', 'onlineshop', 'newsletter', 's
                                         <div>
                                             <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Belohnungstyp</label>
                                             <select name="reward_<?= $i ?>_type" class="reward-type-select w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white" data-level="<?= $i ?>">
-                                                <option value="discount" <?= $defaults[$i][1] === 'discount' ? 'selected' : '' ?>>💰 Rabatt (%)</option>
-                                                <option value="coupon_code" <?= $defaults[$i][1] === 'coupon_code' ? 'selected' : '' ?>>🎟️ Gutschein-Code</option>
-                                                <option value="free_product" <?= $defaults[$i][1] === 'free_product' ? 'selected' : '' ?>>🎁 Gratis-Produkt</option>
-                                                <option value="free_service">⭐ Gratis-Service</option>
-                                                <option value="voucher">💶 Wertgutschein (€)</option>
+                                                <option value="discount" <?= $defaults['type'] === 'discount' ? 'selected' : '' ?>>💰 Rabatt (%)</option>
+                                                <option value="coupon_code" <?= $defaults['type'] === 'coupon_code' ? 'selected' : '' ?>>🎟️ Gutschein-Code</option>
+                                                <option value="free_product" <?= $defaults['type'] === 'free_product' ? 'selected' : '' ?>>🎁 Gratis-Produkt</option>
+                                                <option value="free_service" <?= $defaults['type'] === 'free_service' ? 'selected' : '' ?>>⭐ Gratis-Service</option>
+                                                <option value="voucher" <?= $defaults['type'] === 'voucher' ? 'selected' : '' ?>>💶 Wertgutschein (€)</option>
                                             </select>
                                         </div>
                                         <div>
@@ -482,7 +549,7 @@ $emailToolBranches = ['onlinemarketing', 'coach', 'onlineshop', 'newsletter', 's
                                     <div class="reward-extra-fields space-y-4 mt-4" id="reward_<?= $i ?>_extra_fields">
                                         
                                         <!-- Rabatt (%) - Extra Feld -->
-                                        <div class="extra-field <?= $defaults[$i][1] === 'discount' ? 'active' : '' ?>" data-type="discount">
+                                        <div class="extra-field <?= $defaults['type'] === 'discount' ? 'active' : '' ?>" data-type="discount">
                                             <div class="grid sm:grid-cols-2 gap-4">
                                                 <div>
                                                     <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
@@ -503,7 +570,7 @@ $emailToolBranches = ['onlinemarketing', 'coach', 'onlineshop', 'newsletter', 's
                                         </div>
                                         
                                         <!-- Gutschein-Code - Extra Felder -->
-                                        <div class="extra-field <?= $defaults[$i][1] === 'coupon_code' ? 'active' : '' ?>" data-type="coupon_code">
+                                        <div class="extra-field <?= $defaults['type'] === 'coupon_code' ? 'active' : '' ?>" data-type="coupon_code">
                                             <div class="grid sm:grid-cols-3 gap-4">
                                                 <div>
                                                     <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
@@ -530,7 +597,7 @@ $emailToolBranches = ['onlinemarketing', 'coach', 'onlineshop', 'newsletter', 's
                                         </div>
                                         
                                         <!-- Gratis-Produkt - Extra Felder -->
-                                        <div class="extra-field <?= $defaults[$i][1] === 'free_product' ? 'active' : '' ?>" data-type="free_product">
+                                        <div class="extra-field <?= $defaults['type'] === 'free_product' ? 'active' : '' ?>" data-type="free_product">
                                             <div class="grid sm:grid-cols-2 gap-4">
                                                 <div>
                                                     <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
@@ -551,7 +618,7 @@ $emailToolBranches = ['onlinemarketing', 'coach', 'onlineshop', 'newsletter', 's
                                         </div>
                                         
                                         <!-- Gratis-Service - Extra Felder -->
-                                        <div class="extra-field" data-type="free_service">
+                                        <div class="extra-field <?= $defaults['type'] === 'free_service' ? 'active' : '' ?>" data-type="free_service">
                                             <div>
                                                 <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                                                     <i class="fas fa-link text-primary-500 mr-1"></i>Buchungs-/Termin-URL
@@ -564,7 +631,7 @@ $emailToolBranches = ['onlinemarketing', 'coach', 'onlineshop', 'newsletter', 's
                                         </div>
                                         
                                         <!-- Wertgutschein (€) - Extra Felder -->
-                                        <div class="extra-field" data-type="voucher">
+                                        <div class="extra-field <?= $defaults['type'] === 'voucher' ? 'active' : '' ?>" data-type="voucher">
                                             <div class="grid sm:grid-cols-2 gap-4">
                                                 <div>
                                                     <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
@@ -588,6 +655,18 @@ $emailToolBranches = ['onlinemarketing', 'coach', 'onlineshop', 'newsletter', 's
                                 </div>
                                 <?php endfor; ?>
                             </div>
+                            
+                            <!-- Add Reward Button (nur für Pro/Enterprise) -->
+                            <?php if ($isProfessional): ?>
+                            <div id="addRewardContainer" class="mt-6">
+                                <button type="button" id="addRewardBtn" class="w-full py-4 border-2 border-dashed border-gray-300 dark:border-slate-600 rounded-xl text-gray-500 dark:text-slate-400 hover:border-primary-500 hover:text-primary-500 dark:hover:border-primary-400 dark:hover:text-primary-400 transition-all flex items-center justify-center gap-2">
+                                    <i class="fas fa-plus"></i>
+                                    <span>Weitere Stufe hinzufügen</span>
+                                    <span class="text-xs opacity-70">(<span id="rewardCountDisplay"><?= $initialLevels ?></span>/<?= $maxRewardLevels ?>)</span>
+                                </button>
+                            </div>
+                            <?php endif; ?>
+                            
                         </div>
                     </div>
                     
@@ -612,7 +691,7 @@ $emailToolBranches = ['onlinemarketing', 'coach', 'onlineshop', 'newsletter', 's
                                 </div>
                             </div>
                             
-                            <!-- Tool-Auswahl Container (wird von JS befüllt) -->
+                            <!-- Tool-Auswahl Container -->
                             <div id="emailToolContainer">
                                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6" id="emailToolGrid">
                                     <!-- KlickTipp -->
@@ -690,7 +769,7 @@ $emailToolBranches = ['onlinemarketing', 'coach', 'onlineshop', 'newsletter', 's
                         </div>
                     </div>
                     
-                    <!-- Step 7: Design (war Step 6) -->
+                    <!-- Step 7: Design -->
                     <div class="wizard-panel" data-panel="7">
                         <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-4 sm:p-8 border border-gray-200 dark:border-slate-700">
                             <h2 class="text-xl sm:text-2xl font-bold mb-2 text-gray-900 dark:text-white">Design wählen</h2>
@@ -712,7 +791,7 @@ $emailToolBranches = ['onlinemarketing', 'coach', 'onlineshop', 'newsletter', 's
                         </div>
                     </div>
                     
-                    <!-- Step 8: Subdomain (war Step 7) -->
+                    <!-- Step 8: Subdomain -->
                     <div class="wizard-panel" data-panel="8">
                         <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-4 sm:p-8 border border-gray-200 dark:border-slate-700">
                             <h2 class="text-xl sm:text-2xl font-bold mb-2 text-gray-900 dark:text-white">Ihre Subdomain wählen</h2>
@@ -739,7 +818,7 @@ $emailToolBranches = ['onlinemarketing', 'coach', 'onlineshop', 'newsletter', 's
                         </div>
                     </div>
                     
-                    <!-- Step 9: Fertig (war Step 8) -->
+                    <!-- Step 9: Fertig -->
                     <div class="wizard-panel" data-panel="9">
                         <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-4 sm:p-8 text-center border border-gray-200 dark:border-slate-700">
                             <div class="w-16 h-16 sm:w-20 sm:h-20 mx-auto bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mb-6">
@@ -799,6 +878,11 @@ $emailToolBranches = ['onlinemarketing', 'coach', 'onlineshop', 'newsletter', 's
         const backgroundsByIndustry = <?= json_encode($backgroundsByIndustry) ?>;
         const isProfessional = <?= $isProfessional ? 'true' : 'false' ?>;
         const emailToolBranches = <?= json_encode($emailToolBranches) ?>;
+        const maxRewardLevels = <?= $maxRewardLevels ?>;
+        const currentPlan = '<?= htmlspecialchars($plan) ?>';
+        
+        // Default-Werte für neue Stufen
+        const defaultRewards = <?= json_encode($defaultRewards) ?>;
         
         // Theme Toggle
         function toggleTheme() {
@@ -814,25 +898,47 @@ $emailToolBranches = ['onlinemarketing', 'coach', 'onlineshop', 'newsletter', 's
         }
         
         // ================================
-        // REWARD TYPE EXTRA FIELDS HANDLER
+        // REWARD LEVELS MANAGEMENT
         // ================================
+        
+        let currentRewardCount = <?= $initialLevels ?>;
+        
         document.addEventListener('DOMContentLoaded', function() {
-            // Event Listener für alle Belohnungstyp-Selects
+            
+            // Event Listener für alle Belohnungstyp-Selects (initial)
+            initRewardTypeSelects();
+            
+            // "Stufe hinzufügen"-Button
+            const addRewardBtn = document.getElementById('addRewardBtn');
+            if (addRewardBtn) {
+                addRewardBtn.addEventListener('click', addNewRewardLevel);
+            }
+            
+            // Event Delegation für "Stufe entfernen"-Buttons
+            document.getElementById('rewardsContainer').addEventListener('click', function(e) {
+                if (e.target.closest('.remove-reward-btn')) {
+                    const rewardLevel = e.target.closest('.reward-level');
+                    if (rewardLevel) {
+                        removeRewardLevel(rewardLevel);
+                    }
+                }
+            });
+        });
+        
+        function initRewardTypeSelects() {
             document.querySelectorAll('.reward-type-select').forEach(function(select) {
                 select.addEventListener('change', function() {
                     const level = this.dataset.level;
                     const type = this.value;
                     updateExtraFields(level, type);
                 });
-            });
-            
-            // Initial für alle vorhandenen Reward-Levels die Extra-Felder setzen
-            document.querySelectorAll('.reward-type-select').forEach(function(select) {
+                
+                // Initial setzen
                 const level = select.dataset.level;
                 const type = select.value;
                 updateExtraFields(level, type);
             });
-        });
+        }
         
         function updateExtraFields(level, type) {
             const container = document.getElementById('reward_' + level + '_extra_fields');
@@ -848,6 +954,267 @@ $emailToolBranches = ['onlinemarketing', 'coach', 'onlineshop', 'newsletter', 's
             if (activeField) {
                 activeField.classList.add('active');
             }
+        }
+        
+        function addNewRewardLevel() {
+            if (currentRewardCount >= maxRewardLevels) {
+                alert('Sie haben die maximale Anzahl von ' + maxRewardLevels + ' Belohnungsstufen erreicht.');
+                return;
+            }
+            
+            currentRewardCount++;
+            const newLevel = currentRewardCount;
+            const defaults = defaultRewards[newLevel] || { threshold: newLevel * 5, type: 'discount' };
+            
+            const rewardHTML = createRewardLevelHTML(newLevel, defaults);
+            
+            const container = document.getElementById('rewardsContainer');
+            container.insertAdjacentHTML('beforeend', rewardHTML);
+            
+            // Event Listener für das neue Select hinzufügen
+            const newSelect = container.querySelector('.reward-level[data-reward-level="' + newLevel + '"] .reward-type-select');
+            if (newSelect) {
+                newSelect.addEventListener('change', function() {
+                    updateExtraFields(newLevel, this.value);
+                });
+                // Initial setzen
+                updateExtraFields(newLevel, newSelect.value);
+            }
+            
+            updateRewardCountDisplay();
+            updateAddButtonVisibility();
+        }
+        
+        function removeRewardLevel(element) {
+            // Nicht die erste Stufe entfernen
+            const level = parseInt(element.dataset.rewardLevel);
+            if (level === 1) {
+                alert('Die erste Belohnungsstufe kann nicht entfernt werden.');
+                return;
+            }
+            
+            element.style.animation = 'fadeIn 0.2s ease reverse';
+            setTimeout(() => {
+                element.remove();
+                currentRewardCount--;
+                renumberRewardLevels();
+                updateRewardCountDisplay();
+                updateAddButtonVisibility();
+            }, 200);
+        }
+        
+        function renumberRewardLevels() {
+            const levels = document.querySelectorAll('#rewardsContainer .reward-level');
+            levels.forEach((level, index) => {
+                const newNumber = index + 1;
+                level.dataset.rewardLevel = newNumber;
+                
+                // Nummer im Badge aktualisieren
+                const numberBadge = level.querySelector('.reward-level-number');
+                if (numberBadge) numberBadge.textContent = newNumber;
+                
+                // Label aktualisieren
+                const label = level.querySelector('.reward-level-label');
+                if (label) label.textContent = newNumber;
+                
+                // Alle Input-Namen aktualisieren
+                level.querySelectorAll('input, select').forEach(input => {
+                    if (input.name) {
+                        input.name = input.name.replace(/reward_\d+_/, 'reward_' + newNumber + '_');
+                    }
+                    if (input.id) {
+                        input.id = input.id.replace(/reward_\d+_/, 'reward_' + newNumber + '_');
+                    }
+                });
+                
+                // Labels aktualisieren
+                level.querySelectorAll('label[for]').forEach(label => {
+                    if (label.getAttribute('for')) {
+                        label.setAttribute('for', label.getAttribute('for').replace(/reward_\d+_/, 'reward_' + newNumber + '_'));
+                    }
+                });
+                
+                // Extra-Fields Container ID aktualisieren
+                const extraFields = level.querySelector('.reward-extra-fields');
+                if (extraFields) {
+                    extraFields.id = 'reward_' + newNumber + '_extra_fields';
+                }
+                
+                // Select data-level aktualisieren
+                const select = level.querySelector('.reward-type-select');
+                if (select) {
+                    select.dataset.level = newNumber;
+                }
+            });
+        }
+        
+        function updateRewardCountDisplay() {
+            const display = document.getElementById('rewardCountDisplay');
+            if (display) {
+                display.textContent = currentRewardCount;
+            }
+        }
+        
+        function updateAddButtonVisibility() {
+            const addBtn = document.getElementById('addRewardBtn');
+            const container = document.getElementById('addRewardContainer');
+            
+            if (addBtn && container) {
+                if (currentRewardCount >= maxRewardLevels) {
+                    container.style.display = 'none';
+                } else {
+                    container.style.display = 'block';
+                }
+            }
+        }
+        
+        function createRewardLevelHTML(level, defaults) {
+            return `
+            <div class="reward-level border border-gray-200 dark:border-slate-600 rounded-xl p-4 sm:p-6 bg-white dark:bg-slate-800" data-reward-level="${level}">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-3 sm:gap-4">
+                        <div class="reward-level-number w-8 h-8 sm:w-10 sm:h-10 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold">${level}</div>
+                        <div>
+                            <h3 class="font-semibold text-sm sm:text-base text-gray-900 dark:text-white">Stufe <span class="reward-level-label">${level}</span></h3>
+                            <p class="text-xs sm:text-sm text-gray-500 dark:text-slate-400">
+                                Nach 
+                                <input type="number" name="reward_${level}_threshold" value="${defaults.threshold}" min="1" max="100" class="w-12 sm:w-16 px-2 py-1 border border-gray-300 dark:border-slate-600 rounded text-center text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white"> 
+                                erfolgreichen Empfehlungen
+                            </p>
+                        </div>
+                    </div>
+                    <button type="button" class="remove-reward-btn text-gray-400 hover:text-red-500 dark:text-slate-500 dark:hover:text-red-400 p-2 transition-colors" title="Stufe entfernen">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+                
+                <!-- Hauptfelder: Typ und Beschreibung -->
+                <div class="grid sm:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Belohnungstyp</label>
+                        <select name="reward_${level}_type" class="reward-type-select w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white" data-level="${level}">
+                            <option value="discount" ${defaults.type === 'discount' ? 'selected' : ''}>💰 Rabatt (%)</option>
+                            <option value="coupon_code" ${defaults.type === 'coupon_code' ? 'selected' : ''}>🎟️ Gutschein-Code</option>
+                            <option value="free_product" ${defaults.type === 'free_product' ? 'selected' : ''}>🎁 Gratis-Produkt</option>
+                            <option value="free_service" ${defaults.type === 'free_service' ? 'selected' : ''}>⭐ Gratis-Service</option>
+                            <option value="voucher" ${defaults.type === 'voucher' ? 'selected' : ''}>💶 Wertgutschein (€)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Beschreibung *</label>
+                        <input type="text" name="reward_${level}_description" required class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-500" placeholder="z.B. 10% Rabatt auf Ihre nächste Bestellung">
+                    </div>
+                </div>
+                
+                <!-- Dynamische Extra-Felder Container -->
+                <div class="reward-extra-fields space-y-4 mt-4" id="reward_${level}_extra_fields">
+                    
+                    <!-- Rabatt (%) - Extra Feld -->
+                    <div class="extra-field ${defaults.type === 'discount' ? 'active' : ''}" data-type="discount">
+                        <div class="grid sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+                                    <i class="fas fa-percent text-primary-500 mr-1"></i>Rabatt in %
+                                </label>
+                                <input type="number" name="reward_${level}_discount_percent" min="1" max="100" class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white" placeholder="z.B. 10">
+                            </div>
+                            <div>
+                                <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+                                    <i class="fas fa-link text-primary-500 mr-1"></i>Einlöse-URL
+                                </label>
+                                <input type="url" name="reward_${level}_discount_url" class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-500" placeholder="https://shop.de/rabatt">
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-500 dark:text-slate-400 mt-2">
+                            <i class="fas fa-info-circle mr-1"></i>Diese URL wird in der Belohnungs-E-Mail als "Jetzt einlösen"-Button verlinkt.
+                        </p>
+                    </div>
+                    
+                    <!-- Gutschein-Code - Extra Felder -->
+                    <div class="extra-field ${defaults.type === 'coupon_code' ? 'active' : ''}" data-type="coupon_code">
+                        <div class="grid sm:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+                                    <i class="fas fa-ticket text-purple-500 mr-1"></i>Gutschein-Code
+                                </label>
+                                <input type="text" name="reward_${level}_coupon_code" class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white font-mono" placeholder="RABATT10">
+                            </div>
+                            <div>
+                                <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+                                    <i class="fas fa-calendar text-purple-500 mr-1"></i>Gültig für (Tage)
+                                </label>
+                                <input type="number" name="reward_${level}_coupon_validity" value="30" min="1" max="365" class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white">
+                            </div>
+                            <div>
+                                <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+                                    <i class="fas fa-link text-primary-500 mr-1"></i>Einlöse-URL
+                                </label>
+                                <input type="url" name="reward_${level}_coupon_url" class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-500" placeholder="https://shop.de/checkout">
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-500 dark:text-slate-400 mt-2">
+                            <i class="fas fa-info-circle mr-1"></i>Der Code und die URL werden in der Belohnungs-E-Mail angezeigt.
+                        </p>
+                    </div>
+                    
+                    <!-- Gratis-Produkt - Extra Felder -->
+                    <div class="extra-field ${defaults.type === 'free_product' ? 'active' : ''}" data-type="free_product">
+                        <div class="grid sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+                                    <i class="fas fa-link text-primary-500 mr-1"></i>Produkt-/Bestell-URL
+                                </label>
+                                <input type="url" name="reward_${level}_product_url" class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-500" placeholder="https://shop.de/gratis-produkt">
+                            </div>
+                            <div class="flex items-center gap-2 pt-6">
+                                <input type="checkbox" name="reward_${level}_requires_address" id="reward_${level}_requires_address" class="w-4 h-4 text-primary-500 rounded border-gray-300 dark:border-slate-600 focus:ring-primary-500 bg-white dark:bg-slate-700">
+                                <label for="reward_${level}_requires_address" class="text-xs sm:text-sm text-gray-700 dark:text-slate-300">
+                                    Lieferadresse erforderlich
+                                </label>
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-500 dark:text-slate-400 mt-2">
+                            <i class="fas fa-info-circle mr-1"></i>Die URL wird als "Produkt ansehen"-Button in der E-Mail angezeigt.
+                        </p>
+                    </div>
+                    
+                    <!-- Gratis-Service - Extra Felder -->
+                    <div class="extra-field ${defaults.type === 'free_service' ? 'active' : ''}" data-type="free_service">
+                        <div>
+                            <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+                                <i class="fas fa-link text-primary-500 mr-1"></i>Buchungs-/Termin-URL
+                            </label>
+                            <input type="url" name="reward_${level}_service_url" class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-500" placeholder="https://calendly.com/ihre-firma">
+                        </div>
+                        <p class="text-xs text-gray-500 dark:text-slate-400 mt-2">
+                            <i class="fas fa-info-circle mr-1"></i>Die URL wird als "Termin buchen"-Button in der E-Mail angezeigt.
+                        </p>
+                    </div>
+                    
+                    <!-- Wertgutschein (€) - Extra Felder -->
+                    <div class="extra-field ${defaults.type === 'voucher' ? 'active' : ''}" data-type="voucher">
+                        <div class="grid sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+                                    <i class="fas fa-euro-sign text-green-500 mr-1"></i>Gutscheinwert in €
+                                </label>
+                                <input type="number" name="reward_${level}_voucher_amount" min="1" step="0.01" class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white" placeholder="z.B. 25">
+                            </div>
+                            <div>
+                                <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+                                    <i class="fas fa-link text-primary-500 mr-1"></i>Einlöse-URL
+                                </label>
+                                <input type="url" name="reward_${level}_voucher_url" class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-500" placeholder="https://shop.de/gutschein">
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-500 dark:text-slate-400 mt-2">
+                            <i class="fas fa-info-circle mr-1"></i>Der Betrag und die URL werden in der Belohnungs-E-Mail angezeigt.
+                        </p>
+                    </div>
+                    
+                </div>
+            </div>
+            `;
         }
     </script>
     
