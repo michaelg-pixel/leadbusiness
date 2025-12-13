@@ -4,12 +4,13 @@
  * 
  * Wird nach Lead-Erstellung aufgerufen und führt alle notwendigen
  * Aktionen durch (E-Mail-Tool Sync, Benachrichtigungen, Login-Token, etc.)
+ * PHP 7.4+ kompatibel
  */
 
 require_once __DIR__ . '/EmailIntegrationService.php';
 require_once __DIR__ . '/LeadNotificationService.php';
 
-use Leadbusiness\Services\EmailIntegrationService;
+use Leadbusiness\Database;
 
 class LeadEventHandler
 {
