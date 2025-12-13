@@ -9,6 +9,9 @@ require_once __DIR__ . '/../../includes/Database.php';
 require_once __DIR__ . '/../../includes/Auth.php';
 require_once __DIR__ . '/../../includes/helpers.php';
 
+use Leadbusiness\Auth;
+use Leadbusiness\Database;
+
 $auth = new Auth();
 if (!$auth->isLoggedIn() || $auth->getUserType() !== 'customer') {
     redirect('/dashboard/login.php');
@@ -231,7 +234,6 @@ include __DIR__ . '/../../includes/dashboard-header.php';
         <div class="p-6">
             <div class="flex items-start justify-between gap-4">
                 <div class="flex items-center gap-4">
-                    <!-- Level Badge -->
                     <div class="relative">
                         <div class="w-14 h-14 bg-gradient-to-br from-amber-400 to-orange-500 rounded-xl flex items-center justify-center text-white text-xl font-bold shadow-lg shadow-amber-500/30">
                             <?= $reward['level'] ?>
@@ -263,9 +265,7 @@ include __DIR__ . '/../../includes/dashboard-header.php';
                     </div>
                 </div>
                 
-                <!-- Actions -->
                 <div class="flex items-center gap-1">
-                    <!-- Toggle Active -->
                     <form method="POST" class="inline">
                         <input type="hidden" name="action" value="toggle_active">
                         <input type="hidden" name="reward_id" value="<?= $reward['id'] ?>">
@@ -276,15 +276,13 @@ include __DIR__ . '/../../includes/dashboard-header.php';
                         </button>
                     </form>
                     
-                    <!-- Edit -->
                     <button onclick='editReward(<?= json_encode($reward, JSON_HEX_APOS | JSON_HEX_QUOT) ?>)' 
                             title="Bearbeiten"
                             class="p-2 rounded-lg text-slate-400 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors">
                         <i class="fas fa-edit"></i>
                     </button>
                     
-                    <!-- Delete -->
-                    <form method="POST" class="inline" onsubmit="return confirm('Belohnung wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.')">
+                    <form method="POST" class="inline" onsubmit="return confirm('Belohnung wirklich löschen?')">
                         <input type="hidden" name="action" value="delete_reward">
                         <input type="hidden" name="reward_id" value="<?= $reward['id'] ?>">
                         <button type="submit" title="Löschen"
@@ -295,7 +293,6 @@ include __DIR__ . '/../../includes/dashboard-header.php';
                 </div>
             </div>
             
-            <!-- Reward Details -->
             <?php if ($reward['description'] || $reward['discount_percent'] || $reward['voucher_amount'] || $reward['coupon_code']): ?>
             <div class="mt-4 p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
                 <?php if ($reward['description']): ?>
@@ -335,7 +332,6 @@ include __DIR__ . '/../../includes/dashboard-header.php';
             <?php endif; ?>
         </div>
         
-        <!-- Connector to next level -->
         <?php if ($index < count($rewards) - 1): ?>
         <div class="flex justify-center -mb-2">
             <div class="w-0.5 h-4 bg-slate-200 dark:bg-slate-700"></div>
@@ -348,7 +344,6 @@ include __DIR__ . '/../../includes/dashboard-header.php';
 </div>
 
 <!-- Add/Edit Form -->
-<?php if (count($rewards) < $maxRewards || true): // Always show form for editing ?>
 <div id="rewardFormContainer" class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
     <div class="px-6 py-4 bg-slate-50 dark:bg-slate-700/50 border-b border-slate-200 dark:border-slate-700">
         <h3 class="font-semibold text-slate-800 dark:text-white flex items-center gap-2">
@@ -380,39 +375,32 @@ include __DIR__ . '/../../includes/dashboard-header.php';
         <input type="hidden" name="reward_id" id="rewardId" value="">
         
         <div class="grid md:grid-cols-3 gap-4 mb-4">
-            <!-- Level -->
             <div>
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    <i class="fas fa-layer-group mr-1 text-slate-400"></i>
-                    Stufe *
+                    <i class="fas fa-layer-group mr-1 text-slate-400"></i>Stufe *
                 </label>
-                <select name="level" id="levelInput" required 
-                        class="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                <select name="level" id="levelInput" required class="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white">
                     <?php for ($i = 1; $i <= $maxRewards; $i++): ?>
                     <option value="<?= $i ?>" <?= $i === count($rewards) + 1 ? 'selected' : '' ?>>Stufe <?= $i ?></option>
                     <?php endfor; ?>
                 </select>
             </div>
             
-            <!-- Required Conversions -->
             <div>
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    <i class="fas fa-users mr-1 text-slate-400"></i>
-                    Benötigte Empfehlungen *
+                    <i class="fas fa-users mr-1 text-slate-400"></i>Benötigte Empfehlungen *
                 </label>
                 <input type="number" name="conversions_required" id="conversionsInput" min="1" max="1000" required
-                       class="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500" 
+                       class="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white" 
                        placeholder="z.B. 3">
             </div>
             
-            <!-- Reward Type -->
             <div>
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    <i class="fas fa-gift mr-1 text-slate-400"></i>
-                    Belohnungstyp *
+                    <i class="fas fa-gift mr-1 text-slate-400"></i>Belohnungstyp *
                 </label>
                 <select name="reward_type" id="typeInput" required onchange="updateRewardFields()"
-                        class="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                        class="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white">
                     <?php foreach ($rewardTypes as $key => $type): ?>
                     <option value="<?= $key ?>"><?= $type['label'] ?></option>
                     <?php endforeach; ?>
@@ -420,36 +408,30 @@ include __DIR__ . '/../../includes/dashboard-header.php';
             </div>
         </div>
         
-        <!-- Title -->
         <div class="mb-4">
             <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                <i class="fas fa-heading mr-1 text-slate-400"></i>
-                Titel der Belohnung *
+                <i class="fas fa-heading mr-1 text-slate-400"></i>Titel der Belohnung *
             </label>
             <input type="text" name="title" id="titleInput" required maxlength="255"
-                   class="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500" 
+                   class="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white" 
                    placeholder="z.B. 10% Rabatt auf Ihren nächsten Einkauf">
         </div>
         
-        <!-- Description -->
         <div class="mb-4">
             <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                <i class="fas fa-align-left mr-1 text-slate-400"></i>
-                Beschreibung (optional)
+                <i class="fas fa-align-left mr-1 text-slate-400"></i>Beschreibung (optional)
             </label>
             <textarea name="description" id="descInput" rows="2"
-                      class="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none" 
+                      class="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white resize-none" 
                       placeholder="Detaillierte Beschreibung für Ihre Empfehler..."></textarea>
         </div>
         
-        <!-- Type-specific fields -->
         <div id="discountFields" class="type-fields mb-4 hidden">
             <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                <i class="fas fa-percent mr-1 text-green-500"></i>
-                Rabatt in Prozent
+                <i class="fas fa-percent mr-1 text-green-500"></i>Rabatt in Prozent
             </label>
             <input type="number" name="discount_percent" id="discountPercentInput" min="1" max="100"
-                   class="w-full md:w-48 px-4 py-2.5 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500" 
+                   class="w-full md:w-48 px-4 py-2.5 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white" 
                    placeholder="z.B. 10">
         </div>
         
@@ -457,71 +439,62 @@ include __DIR__ . '/../../includes/dashboard-header.php';
             <div class="grid md:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                        <i class="fas fa-ticket mr-1 text-blue-500"></i>
-                        Gutschein-Code
+                        <i class="fas fa-ticket mr-1 text-blue-500"></i>Gutschein-Code
                     </label>
                     <input type="text" name="coupon_code" id="couponCodeInput" maxlength="50"
-                           class="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 font-mono uppercase" 
+                           class="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white font-mono uppercase" 
                            placeholder="z.B. WILLKOMMEN10">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                        <i class="fas fa-calendar mr-1 text-slate-400"></i>
-                        Gültigkeit (Tage)
+                        <i class="fas fa-calendar mr-1 text-slate-400"></i>Gültigkeit (Tage)
                     </label>
                     <input type="number" name="coupon_validity_days" id="couponValidityInput" min="1" max="365" value="30"
-                           class="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                           class="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white">
                 </div>
             </div>
         </div>
         
         <div id="voucherFields" class="type-fields mb-4 hidden">
             <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                <i class="fas fa-euro-sign mr-1 text-amber-500"></i>
-                Gutschein-Wert in Euro
+                <i class="fas fa-euro-sign mr-1 text-amber-500"></i>Gutschein-Wert in Euro
             </label>
             <input type="number" name="voucher_amount" id="voucherAmountInput" min="1" max="10000" step="0.01"
-                   class="w-full md:w-48 px-4 py-2.5 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500" 
+                   class="w-full md:w-48 px-4 py-2.5 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white" 
                    placeholder="z.B. 50.00">
         </div>
         
         <div id="downloadFields" class="type-fields mb-4 hidden">
             <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                <i class="fas fa-link mr-1 text-cyan-500"></i>
-                Download-URL
+                <i class="fas fa-link mr-1 text-cyan-500"></i>Download-URL
             </label>
             <input type="url" name="download_file_url" id="downloadUrlInput"
-                   class="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500" 
+                   class="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white" 
                    placeholder="https://beispiel.de/download/ebook.pdf">
         </div>
         
-        <!-- General URL for redeeming -->
         <div class="mb-4">
             <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                <i class="fas fa-external-link-alt mr-1 text-slate-400"></i>
-                Einlöse-URL (optional)
+                <i class="fas fa-external-link-alt mr-1 text-slate-400"></i>Einlöse-URL (optional)
             </label>
             <input type="url" name="redeem_url" id="redeemUrlInput"
-                   class="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500" 
+                   class="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white" 
                    placeholder="https://shop.beispiel.de/checkout">
         </div>
         
-        <!-- Instructions -->
         <div class="mb-4">
             <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                <i class="fas fa-info-circle mr-1 text-slate-400"></i>
-                Einlöse-Anleitung (optional)
+                <i class="fas fa-info-circle mr-1 text-slate-400"></i>Einlöse-Anleitung (optional)
             </label>
             <textarea name="instructions" id="instructionsInput" rows="2"
-                      class="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none" 
+                      class="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white resize-none" 
                       placeholder="Anleitung zum Einlösen der Belohnung..."></textarea>
         </div>
         
-        <!-- Requires Address -->
         <div class="mb-6">
             <label class="flex items-center gap-3 cursor-pointer">
                 <input type="checkbox" name="requires_address" id="requiresAddressInput" value="1"
-                       class="w-5 h-5 rounded border-slate-300 dark:border-slate-600 text-primary-600 focus:ring-primary-500 dark:bg-slate-700">
+                       class="w-5 h-5 rounded border-slate-300 dark:border-slate-600 text-primary-600">
                 <span class="text-sm text-slate-700 dark:text-slate-300">
                     <i class="fas fa-map-marker-alt mr-1 text-slate-400"></i>
                     Empfehler muss Adresse angeben (z.B. für physische Produkte)
@@ -529,7 +502,6 @@ include __DIR__ . '/../../includes/dashboard-header.php';
             </label>
         </div>
         
-        <!-- Buttons -->
         <div class="flex flex-wrap gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
             <button type="submit" class="px-6 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-all shadow-lg shadow-primary-600/30 font-medium flex items-center gap-2">
                 <i class="fas fa-save"></i>
@@ -541,7 +513,6 @@ include __DIR__ . '/../../includes/dashboard-header.php';
         </div>
     </form>
 </div>
-<?php endif; ?>
 
 <!-- Tips -->
 <div class="mt-8 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800/50 dark:to-slate-900/50 rounded-xl p-6 border border-slate-200 dark:border-slate-700">
@@ -564,7 +535,7 @@ include __DIR__ . '/../../includes/dashboard-header.php';
         </div>
         <div class="flex items-start gap-2">
             <i class="fas fa-check-circle text-green-500 mt-0.5"></i>
-            <span>Belohnungen mit exklusivem Charakter (z.B. "nur für Empfehler") wirken besonders.</span>
+            <span>Belohnungen mit exklusivem Charakter wirken besonders.</span>
         </div>
     </div>
 </div>
@@ -574,9 +545,7 @@ include __DIR__ . '/../../includes/dashboard-header.php';
     const currentRewardCount = <?= count($rewards) ?>;
     
     function updateRewardFields() {
-        // Hide all type-specific fields
         document.querySelectorAll('.type-fields').forEach(el => el.classList.add('hidden'));
-        
         const type = document.getElementById('typeInput').value;
         
         switch(type) {
@@ -596,12 +565,10 @@ include __DIR__ . '/../../includes/dashboard-header.php';
     }
     
     function editReward(reward) {
-        // Show form if hidden
         document.getElementById('rewardForm').classList.remove('hidden');
         const maxNotice = document.getElementById('maxReachedNotice');
         if (maxNotice) maxNotice.classList.add('hidden');
         
-        // Fill form
         document.getElementById('rewardId').value = reward.id;
         document.getElementById('levelInput').value = reward.level;
         document.getElementById('conversionsInput').value = reward.conversions_required;
@@ -617,7 +584,6 @@ include __DIR__ . '/../../includes/dashboard-header.php';
         document.getElementById('instructionsInput').value = reward.instructions || '';
         document.getElementById('requiresAddressInput').checked = reward.requires_address == 1;
         
-        // Update UI
         document.getElementById('formTitle').textContent = 'Belohnung bearbeiten';
         document.getElementById('formIcon').className = 'fas fa-edit text-primary-500';
         document.getElementById('submitText').textContent = 'Änderungen speichern';
@@ -633,11 +599,9 @@ include __DIR__ . '/../../includes/dashboard-header.php';
         document.getElementById('formIcon').className = 'fas fa-plus-circle text-primary-500';
         document.getElementById('submitText').textContent = 'Belohnung speichern';
         
-        // Select next available level
         const nextLevel = Math.min(currentRewardCount + 1, maxRewards);
         document.getElementById('levelInput').value = nextLevel;
         
-        // Show/hide form based on limit
         if (currentRewardCount >= maxRewards) {
             document.getElementById('rewardForm').classList.add('hidden');
             const maxNotice = document.getElementById('maxReachedNotice');
@@ -647,7 +611,6 @@ include __DIR__ . '/../../includes/dashboard-header.php';
         updateRewardFields();
     }
     
-    // Initialize
     document.addEventListener('DOMContentLoaded', function() {
         updateRewardFields();
     });
