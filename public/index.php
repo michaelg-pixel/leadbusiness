@@ -2,7 +2,75 @@
 /**
  * Leadbusiness - Landingpage
  * Vollautomatisches Empfehlungsprogramm für Unternehmen
+ * 
+ * Mit Subdomain-Routing für Empfehlungsseiten
  */
+
+// =============================================================================
+// SUBDOMAIN-ROUTING
+// =============================================================================
+// Prüfen, ob es sich um eine Kunden-Subdomain handelt
+// Beispiel: zahnarzt-mueller.empfehlungen.cloud -> /r/index.php
+// =============================================================================
+
+$host = $_SERVER['HTTP_HOST'] ?? '';
+$mainDomains = [
+    'empfehlungen.cloud',
+    'www.empfehlungen.cloud',
+    'localhost',
+    '127.0.0.1'
+];
+
+// Subdomain extrahieren
+$subdomain = null;
+$isSubdomain = false;
+
+// Prüfen ob es NICHT die Hauptdomain ist
+$isMainDomain = false;
+foreach ($mainDomains as $mainDomain) {
+    if ($host === $mainDomain || $host === 'www.' . $mainDomain) {
+        $isMainDomain = true;
+        break;
+    }
+}
+
+if (!$isMainDomain) {
+    // Subdomain aus Host extrahieren
+    // Format: subdomain.empfehlungen.cloud oder subdomain.localhost:port
+    
+    // Entferne Port falls vorhanden
+    $hostWithoutPort = explode(':', $host)[0];
+    
+    // Prüfe auf bekannte Hauptdomains
+    foreach (['empfehlungen.cloud', 'empfohlen.de'] as $baseDomain) {
+        if (str_ends_with($hostWithoutPort, '.' . $baseDomain)) {
+            $subdomain = str_replace('.' . $baseDomain, '', $hostWithoutPort);
+            $isSubdomain = true;
+            break;
+        }
+    }
+    
+    // Fallback für localhost-Entwicklung (z.B. test.localhost)
+    if (!$isSubdomain && str_ends_with($hostWithoutPort, '.localhost')) {
+        $subdomain = str_replace('.localhost', '', $hostWithoutPort);
+        $isSubdomain = true;
+    }
+}
+
+// Wenn Subdomain erkannt wurde, zur Empfehlungsseite weiterleiten
+if ($isSubdomain && $subdomain) {
+    // Subdomain in Session/Request speichern für /r/index.php
+    $_GET['subdomain'] = $subdomain;
+    $_SERVER['LEADBUSINESS_SUBDOMAIN'] = $subdomain;
+    
+    // Empfehlungsseite einbinden
+    require_once __DIR__ . '/r/index.php';
+    exit;
+}
+
+// =============================================================================
+// NORMALE MARKETING-LANDINGPAGE (Hauptdomain)
+// =============================================================================
 
 $pageTitle = 'Empfehlungsprogramm für Ihr Unternehmen';
 $metaDescription = 'Vollautomatisches Empfehlungsprogramm: Kunden werben Kunden und werden automatisch belohnt. Einrichtung in 5 Minuten. Ab 49€/Monat.';
