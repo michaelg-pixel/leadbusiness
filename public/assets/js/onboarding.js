@@ -2,6 +2,7 @@
  * Leadbusiness - Onboarding Wizard JavaScript
  * 
  * Verbesserte Version mit Touch-Support und Mobile-Optimierung
+ * Fixed: E-Mail-Tool-Schritt (6) wird jetzt korrekt behandelt
  */
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -19,8 +20,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // State
     let currentStep = 1;
-    const totalSteps = 8;
+    const totalSteps = 9; // Korrigiert: 9 Schritte inkl. E-Mail-Tool
     let formData = {};
+    let showEmailToolStep = false; // Wird basierend auf Branche gesetzt
     
     // ================================
     // INDUSTRY CARD SELECTION
@@ -62,6 +64,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const industry = this.dataset.industry;
                 if (industry) {
                     updateBackgroundsForIndustry(industry);
+                    updateEmailToolStepVisibility(industry);
                 }
             });
             
@@ -75,6 +78,30 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize industry cards
     initIndustryCards();
+    
+    // ================================
+    // EMAIL TOOL STEP VISIBILITY
+    // ================================
+    
+    function updateEmailToolStepVisibility(industry) {
+        // Branchen die den E-Mail-Tool-Schritt sehen
+        const emailToolBranches = ['onlinemarketing', 'coach', 'onlineshop', 'newsletter', 'software'];
+        showEmailToolStep = emailToolBranches.includes(industry);
+        
+        console.log('Email tool step visible:', showEmailToolStep, 'for industry:', industry);
+        
+        // Step 6 in der Progress-Leiste ein-/ausblenden
+        const step6Item = document.querySelector('.step-item[data-step="6"]');
+        if (step6Item) {
+            if (showEmailToolStep) {
+                step6Item.classList.remove('hidden');
+            } else {
+                step6Item.classList.add('hidden');
+            }
+        }
+        
+        updateProgress();
+    }
     
     // ================================
     // LOGO UPLOAD
@@ -238,7 +265,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Update preview
             if (previewUrl) {
-                previewUrl.textContent = (value || 'ihre-firma') + '.empfohlen.de';
+                previewUrl.textContent = (value || 'ihre-firma') + '.empfehlungen.cloud';
             }
             
             // Check availability (debounced)
@@ -343,17 +370,70 @@ document.addEventListener('DOMContentLoaded', function() {
     // NAVIGATION FUNCTIONS
     // ================================
     
+    function getVisibleSteps() {
+        // Gibt die Liste der sichtbaren Schritte zurück
+        let steps = [1, 2, 3, 4, 5];
+        
+        if (showEmailToolStep) {
+            steps.push(6);
+        }
+        
+        steps.push(7, 8, 9);
+        
+        return steps;
+    }
+    
+    function getNextStep(current) {
+        const visibleSteps = getVisibleSteps();
+        const currentIndex = visibleSteps.indexOf(current);
+        if (currentIndex < visibleSteps.length - 1) {
+            return visibleSteps[currentIndex + 1];
+        }
+        return current;
+    }
+    
+    function getPrevStep(current) {
+        const visibleSteps = getVisibleSteps();
+        const currentIndex = visibleSteps.indexOf(current);
+        if (currentIndex > 0) {
+            return visibleSteps[currentIndex - 1];
+        }
+        return current;
+    }
+    
+    function isLastStep(step) {
+        const visibleSteps = getVisibleSteps();
+        return step === visibleSteps[visibleSteps.length - 1];
+    }
+    
+    function isFirstStep(step) {
+        const visibleSteps = getVisibleSteps();
+        return step === visibleSteps[0];
+    }
+    
     function updateProgress() {
-        const progress = ((currentStep - 1) / (totalSteps - 1)) * 100;
+        const visibleSteps = getVisibleSteps();
+        const currentIndex = visibleSteps.indexOf(currentStep);
+        const progress = (currentIndex / (visibleSteps.length - 1)) * 100;
+        
         if (progressBar) {
             progressBar.style.width = progress + '%';
         }
         
-        stepItems.forEach(function(item, index) {
-            const stepNum = index + 1;
+        stepItems.forEach(function(item) {
+            const stepNum = parseInt(item.dataset.step);
             item.classList.remove('active', 'completed');
             
-            if (stepNum < currentStep) {
+            // Schritt 6 Sichtbarkeit
+            if (stepNum === 6) {
+                if (showEmailToolStep) {
+                    item.classList.remove('hidden');
+                } else {
+                    item.classList.add('hidden');
+                }
+            }
+            
+            if (stepNum < currentStep && visibleSteps.includes(stepNum)) {
                 item.classList.add('completed');
             } else if (stepNum === currentStep) {
                 item.classList.add('active');
@@ -370,12 +450,12 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         // Update buttons
-        if (prevBtn) prevBtn.classList.toggle('hidden', step === 1);
-        if (nextBtn) nextBtn.classList.toggle('hidden', step === totalSteps);
-        if (submitBtn) submitBtn.classList.toggle('hidden', step !== totalSteps);
+        if (prevBtn) prevBtn.classList.toggle('hidden', isFirstStep(step));
+        if (nextBtn) nextBtn.classList.toggle('hidden', isLastStep(step));
+        if (submitBtn) submitBtn.classList.toggle('hidden', !isLastStep(step));
         
         // Generate summary on last step
-        if (step === totalSteps) {
+        if (isLastStep(step)) {
             generateSummary();
         }
         
@@ -385,6 +465,18 @@ document.addEventListener('DOMContentLoaded', function() {
     function validateStep(step) {
         const panel = document.querySelector(`.wizard-panel[data-panel="${step}"]`);
         if (!panel) return true;
+        
+        // Schritt 6 (E-Mail Tool) - immer gültig, da optional
+        if (step === 6) {
+            const selectedTool = document.getElementById('selectedEmailTool');
+            // Wenn "skip" gewählt oder gar nichts gewählt wurde, ist es OK
+            if (!selectedTool || !selectedTool.value || selectedTool.value === 'skip' || selectedTool.value === '') {
+                return true;
+            }
+            // Wenn ein Tool gewählt wurde, prüfen wir nicht ob die Verbindung getestet wurde
+            // Das ist optional - der Benutzer kann die Einrichtung später abschließen
+            return true;
+        }
         
         const inputs = panel.querySelectorAll('input[required], select[required]');
         
@@ -424,7 +516,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        if (step === 7) {
+        if (step === 8) {
             if (subdomainInput && subdomainInput.value.length < 3) {
                 alert('Die Subdomain muss mindestens 3 Zeichen lang sein.');
                 return false;
@@ -444,27 +536,45 @@ document.addEventListener('DOMContentLoaded', function() {
         const email = form.querySelector('input[name="email"]');
         const subdomain = form.querySelector('input[name="subdomain"]');
         const plan = form.querySelector('input[name="plan"]');
+        const emailTool = document.getElementById('selectedEmailTool');
+        
+        // E-Mail-Tool Info
+        let emailToolInfo = 'Nicht verbunden';
+        if (emailTool && emailTool.value && emailTool.value !== 'skip' && emailTool.value !== '') {
+            const toolNames = {
+                'klicktipp': 'KlickTipp',
+                'quentn': 'Quentn',
+                'cleverreach': 'CleverReach'
+            };
+            emailToolInfo = toolNames[emailTool.value] || emailTool.value;
+        }
         
         container.innerHTML = `
             <div class="grid sm:grid-cols-2 gap-4 sm:gap-6">
                 <div>
-                    <h4 class="font-semibold text-gray-700 mb-1 text-sm sm:text-base">Unternehmen</h4>
-                    <p class="text-gray-600 text-sm sm:text-base">${companyName ? companyName.value : '-'}</p>
-                    <p class="text-xs sm:text-sm text-gray-500">${industry ? industry.value : '-'}</p>
+                    <h4 class="font-semibold text-gray-700 dark:text-slate-300 mb-1 text-sm sm:text-base">Unternehmen</h4>
+                    <p class="text-gray-600 dark:text-slate-400 text-sm sm:text-base">${companyName ? companyName.value : '-'}</p>
+                    <p class="text-xs sm:text-sm text-gray-500 dark:text-slate-500">${industry ? industry.value : '-'}</p>
                 </div>
                 <div>
-                    <h4 class="font-semibold text-gray-700 mb-1 text-sm sm:text-base">Kontakt</h4>
-                    <p class="text-gray-600 text-sm sm:text-base">${contactName ? contactName.value : '-'}</p>
-                    <p class="text-xs sm:text-sm text-gray-500">${email ? email.value : '-'}</p>
+                    <h4 class="font-semibold text-gray-700 dark:text-slate-300 mb-1 text-sm sm:text-base">Kontakt</h4>
+                    <p class="text-gray-600 dark:text-slate-400 text-sm sm:text-base">${contactName ? contactName.value : '-'}</p>
+                    <p class="text-xs sm:text-sm text-gray-500 dark:text-slate-500">${email ? email.value : '-'}</p>
                 </div>
                 <div>
-                    <h4 class="font-semibold text-gray-700 mb-1 text-sm sm:text-base">Empfehlungsseite</h4>
-                    <p class="text-gray-600 text-sm sm:text-base">${subdomain ? subdomain.value : 'ihre-firma'}.empfohlen.de</p>
+                    <h4 class="font-semibold text-gray-700 dark:text-slate-300 mb-1 text-sm sm:text-base">Empfehlungsseite</h4>
+                    <p class="text-gray-600 dark:text-slate-400 text-sm sm:text-base">${subdomain ? subdomain.value : 'ihre-firma'}.empfehlungen.cloud</p>
                 </div>
                 <div>
-                    <h4 class="font-semibold text-gray-700 mb-1 text-sm sm:text-base">Tarif</h4>
-                    <p class="text-gray-600 text-sm sm:text-base">${plan && plan.value === 'professional' ? 'Professional' : 'Starter'}</p>
+                    <h4 class="font-semibold text-gray-700 dark:text-slate-300 mb-1 text-sm sm:text-base">Tarif</h4>
+                    <p class="text-gray-600 dark:text-slate-400 text-sm sm:text-base">${plan && plan.value === 'professional' ? 'Professional' : 'Starter'}</p>
                 </div>
+                ${showEmailToolStep ? `
+                <div>
+                    <h4 class="font-semibold text-gray-700 dark:text-slate-300 mb-1 text-sm sm:text-base">E-Mail-Tool</h4>
+                    <p class="text-gray-600 dark:text-slate-400 text-sm sm:text-base">${emailToolInfo}</p>
+                </div>
+                ` : ''}
             </div>
         `;
     }
@@ -475,8 +585,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (prevBtn) {
         prevBtn.addEventListener('click', function() {
-            if (currentStep > 1) {
-                currentStep--;
+            const prevStep = getPrevStep(currentStep);
+            if (prevStep !== currentStep) {
+                currentStep = prevStep;
                 showPanel(currentStep);
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             }
@@ -485,12 +596,19 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (nextBtn) {
         nextBtn.addEventListener('click', function() {
+            console.log('Next button clicked, current step:', currentStep);
+            
             if (validateStep(currentStep)) {
-                if (currentStep < totalSteps) {
-                    currentStep++;
+                const nextStep = getNextStep(currentStep);
+                console.log('Validation passed, next step:', nextStep);
+                
+                if (nextStep !== currentStep) {
+                    currentStep = nextStep;
                     showPanel(currentStep);
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                 }
+            } else {
+                console.log('Validation failed for step:', currentStep);
             }
         });
     }
@@ -551,15 +669,18 @@ document.addEventListener('DOMContentLoaded', function() {
     // INITIALIZE
     // ================================
     
-    showPanel(1);
-    
-    // Auto-fill backgrounds for default industry
-    const defaultIndustry = document.querySelector('input[name="industry"]:checked');
-    if (defaultIndustry) {
-        updateBackgroundsForIndustry(defaultIndustry.value);
+    // Check initial industry selection for email tool step visibility
+    const initialIndustry = document.querySelector('input[name="industry"]:checked');
+    if (initialIndustry) {
+        updateEmailToolStepVisibility(initialIndustry.value);
+        updateBackgroundsForIndustry(initialIndustry.value);
     } else {
+        // Default: Email tool step hidden
+        showEmailToolStep = false;
         updateBackgroundsForIndustry('allgemein');
     }
+    
+    showPanel(1);
     
     console.log('Onboarding Wizard ready');
 });
