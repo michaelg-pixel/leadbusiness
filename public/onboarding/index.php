@@ -427,7 +427,7 @@ $emailToolBranches = ['onlinemarketing', 'coach', 'onlineshop', 'newsletter', 's
                         </div>
                     </div>
                     
-                    <!-- Step 5: Belohnungen (gekürzt für Übersichtlichkeit) -->
+                    <!-- Step 5: Belohnungen - ERWEITERT mit URL-Feldern -->
                     <div class="wizard-panel" data-panel="5">
                         <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-4 sm:p-8 border border-gray-200 dark:border-slate-700">
                             <h2 class="text-xl sm:text-2xl font-bold mb-2 text-gray-900 dark:text-white">Belohnungen für Empfehler</h2>
@@ -436,7 +436,10 @@ $emailToolBranches = ['onlinemarketing', 'coach', 'onlineshop', 'newsletter', 's
                             <div class="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-xl p-4 mb-6">
                                 <div class="flex items-start gap-3">
                                     <i class="fas fa-lightbulb text-blue-500 dark:text-blue-400 mt-1"></i>
-                                    <p class="text-sm text-blue-800 dark:text-blue-300"><strong>Tipp:</strong> Je nach Belohnungstyp erscheinen automatisch die passenden Eingabefelder.</p>
+                                    <div class="text-sm text-blue-800 dark:text-blue-300">
+                                        <p><strong>Tipp:</strong> Je nach Belohnungstyp erscheinen automatisch die passenden Eingabefelder.</p>
+                                        <p class="mt-1 text-xs">Die URL wird in der Belohnungs-E-Mail an Ihre Empfehler als "Jetzt einlösen"-Button angezeigt.</p>
+                                    </div>
                                 </div>
                             </div>
                             
@@ -457,7 +460,8 @@ $emailToolBranches = ['onlinemarketing', 'coach', 'onlineshop', 'newsletter', 's
                                         </div>
                                     </div>
                                     
-                                    <div class="grid sm:grid-cols-2 gap-4">
+                                    <!-- Hauptfelder: Typ und Beschreibung -->
+                                    <div class="grid sm:grid-cols-2 gap-4 mb-4">
                                         <div>
                                             <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Belohnungstyp</label>
                                             <select name="reward_<?= $i ?>_type" class="reward-type-select w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white" data-level="<?= $i ?>">
@@ -470,8 +474,116 @@ $emailToolBranches = ['onlinemarketing', 'coach', 'onlineshop', 'newsletter', 's
                                         </div>
                                         <div>
                                             <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Beschreibung *</label>
-                                            <input type="text" name="reward_<?= $i ?>_description" required class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-500" placeholder="z.B. 10% Rabatt">
+                                            <input type="text" name="reward_<?= $i ?>_description" required class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-500" placeholder="z.B. 10% Rabatt auf Ihre nächste Bestellung">
                                         </div>
+                                    </div>
+                                    
+                                    <!-- Dynamische Extra-Felder Container -->
+                                    <div class="reward-extra-fields space-y-4 mt-4" id="reward_<?= $i ?>_extra_fields">
+                                        
+                                        <!-- Rabatt (%) - Extra Feld -->
+                                        <div class="extra-field <?= $defaults[$i][1] === 'discount' ? 'active' : '' ?>" data-type="discount">
+                                            <div class="grid sm:grid-cols-2 gap-4">
+                                                <div>
+                                                    <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+                                                        <i class="fas fa-percent text-primary-500 mr-1"></i>Rabatt in %
+                                                    </label>
+                                                    <input type="number" name="reward_<?= $i ?>_discount_percent" min="1" max="100" class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white" placeholder="z.B. 10">
+                                                </div>
+                                                <div>
+                                                    <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+                                                        <i class="fas fa-link text-primary-500 mr-1"></i>Einlöse-URL
+                                                    </label>
+                                                    <input type="url" name="reward_<?= $i ?>_discount_url" class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-500" placeholder="https://shop.de/rabatt">
+                                                </div>
+                                            </div>
+                                            <p class="text-xs text-gray-500 dark:text-slate-400 mt-2">
+                                                <i class="fas fa-info-circle mr-1"></i>Diese URL wird in der Belohnungs-E-Mail als "Jetzt einlösen"-Button verlinkt.
+                                            </p>
+                                        </div>
+                                        
+                                        <!-- Gutschein-Code - Extra Felder -->
+                                        <div class="extra-field <?= $defaults[$i][1] === 'coupon_code' ? 'active' : '' ?>" data-type="coupon_code">
+                                            <div class="grid sm:grid-cols-3 gap-4">
+                                                <div>
+                                                    <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+                                                        <i class="fas fa-ticket text-purple-500 mr-1"></i>Gutschein-Code
+                                                    </label>
+                                                    <input type="text" name="reward_<?= $i ?>_coupon_code" class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white font-mono" placeholder="RABATT10">
+                                                </div>
+                                                <div>
+                                                    <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+                                                        <i class="fas fa-calendar text-purple-500 mr-1"></i>Gültig für (Tage)
+                                                    </label>
+                                                    <input type="number" name="reward_<?= $i ?>_coupon_validity" value="30" min="1" max="365" class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white">
+                                                </div>
+                                                <div>
+                                                    <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+                                                        <i class="fas fa-link text-primary-500 mr-1"></i>Einlöse-URL
+                                                    </label>
+                                                    <input type="url" name="reward_<?= $i ?>_coupon_url" class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-500" placeholder="https://shop.de/checkout">
+                                                </div>
+                                            </div>
+                                            <p class="text-xs text-gray-500 dark:text-slate-400 mt-2">
+                                                <i class="fas fa-info-circle mr-1"></i>Der Code und die URL werden in der Belohnungs-E-Mail angezeigt.
+                                            </p>
+                                        </div>
+                                        
+                                        <!-- Gratis-Produkt - Extra Felder -->
+                                        <div class="extra-field <?= $defaults[$i][1] === 'free_product' ? 'active' : '' ?>" data-type="free_product">
+                                            <div class="grid sm:grid-cols-2 gap-4">
+                                                <div>
+                                                    <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+                                                        <i class="fas fa-link text-primary-500 mr-1"></i>Produkt-/Bestell-URL
+                                                    </label>
+                                                    <input type="url" name="reward_<?= $i ?>_product_url" class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-500" placeholder="https://shop.de/gratis-produkt">
+                                                </div>
+                                                <div class="flex items-center gap-2 pt-6">
+                                                    <input type="checkbox" name="reward_<?= $i ?>_requires_address" id="reward_<?= $i ?>_requires_address" class="w-4 h-4 text-primary-500 rounded border-gray-300 dark:border-slate-600 focus:ring-primary-500 bg-white dark:bg-slate-700">
+                                                    <label for="reward_<?= $i ?>_requires_address" class="text-xs sm:text-sm text-gray-700 dark:text-slate-300">
+                                                        Lieferadresse erforderlich
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <p class="text-xs text-gray-500 dark:text-slate-400 mt-2">
+                                                <i class="fas fa-info-circle mr-1"></i>Die URL wird als "Produkt ansehen"-Button in der E-Mail angezeigt.
+                                            </p>
+                                        </div>
+                                        
+                                        <!-- Gratis-Service - Extra Felder -->
+                                        <div class="extra-field" data-type="free_service">
+                                            <div>
+                                                <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+                                                    <i class="fas fa-link text-primary-500 mr-1"></i>Buchungs-/Termin-URL
+                                                </label>
+                                                <input type="url" name="reward_<?= $i ?>_service_url" class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-500" placeholder="https://calendly.com/ihre-firma">
+                                            </div>
+                                            <p class="text-xs text-gray-500 dark:text-slate-400 mt-2">
+                                                <i class="fas fa-info-circle mr-1"></i>Die URL wird als "Termin buchen"-Button in der E-Mail angezeigt.
+                                            </p>
+                                        </div>
+                                        
+                                        <!-- Wertgutschein (€) - Extra Felder -->
+                                        <div class="extra-field" data-type="voucher">
+                                            <div class="grid sm:grid-cols-2 gap-4">
+                                                <div>
+                                                    <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+                                                        <i class="fas fa-euro-sign text-green-500 mr-1"></i>Gutscheinwert in €
+                                                    </label>
+                                                    <input type="number" name="reward_<?= $i ?>_voucher_amount" min="1" step="0.01" class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white" placeholder="z.B. 25">
+                                                </div>
+                                                <div>
+                                                    <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+                                                        <i class="fas fa-link text-primary-500 mr-1"></i>Einlöse-URL
+                                                    </label>
+                                                    <input type="url" name="reward_<?= $i ?>_voucher_url" class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-500" placeholder="https://shop.de/gutschein">
+                                                </div>
+                                            </div>
+                                            <p class="text-xs text-gray-500 dark:text-slate-400 mt-2">
+                                                <i class="fas fa-info-circle mr-1"></i>Der Betrag und die URL werden in der Belohnungs-E-Mail angezeigt.
+                                            </p>
+                                        </div>
+                                        
                                     </div>
                                 </div>
                                 <?php endfor; ?>
@@ -698,6 +810,43 @@ $emailToolBranches = ['onlinemarketing', 'coach', 'onlineshop', 'newsletter', 's
             } else {
                 html.classList.add('dark');
                 document.cookie = 'onboarding_theme=dark;path=/;max-age=31536000';
+            }
+        }
+        
+        // ================================
+        // REWARD TYPE EXTRA FIELDS HANDLER
+        // ================================
+        document.addEventListener('DOMContentLoaded', function() {
+            // Event Listener für alle Belohnungstyp-Selects
+            document.querySelectorAll('.reward-type-select').forEach(function(select) {
+                select.addEventListener('change', function() {
+                    const level = this.dataset.level;
+                    const type = this.value;
+                    updateExtraFields(level, type);
+                });
+            });
+            
+            // Initial für alle vorhandenen Reward-Levels die Extra-Felder setzen
+            document.querySelectorAll('.reward-type-select').forEach(function(select) {
+                const level = select.dataset.level;
+                const type = select.value;
+                updateExtraFields(level, type);
+            });
+        });
+        
+        function updateExtraFields(level, type) {
+            const container = document.getElementById('reward_' + level + '_extra_fields');
+            if (!container) return;
+            
+            // Alle Extra-Felder verstecken
+            container.querySelectorAll('.extra-field').forEach(function(field) {
+                field.classList.remove('active');
+            });
+            
+            // Das passende Extra-Feld anzeigen
+            const activeField = container.querySelector('.extra-field[data-type="' + type + '"]');
+            if (activeField) {
+                activeField.classList.add('active');
             }
         }
     </script>
