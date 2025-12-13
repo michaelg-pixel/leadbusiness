@@ -5,6 +5,9 @@
  * Verwaltet Branchen-Hintergrundbilder für Empfehlungsseiten
  */
 
+// Database-Klasse hat Namespace
+use Leadbusiness\Database;
+
 class BackgroundService {
     
     private $db;
@@ -126,7 +129,7 @@ class BackgroundService {
         }
         
         // Standard-Hintergrundbild der Branche
-        $background = $this->getDefaultForIndustry($customer['industry']);
+        $background = $this->getDefaultForIndustry($customer['industry'] ?? 'allgemein');
         if ($background) {
             return $background['url'];
         }
