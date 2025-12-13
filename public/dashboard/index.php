@@ -30,7 +30,7 @@ if (!$auth->isLoggedIn() || $auth->getUserType() !== 'customer') {
 $customer = $auth->getCurrentCustomer();
 $customerId = $customer['id'];
 $db = Database::getInstance();
-$pdo = $db->getConnection();
+$pdo = $db->getPdo();
 
 // Dashboard-Layout basierend auf Branche + Tarif laden
 $layoutService = new DashboardLayoutService($pdo);
