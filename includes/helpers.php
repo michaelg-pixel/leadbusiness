@@ -3,7 +3,33 @@
  * Helper-Funktionen
  * 
  * Allgemeine Hilfsfunktionen für das gesamte Projekt.
+ * PHP 7.4+ kompatibel
  */
+
+// PHP 7.4 Polyfill für str_ends_with
+if (!function_exists('str_ends_with')) {
+    function str_ends_with(string $haystack, string $needle): bool {
+        $length = strlen($needle);
+        if ($length === 0) {
+            return true;
+        }
+        return substr($haystack, -$length) === $needle;
+    }
+}
+
+// PHP 7.4 Polyfill für str_starts_with
+if (!function_exists('str_starts_with')) {
+    function str_starts_with(string $haystack, string $needle): bool {
+        return strncmp($haystack, $needle, strlen($needle)) === 0;
+    }
+}
+
+// PHP 7.4 Polyfill für str_contains
+if (!function_exists('str_contains')) {
+    function str_contains(string $haystack, string $needle): bool {
+        return $needle !== '' && strpos($haystack, $needle) !== false;
+    }
+}
 
 /**
  * Konfiguration laden
@@ -49,6 +75,7 @@ if (!function_exists('db')) {
 
 /**
  * System-Setting abrufen
+ * PHP 7.4 kompatibel (kein match-Statement)
  */
 function setting(string $key, $default = null)
 {
@@ -58,12 +85,20 @@ function setting(string $key, $default = null)
         $rows = db()->fetchAll("SELECT setting_key, setting_value, setting_type FROM system_settings");
         $settings = [];
         foreach ($rows as $row) {
-            $settings[$row['setting_key']] = match ($row['setting_type']) {
-                'boolean' => (bool) $row['setting_value'],
-                'integer' => (int) $row['setting_value'],
-                'json' => json_decode($row['setting_value'], true),
-                default => $row['setting_value']
-            };
+            // PHP 7.4 kompatibel: switch statt match
+            switch ($row['setting_type']) {
+                case 'boolean':
+                    $settings[$row['setting_key']] = (bool) $row['setting_value'];
+                    break;
+                case 'integer':
+                    $settings[$row['setting_key']] = (int) $row['setting_value'];
+                    break;
+                case 'json':
+                    $settings[$row['setting_key']] = json_decode($row['setting_value'], true);
+                    break;
+                default:
+                    $settings[$row['setting_key']] = $row['setting_value'];
+            }
         }
     }
     
@@ -262,6 +297,7 @@ function getSubdomain(): ?string
     $host = $_SERVER['HTTP_HOST'] ?? '';
     $baseDomain = config('settings.subdomain.base_domain', 'empfehlungen.cloud');
     
+    // PHP 7.4 kompatibel - str_ends_with wird oben als Polyfill definiert
     if (str_ends_with($host, '.' . $baseDomain)) {
         return substr($host, 0, -(strlen($baseDomain) + 1));
     }
@@ -382,9 +418,9 @@ function timeAgo(?string $datetime): string
 /**
  * Zahl formatieren
  */
-function formatNumber(int|float $number, int $decimals = 0): string
+function formatNumber($number, int $decimals = 0): string
 {
-    return number_format($number, $decimals, ',', '.');
+    return number_format((float)$number, $decimals, ',', '.');
 }
 
 /**
@@ -434,7 +470,7 @@ function anonymizeName(string $name): string
 /**
  * Debug-Log
  */
-function debug_log(mixed $data, string $label = ''): void
+function debug_log($data, string $label = ''): void
 {
     if (!config('settings.debug')) return;
     
@@ -565,7 +601,7 @@ function getPlanLimit(string $plan): array
  * @param mixed $default Standardwert falls nicht gefunden
  * @return mixed Limit-Wert
  */
-function getPlanLimitValue(string $plan, string $key, mixed $default = null): mixed
+function getPlanLimitValue(string $plan, string $key, $default = null)
 {
     $limits = getPlanLimit($plan);
     return $limits[$key] ?? $default;
