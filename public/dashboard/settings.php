@@ -1,11 +1,14 @@
 <?php
 /**
  * Leadbusiness - Einstellungen
+ * Mit Logo-Upload und Setup-Wizard Integration
  */
 
 require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../../config/settings.php';
 require_once __DIR__ . '/../../includes/Database.php';
 require_once __DIR__ . '/../../includes/Auth.php';
+require_once __DIR__ . '/../../includes/SetupWizard.php';
 require_once __DIR__ . '/../../includes/helpers.php';
 
 $auth = new Auth();
@@ -16,6 +19,8 @@ if (!$auth->isLoggedIn() || $auth->getUserType() !== 'customer') {
 $customer = $auth->getCurrentCustomer();
 $customerId = $customer['id'];
 $db = Database::getInstance();
+
+$setupWizard = new \Leadbusiness\SetupWizard($customer);
 
 $message = '';
 $error = '';
@@ -46,6 +51,58 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $message = 'Profil aktualisiert!';
             $customer = $db->fetch("SELECT * FROM customers WHERE id = ?", [$customerId]);
         }
+    }
+    
+    if ($action === 'upload_logo') {
+        if (!empty($_FILES['logo']['tmp_name'])) {
+            $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+            
+            if (!in_array($_FILES['logo']['type'], $allowedTypes)) {
+                $error = 'Ungültiges Bildformat. Erlaubt: JPG, PNG, GIF, WebP';
+            } elseif ($_FILES['logo']['size'] > 2 * 1024 * 1024) {
+                $error = 'Logo zu groß. Maximal 2MB erlaubt.';
+            } else {
+                $uploadDir = __DIR__ . '/../uploads/logos/';
+                if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
+                
+                $extension = pathinfo($_FILES['logo']['name'], PATHINFO_EXTENSION);
+                $filename = $customer['subdomain'] . '-logo-' . time() . '.' . $extension;
+                
+                if (move_uploaded_file($_FILES['logo']['tmp_name'], $uploadDir . $filename)) {
+                    // Altes Logo löschen
+                    if ($customer['logo_url'] && file_exists(__DIR__ . '/..' . $customer['logo_url'])) {
+                        @unlink(__DIR__ . '/..' . $customer['logo_url']);
+                    }
+                    
+                    $logoUrl = '/uploads/logos/' . $filename;
+                    $db->update('customers', [
+                        'logo_url' => $logoUrl,
+                        'updated_at' => date('Y-m-d H:i:s')
+                    ], 'id = ?', [$customerId]);
+                    
+                    $message = 'Logo erfolgreich hochgeladen!';
+                    $customer = $db->fetch("SELECT * FROM customers WHERE id = ?", [$customerId]);
+                } else {
+                    $error = 'Fehler beim Hochladen des Logos.';
+                }
+            }
+        } else {
+            $error = 'Bitte wählen Sie ein Logo aus.';
+        }
+    }
+    
+    if ($action === 'delete_logo') {
+        if ($customer['logo_url'] && file_exists(__DIR__ . '/..' . $customer['logo_url'])) {
+            @unlink(__DIR__ . '/..' . $customer['logo_url']);
+        }
+        
+        $db->update('customers', [
+            'logo_url' => null,
+            'updated_at' => date('Y-m-d H:i:s')
+        ], 'id = ?', [$customerId]);
+        
+        $message = 'Logo wurde entfernt.';
+        $customer = $db->fetch("SELECT * FROM customers WHERE id = ?", [$customerId]);
     }
     
     if ($action === 'update_address') {
@@ -106,284 +163,342 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $message = 'Passwort geändert!';
         }
     }
+    
+    if ($action === 'show_wizard') {
+        $setupWizard->show();
+        $message = 'Einrichtungs-Checkliste wird wieder angezeigt.';
+    }
 }
 
 $pageTitle = 'Einstellungen';
+
+include __DIR__ . '/../../includes/dashboard-header.php';
 ?>
-<!DOCTYPE html>
-<html lang="de">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= htmlspecialchars($pageTitle) ?> | Leadbusiness</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>body { font-family: 'Inter', sans-serif; }</style>
-</head>
-<body class="bg-gray-50">
+
+<div class="max-w-3xl mx-auto">
     
-    <div class="flex h-screen">
-        
-        <!-- Sidebar -->
-        <aside class="w-64 bg-white border-r hidden lg:block">
-            <div class="p-6 border-b">
-                <a href="/" class="flex items-center gap-2">
-                    <div class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center">
-                        <i class="fas fa-share-nodes text-white"></i>
-                    </div>
-                    <span class="text-xl font-bold text-gray-900">Leadbusiness</span>
-                </a>
-            </div>
-            
-            <nav class="p-4 space-y-1">
-                <a href="/dashboard" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl">
-                    <i class="fas fa-home w-5"></i><span>Übersicht</span>
-                </a>
-                <a href="/dashboard/leads.php" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl">
-                    <i class="fas fa-users w-5"></i><span>Empfehler</span>
-                </a>
-                <a href="/dashboard/rewards.php" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl">
-                    <i class="fas fa-gift w-5"></i><span>Belohnungen</span>
-                </a>
-                <a href="/dashboard/design.php" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl">
-                    <i class="fas fa-palette w-5"></i><span>Design</span>
-                </a>
-                <a href="/dashboard/settings.php" class="flex items-center gap-3 px-4 py-3 text-indigo-600 bg-indigo-50 rounded-xl font-medium">
-                    <i class="fas fa-cog w-5"></i><span>Einstellungen</span>
-                </a>
-            </nav>
-            
-            <div class="absolute bottom-0 left-0 right-0 p-4 border-t bg-white w-64">
-                <a href="/dashboard/logout.php" class="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700">
-                    <i class="fas fa-sign-out-alt"></i>Abmelden
-                </a>
-            </div>
-        </aside>
-        
-        <!-- Main Content -->
-        <main class="flex-1 overflow-y-auto">
-            
-            <header class="bg-white border-b px-6 py-4">
-                <h1 class="text-2xl font-bold text-gray-900">Einstellungen</h1>
-            </header>
-            
-            <div class="p-6 max-w-3xl">
-                
-                <?php if ($message): ?>
-                <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-xl mb-6">
-                    <i class="fas fa-check-circle mr-2"></i><?= htmlspecialchars($message) ?>
-                </div>
-                <?php endif; ?>
-                
-                <?php if ($error): ?>
-                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-xl mb-6">
-                    <i class="fas fa-exclamation-circle mr-2"></i><?= htmlspecialchars($error) ?>
-                </div>
-                <?php endif; ?>
-                
-                <!-- Plan Info -->
-                <div class="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl p-6 text-white mb-6">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <h3 class="font-bold text-lg"><?= ucfirst($customer['plan']) ?>-Plan</h3>
-                            <p class="text-white/80 text-sm">
-                                <?php if ($customer['subscription_ends_at']): ?>
-                                Aktiv bis: <?= date('d.m.Y', strtotime($customer['subscription_ends_at'])) ?>
-                                <?php endif; ?>
-                            </p>
-                        </div>
-                        <?php if ($customer['plan'] === 'starter'): ?>
-                        <a href="/preise" class="px-4 py-2 bg-white text-indigo-600 rounded-lg font-medium hover:bg-gray-100">
-                            Upgrade
-                        </a>
-                        <?php endif; ?>
-                    </div>
-                </div>
-                
-                <!-- Profil -->
-                <div class="bg-white rounded-xl p-6 shadow-sm mb-6">
-                    <h3 class="font-semibold text-gray-900 mb-4">
-                        <i class="fas fa-building mr-2 text-gray-400"></i>Unternehmensdaten
-                    </h3>
-                    
-                    <form method="POST">
-                        <input type="hidden" name="action" value="update_profile">
-                        
-                        <div class="grid md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Firmenname *</label>
-                                <input type="text" name="company_name" value="<?= htmlspecialchars($customer['company_name']) ?>" required
-                                       class="w-full px-4 py-2 border rounded-lg">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Ansprechpartner *</label>
-                                <input type="text" name="contact_name" value="<?= htmlspecialchars($customer['contact_name']) ?>" required
-                                       class="w-full px-4 py-2 border rounded-lg">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Telefon</label>
-                                <input type="text" name="phone" value="<?= htmlspecialchars($customer['phone'] ?? '') ?>"
-                                       class="w-full px-4 py-2 border rounded-lg">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Website</label>
-                                <input type="url" name="website" value="<?= htmlspecialchars($customer['website'] ?? '') ?>"
-                                       class="w-full px-4 py-2 border rounded-lg">
-                            </div>
-                            <div class="md:col-span-2">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">E-Mail-Absendername</label>
-                                <input type="text" name="email_sender_name" value="<?= htmlspecialchars($customer['email_sender_name'] ?? '') ?>"
-                                       class="w-full px-4 py-2 border rounded-lg" placeholder="z.B. Zahnarztpraxis Dr. Müller">
-                                <p class="text-xs text-gray-500 mt-1">Dieser Name erscheint als Absender bei E-Mails an Ihre Empfehler.</p>
-                            </div>
-                        </div>
-                        
-                        <button type="submit" class="mt-4 px-6 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600">
-                            Speichern
-                        </button>
-                    </form>
-                </div>
-                
-                <!-- Impressum -->
-                <div class="bg-white rounded-xl p-6 shadow-sm mb-6">
-                    <h3 class="font-semibold text-gray-900 mb-4">
-                        <i class="fas fa-map-marker-alt mr-2 text-gray-400"></i>Impressumsadresse
-                    </h3>
-                    
-                    <form method="POST">
-                        <input type="hidden" name="action" value="update_address">
-                        
-                        <div class="space-y-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Straße & Hausnummer *</label>
-                                <input type="text" name="address_street" value="<?= htmlspecialchars($customer['address_street']) ?>" required
-                                       class="w-full px-4 py-2 border rounded-lg">
-                            </div>
-                            <div class="grid grid-cols-3 gap-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">PLZ *</label>
-                                    <input type="text" name="address_zip" value="<?= htmlspecialchars($customer['address_zip']) ?>" required
-                                           class="w-full px-4 py-2 border rounded-lg">
-                                </div>
-                                <div class="col-span-2">
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Stadt *</label>
-                                    <input type="text" name="address_city" value="<?= htmlspecialchars($customer['address_city']) ?>" required
-                                           class="w-full px-4 py-2 border rounded-lg">
-                                </div>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">USt-IdNr.</label>
-                                <input type="text" name="tax_id" value="<?= htmlspecialchars($customer['tax_id'] ?? '') ?>"
-                                       class="w-full px-4 py-2 border rounded-lg" placeholder="DE123456789">
-                            </div>
-                        </div>
-                        
-                        <button type="submit" class="mt-4 px-6 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600">
-                            Speichern
-                        </button>
-                    </form>
-                </div>
-                
-                <!-- Features -->
-                <div class="bg-white rounded-xl p-6 shadow-sm mb-6">
-                    <h3 class="font-semibold text-gray-900 mb-4">
-                        <i class="fas fa-sliders-h mr-2 text-gray-400"></i>Funktionen
-                    </h3>
-                    
-                    <form method="POST">
-                        <input type="hidden" name="action" value="update_features">
-                        
-                        <div class="space-y-4">
-                            <label class="flex items-center justify-between p-4 bg-gray-50 rounded-lg cursor-pointer">
-                                <div>
-                                    <div class="font-medium text-gray-900">Live-Counter</div>
-                                    <div class="text-sm text-gray-500">"47 Personen nehmen bereits teil"</div>
-                                </div>
-                                <input type="checkbox" name="live_counter_enabled" <?= $customer['live_counter_enabled'] ? 'checked' : '' ?>
-                                       class="w-5 h-5 text-indigo-500 rounded">
-                            </label>
-                            
-                            <label class="flex items-center justify-between p-4 bg-gray-50 rounded-lg cursor-pointer">
-                                <div>
-                                    <div class="font-medium text-gray-900">Leaderboard</div>
-                                    <div class="text-sm text-gray-500">Top Empfehler öffentlich anzeigen</div>
-                                </div>
-                                <input type="checkbox" name="leaderboard_enabled" <?= $customer['leaderboard_enabled'] ? 'checked' : '' ?>
-                                       class="w-5 h-5 text-indigo-500 rounded">
-                            </label>
-                            
-                            <label class="flex items-center justify-between p-4 rounded-lg cursor-pointer <?= $customer['plan'] === 'starter' ? 'bg-gray-100 opacity-60' : 'bg-gray-50' ?>">
-                                <div>
-                                    <div class="font-medium text-gray-900">
-                                        Wöchentlicher Digest
-                                        <?php if ($customer['plan'] === 'starter'): ?>
-                                        <span class="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full ml-2">Pro</span>
-                                        <?php endif; ?>
-                                    </div>
-                                    <div class="text-sm text-gray-500">Wöchentliche E-Mail mit Statistiken an aktive Empfehler</div>
-                                </div>
-                                <input type="checkbox" name="weekly_digest_enabled" 
-                                       <?= $customer['weekly_digest_enabled'] ? 'checked' : '' ?>
-                                       <?= $customer['plan'] === 'starter' ? 'disabled' : '' ?>
-                                       class="w-5 h-5 text-indigo-500 rounded">
-                            </label>
-                        </div>
-                        
-                        <button type="submit" class="mt-4 px-6 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600">
-                            Speichern
-                        </button>
-                    </form>
-                </div>
-                
-                <!-- Passwort -->
-                <div class="bg-white rounded-xl p-6 shadow-sm mb-6">
-                    <h3 class="font-semibold text-gray-900 mb-4">
-                        <i class="fas fa-lock mr-2 text-gray-400"></i>Passwort ändern
-                    </h3>
-                    
-                    <form method="POST">
-                        <input type="hidden" name="action" value="change_password">
-                        
-                        <div class="space-y-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Aktuelles Passwort</label>
-                                <input type="password" name="current_password" required
-                                       class="w-full px-4 py-2 border rounded-lg">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Neues Passwort</label>
-                                <input type="password" name="new_password" required minlength="8"
-                                       class="w-full px-4 py-2 border rounded-lg">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Passwort bestätigen</label>
-                                <input type="password" name="confirm_password" required
-                                       class="w-full px-4 py-2 border rounded-lg">
-                            </div>
-                        </div>
-                        
-                        <button type="submit" class="mt-4 px-6 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600">
-                            Passwort ändern
-                        </button>
-                    </form>
-                </div>
-                
-                <!-- Subdomain Info -->
-                <div class="bg-gray-100 rounded-xl p-6">
-                    <h3 class="font-semibold text-gray-900 mb-2">Ihre Empfehlungsseite</h3>
-                    <p class="text-gray-600 mb-2">
-                        <i class="fas fa-globe mr-2"></i>
-                        <a href="https://<?= htmlspecialchars($customer['subdomain']) ?>.empfohlen.de" target="_blank" class="text-indigo-500 hover:underline">
-                            <?= htmlspecialchars($customer['subdomain']) ?>.empfohlen.de
-                        </a>
-                    </p>
-                    <p class="text-sm text-gray-500">Die Subdomain kann nach der Einrichtung nicht mehr geändert werden.</p>
-                </div>
-                
-            </div>
-        </main>
+    <!-- Header -->
+    <div class="mb-8">
+        <h1 class="text-2xl font-bold text-slate-800 dark:text-white mb-2">
+            <i class="fas fa-cog text-primary-500 mr-2"></i>Einstellungen
+        </h1>
+        <p class="text-slate-500 dark:text-slate-400">
+            Verwalten Sie Ihre Unternehmensdaten, Logo und Einstellungen.
+        </p>
     </div>
     
-</body>
-</html>
+    <?php if ($message): ?>
+    <div class="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-300 px-4 py-3 rounded-xl mb-6 flex items-center gap-2">
+        <i class="fas fa-check-circle"></i><?= htmlspecialchars($message) ?>
+    </div>
+    <?php endif; ?>
+    
+    <?php if ($error): ?>
+    <div class="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded-xl mb-6 flex items-center gap-2">
+        <i class="fas fa-exclamation-circle"></i><?= htmlspecialchars($error) ?>
+    </div>
+    <?php endif; ?>
+    
+    <!-- Plan Info -->
+    <div class="bg-gradient-to-r from-primary-500 to-purple-600 rounded-2xl p-6 text-white mb-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <h3 class="font-bold text-lg"><?= ucfirst($customer['plan']) ?>-Plan</h3>
+                <p class="text-white/80 text-sm">
+                    <?php if ($customer['subscription_ends_at']): ?>
+                    Aktiv bis: <?= date('d.m.Y', strtotime($customer['subscription_ends_at'])) ?>
+                    <?php endif; ?>
+                </p>
+            </div>
+            <?php if ($customer['plan'] === 'starter'): ?>
+            <a href="/dashboard/upgrade.php" class="px-4 py-2 bg-white text-primary-600 rounded-lg font-medium hover:bg-gray-100 transition-colors">
+                <i class="fas fa-crown mr-1"></i> Upgrade
+            </a>
+            <?php endif; ?>
+        </div>
+    </div>
+    
+    <!-- Logo Upload -->
+    <div id="logo" class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 mb-6">
+        <h3 class="font-semibold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
+            <i class="fas fa-image text-primary-500"></i>
+            Logo
+            <?php if (empty($customer['logo_url'])): ?>
+            <span class="px-2 py-0.5 bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 text-xs font-medium rounded-full">
+                Nicht hochgeladen
+            </span>
+            <?php endif; ?>
+        </h3>
+        
+        <div class="flex items-start gap-6">
+            <!-- Logo Preview -->
+            <div class="flex-shrink-0">
+                <div class="w-24 h-24 bg-slate-100 dark:bg-slate-700 rounded-xl flex items-center justify-center overflow-hidden">
+                    <?php if ($customer['logo_url']): ?>
+                    <img src="<?= htmlspecialchars($customer['logo_url']) ?>" alt="Logo" class="max-w-full max-h-full object-contain">
+                    <?php else: ?>
+                    <i class="fas fa-image text-slate-300 dark:text-slate-500 text-3xl"></i>
+                    <?php endif; ?>
+                </div>
+            </div>
+            
+            <!-- Upload Form -->
+            <div class="flex-1">
+                <form method="POST" enctype="multipart/form-data" class="space-y-4">
+                    <input type="hidden" name="action" value="upload_logo">
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                            Logo hochladen
+                        </label>
+                        <input type="file" name="logo" accept="image/*" 
+                               class="block w-full text-sm text-slate-500 dark:text-slate-400
+                                      file:mr-4 file:py-2 file:px-4
+                                      file:rounded-lg file:border-0
+                                      file:text-sm file:font-medium
+                                      file:bg-primary-50 dark:file:bg-primary-900/30 file:text-primary-600 dark:file:text-primary-400
+                                      hover:file:bg-primary-100 dark:hover:file:bg-primary-900/50
+                                      file:cursor-pointer">
+                        <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">JPG, PNG, GIF oder WebP. Max. 2MB.</p>
+                    </div>
+                    
+                    <div class="flex gap-2">
+                        <button type="submit" class="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors text-sm font-medium">
+                            <i class="fas fa-upload mr-1"></i> Hochladen
+                        </button>
+                        <?php if ($customer['logo_url']): ?>
+                        <button type="submit" name="action" value="delete_logo" 
+                                onclick="return confirm('Logo wirklich löschen?')"
+                                class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm font-medium">
+                            <i class="fas fa-trash mr-1"></i> Entfernen
+                        </button>
+                        <?php endif; ?>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Profil -->
+    <div id="website" class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 mb-6">
+        <h3 class="font-semibold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
+            <i class="fas fa-building text-primary-500"></i>
+            Unternehmensdaten
+        </h3>
+        
+        <form method="POST">
+            <input type="hidden" name="action" value="update_profile">
+            
+            <div class="grid md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Firmenname *</label>
+                    <input type="text" name="company_name" value="<?= htmlspecialchars($customer['company_name']) ?>" required
+                           class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Ansprechpartner *</label>
+                    <input type="text" name="contact_name" value="<?= htmlspecialchars($customer['contact_name']) ?>" required
+                           class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white">
+                </div>
+                <div id="phone">
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                        Telefon
+                        <?php if (empty($customer['phone'])): ?>
+                        <span class="text-xs text-amber-500 ml-1">(optional)</span>
+                        <?php endif; ?>
+                    </label>
+                    <input type="text" name="phone" value="<?= htmlspecialchars($customer['phone'] ?? '') ?>"
+                           class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white"
+                           placeholder="+49 123 456789">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                        Website
+                        <?php if (empty($customer['website'])): ?>
+                        <span class="text-xs text-amber-500 ml-1">(optional)</span>
+                        <?php endif; ?>
+                    </label>
+                    <input type="url" name="website" value="<?= htmlspecialchars($customer['website'] ?? '') ?>"
+                           class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white"
+                           placeholder="https://www.ihre-website.de">
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">E-Mail-Absendername</label>
+                    <input type="text" name="email_sender_name" value="<?= htmlspecialchars($customer['email_sender_name'] ?? '') ?>"
+                           class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white" 
+                           placeholder="z.B. Zahnarztpraxis Dr. Müller">
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Dieser Name erscheint als Absender bei E-Mails an Ihre Empfehler.</p>
+                </div>
+            </div>
+            
+            <button type="submit" class="mt-4 px-6 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors font-medium">
+                <i class="fas fa-save mr-1"></i> Speichern
+            </button>
+        </form>
+    </div>
+    
+    <!-- Impressum -->
+    <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 mb-6">
+        <h3 class="font-semibold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
+            <i class="fas fa-map-marker-alt text-primary-500"></i>
+            Impressumsadresse
+        </h3>
+        
+        <form method="POST">
+            <input type="hidden" name="action" value="update_address">
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Straße & Hausnummer *</label>
+                    <input type="text" name="address_street" value="<?= htmlspecialchars($customer['address_street']) ?>" required
+                           class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white">
+                </div>
+                <div class="grid grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">PLZ *</label>
+                        <input type="text" name="address_zip" value="<?= htmlspecialchars($customer['address_zip']) ?>" required
+                               class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white">
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Stadt *</label>
+                        <input type="text" name="address_city" value="<?= htmlspecialchars($customer['address_city']) ?>" required
+                               class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">USt-IdNr. (optional)</label>
+                    <input type="text" name="tax_id" value="<?= htmlspecialchars($customer['tax_id'] ?? '') ?>"
+                           class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white" 
+                           placeholder="DE123456789">
+                </div>
+            </div>
+            
+            <button type="submit" class="mt-4 px-6 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors font-medium">
+                <i class="fas fa-save mr-1"></i> Speichern
+            </button>
+        </form>
+    </div>
+    
+    <!-- Features -->
+    <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 mb-6">
+        <h3 class="font-semibold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
+            <i class="fas fa-sliders-h text-primary-500"></i>
+            Funktionen
+        </h3>
+        
+        <form method="POST">
+            <input type="hidden" name="action" value="update_features">
+            
+            <div class="space-y-4">
+                <label class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-700/50 rounded-xl cursor-pointer">
+                    <div>
+                        <div class="font-medium text-slate-800 dark:text-white">Live-Counter</div>
+                        <div class="text-sm text-slate-500 dark:text-slate-400">"47 Personen nehmen bereits teil"</div>
+                    </div>
+                    <input type="checkbox" name="live_counter_enabled" <?= $customer['live_counter_enabled'] ? 'checked' : '' ?>
+                           class="w-5 h-5 text-primary-500 rounded border-slate-300 dark:border-slate-600">
+                </label>
+                
+                <label class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-700/50 rounded-xl cursor-pointer">
+                    <div>
+                        <div class="font-medium text-slate-800 dark:text-white">Leaderboard</div>
+                        <div class="text-sm text-slate-500 dark:text-slate-400">Top Empfehler öffentlich anzeigen</div>
+                    </div>
+                    <input type="checkbox" name="leaderboard_enabled" <?= $customer['leaderboard_enabled'] ? 'checked' : '' ?>
+                           class="w-5 h-5 text-primary-500 rounded border-slate-300 dark:border-slate-600">
+                </label>
+                
+                <label class="flex items-center justify-between p-4 rounded-xl cursor-pointer <?= $customer['plan'] === 'starter' ? 'bg-slate-100 dark:bg-slate-700 opacity-60' : 'bg-slate-50 dark:bg-slate-700/50' ?>">
+                    <div>
+                        <div class="font-medium text-slate-800 dark:text-white flex items-center gap-2">
+                            Wöchentlicher Digest
+                            <?php if ($customer['plan'] === 'starter'): ?>
+                            <span class="px-2 py-0.5 bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 text-xs rounded-full">Pro</span>
+                            <?php endif; ?>
+                        </div>
+                        <div class="text-sm text-slate-500 dark:text-slate-400">Wöchentliche E-Mail mit Statistiken an aktive Empfehler</div>
+                    </div>
+                    <input type="checkbox" name="weekly_digest_enabled" 
+                           <?= $customer['weekly_digest_enabled'] ? 'checked' : '' ?>
+                           <?= $customer['plan'] === 'starter' ? 'disabled' : '' ?>
+                           class="w-5 h-5 text-primary-500 rounded border-slate-300 dark:border-slate-600">
+                </label>
+            </div>
+            
+            <button type="submit" class="mt-4 px-6 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors font-medium">
+                <i class="fas fa-save mr-1"></i> Speichern
+            </button>
+        </form>
+    </div>
+    
+    <!-- Passwort -->
+    <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 mb-6">
+        <h3 class="font-semibold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
+            <i class="fas fa-lock text-primary-500"></i>
+            Passwort ändern
+        </h3>
+        
+        <form method="POST">
+            <input type="hidden" name="action" value="change_password">
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Aktuelles Passwort</label>
+                    <input type="password" name="current_password" required
+                           class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Neues Passwort</label>
+                    <input type="password" name="new_password" required minlength="8"
+                           class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Passwort bestätigen</label>
+                    <input type="password" name="confirm_password" required
+                           class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white">
+                </div>
+            </div>
+            
+            <button type="submit" class="mt-4 px-6 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors font-medium">
+                <i class="fas fa-key mr-1"></i> Passwort ändern
+            </button>
+        </form>
+    </div>
+    
+    <!-- Setup Wizard wieder anzeigen -->
+    <?php if ($setupWizard->isHidden()): ?>
+    <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 mb-6">
+        <h3 class="font-semibold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
+            <i class="fas fa-rocket text-primary-500"></i>
+            Einrichtungs-Checkliste
+        </h3>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mb-4">
+            Sie haben die Einrichtungs-Checkliste ausgeblendet. Möchten Sie sie wieder anzeigen?
+        </p>
+        <form method="POST">
+            <input type="hidden" name="action" value="show_wizard">
+            <button type="submit" class="px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors text-sm font-medium">
+                <i class="fas fa-eye mr-1"></i> Checkliste wieder anzeigen
+            </button>
+        </form>
+    </div>
+    <?php endif; ?>
+    
+    <!-- Subdomain Info -->
+    <div class="bg-slate-100 dark:bg-slate-700/50 rounded-2xl p-6">
+        <h3 class="font-semibold text-slate-800 dark:text-white mb-2 flex items-center gap-2">
+            <i class="fas fa-globe text-primary-500"></i>
+            Ihre Empfehlungsseite
+        </h3>
+        <p class="text-slate-600 dark:text-slate-300 mb-2">
+            <a href="https://<?= htmlspecialchars($customer['subdomain']) ?>.empfehlungen.cloud" target="_blank" class="text-primary-500 hover:underline">
+                <?= htmlspecialchars($customer['subdomain']) ?>.empfehlungen.cloud
+                <i class="fas fa-external-link-alt text-xs ml-1"></i>
+            </a>
+        </p>
+        <p class="text-sm text-slate-500 dark:text-slate-400">Die Subdomain kann nach der Einrichtung nicht mehr geändert werden.</p>
+    </div>
+    
+</div>
+
+<?php include __DIR__ . '/../../includes/dashboard-footer.php'; ?>
