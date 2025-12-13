@@ -11,6 +11,10 @@ require_once __DIR__ . '/../../includes/Auth.php';
 require_once __DIR__ . '/../../includes/SetupWizard.php';
 require_once __DIR__ . '/../../includes/helpers.php';
 
+use Leadbusiness\Auth;
+use Leadbusiness\Database;
+use Leadbusiness\SetupWizard;
+
 $auth = new Auth();
 if (!$auth->isLoggedIn() || $auth->getUserType() !== 'customer') {
     redirect('/dashboard/login.php');
@@ -20,7 +24,7 @@ $customer = $auth->getCurrentCustomer();
 $customerId = $customer['id'];
 $db = Database::getInstance();
 
-$setupWizard = new \Leadbusiness\SetupWizard($customer);
+$setupWizard = new SetupWizard($customer);
 
 $message = '';
 $error = '';
@@ -69,7 +73,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $filename = $customer['subdomain'] . '-logo-' . time() . '.' . $extension;
                 
                 if (move_uploaded_file($_FILES['logo']['tmp_name'], $uploadDir . $filename)) {
-                    // Altes Logo löschen
                     if ($customer['logo_url'] && file_exists(__DIR__ . '/..' . $customer['logo_url'])) {
                         @unlink(__DIR__ . '/..' . $customer['logo_url']);
                     }
@@ -177,7 +180,6 @@ include __DIR__ . '/../../includes/dashboard-header.php';
 
 <div class="max-w-3xl mx-auto">
     
-    <!-- Header -->
     <div class="mb-8">
         <h1 class="text-2xl font-bold text-slate-800 dark:text-white mb-2">
             <i class="fas fa-cog text-primary-500 mr-2"></i>Einstellungen
@@ -189,17 +191,16 @@ include __DIR__ . '/../../includes/dashboard-header.php';
     
     <?php if ($message): ?>
     <div class="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-300 px-4 py-3 rounded-xl mb-6 flex items-center gap-2">
-        <i class="fas fa-check-circle"></i><?= htmlspecialchars($message) ?>
+        <i class="fas fa-check-circle"></i><?= e($message) ?>
     </div>
     <?php endif; ?>
     
     <?php if ($error): ?>
     <div class="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded-xl mb-6 flex items-center gap-2">
-        <i class="fas fa-exclamation-circle"></i><?= htmlspecialchars($error) ?>
+        <i class="fas fa-exclamation-circle"></i><?= e($error) ?>
     </div>
     <?php endif; ?>
     
-    <!-- Plan Info -->
     <div class="bg-gradient-to-r from-primary-500 to-purple-600 rounded-2xl p-6 text-white mb-6">
         <div class="flex items-center justify-between">
             <div>
@@ -218,7 +219,6 @@ include __DIR__ . '/../../includes/dashboard-header.php';
         </div>
     </div>
     
-    <!-- Logo Upload -->
     <div id="logo" class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 mb-6">
         <h3 class="font-semibold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
             <i class="fas fa-image text-primary-500"></i>
@@ -231,34 +231,24 @@ include __DIR__ . '/../../includes/dashboard-header.php';
         </h3>
         
         <div class="flex items-start gap-6">
-            <!-- Logo Preview -->
             <div class="flex-shrink-0">
                 <div class="w-24 h-24 bg-slate-100 dark:bg-slate-700 rounded-xl flex items-center justify-center overflow-hidden">
                     <?php if ($customer['logo_url']): ?>
-                    <img src="<?= htmlspecialchars($customer['logo_url']) ?>" alt="Logo" class="max-w-full max-h-full object-contain">
+                    <img src="<?= e($customer['logo_url']) ?>" alt="Logo" class="max-w-full max-h-full object-contain">
                     <?php else: ?>
                     <i class="fas fa-image text-slate-300 dark:text-slate-500 text-3xl"></i>
                     <?php endif; ?>
                 </div>
             </div>
             
-            <!-- Upload Form -->
             <div class="flex-1">
                 <form method="POST" enctype="multipart/form-data" class="space-y-4">
                     <input type="hidden" name="action" value="upload_logo">
                     
                     <div>
-                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                            Logo hochladen
-                        </label>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Logo hochladen</label>
                         <input type="file" name="logo" accept="image/*" 
-                               class="block w-full text-sm text-slate-500 dark:text-slate-400
-                                      file:mr-4 file:py-2 file:px-4
-                                      file:rounded-lg file:border-0
-                                      file:text-sm file:font-medium
-                                      file:bg-primary-50 dark:file:bg-primary-900/30 file:text-primary-600 dark:file:text-primary-400
-                                      hover:file:bg-primary-100 dark:hover:file:bg-primary-900/50
-                                      file:cursor-pointer">
+                               class="block w-full text-sm text-slate-500 dark:text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-primary-50 dark:file:bg-primary-900/30 file:text-primary-600 dark:file:text-primary-400 hover:file:bg-primary-100 dark:hover:file:bg-primary-900/50 file:cursor-pointer">
                         <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">JPG, PNG, GIF oder WebP. Max. 2MB.</p>
                     </div>
                     
@@ -267,8 +257,7 @@ include __DIR__ . '/../../includes/dashboard-header.php';
                             <i class="fas fa-upload mr-1"></i> Hochladen
                         </button>
                         <?php if ($customer['logo_url']): ?>
-                        <button type="submit" name="action" value="delete_logo" 
-                                onclick="return confirm('Logo wirklich löschen?')"
+                        <button type="submit" name="action" value="delete_logo" onclick="return confirm('Logo wirklich löschen?')"
                                 class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm font-medium">
                             <i class="fas fa-trash mr-1"></i> Entfernen
                         </button>
@@ -279,11 +268,9 @@ include __DIR__ . '/../../includes/dashboard-header.php';
         </div>
     </div>
     
-    <!-- Profil -->
     <div id="website" class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 mb-6">
         <h3 class="font-semibold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
-            <i class="fas fa-building text-primary-500"></i>
-            Unternehmensdaten
+            <i class="fas fa-building text-primary-500"></i>Unternehmensdaten
         </h3>
         
         <form method="POST">
@@ -292,12 +279,12 @@ include __DIR__ . '/../../includes/dashboard-header.php';
             <div class="grid md:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Firmenname *</label>
-                    <input type="text" name="company_name" value="<?= htmlspecialchars($customer['company_name']) ?>" required
+                    <input type="text" name="company_name" value="<?= e($customer['company_name']) ?>" required
                            class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Ansprechpartner *</label>
-                    <input type="text" name="contact_name" value="<?= htmlspecialchars($customer['contact_name']) ?>" required
+                    <input type="text" name="contact_name" value="<?= e($customer['contact_name']) ?>" required
                            class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white">
                 </div>
                 <div id="phone">
@@ -307,7 +294,7 @@ include __DIR__ . '/../../includes/dashboard-header.php';
                         <span class="text-xs text-amber-500 ml-1">(optional)</span>
                         <?php endif; ?>
                     </label>
-                    <input type="text" name="phone" value="<?= htmlspecialchars($customer['phone'] ?? '') ?>"
+                    <input type="text" name="phone" value="<?= e($customer['phone'] ?? '') ?>"
                            class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white"
                            placeholder="+49 123 456789">
                 </div>
@@ -318,13 +305,13 @@ include __DIR__ . '/../../includes/dashboard-header.php';
                         <span class="text-xs text-amber-500 ml-1">(optional)</span>
                         <?php endif; ?>
                     </label>
-                    <input type="url" name="website" value="<?= htmlspecialchars($customer['website'] ?? '') ?>"
+                    <input type="url" name="website" value="<?= e($customer['website'] ?? '') ?>"
                            class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white"
                            placeholder="https://www.ihre-website.de">
                 </div>
                 <div class="md:col-span-2">
                     <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">E-Mail-Absendername</label>
-                    <input type="text" name="email_sender_name" value="<?= htmlspecialchars($customer['email_sender_name'] ?? '') ?>"
+                    <input type="text" name="email_sender_name" value="<?= e($customer['email_sender_name'] ?? '') ?>"
                            class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white" 
                            placeholder="z.B. Zahnarztpraxis Dr. Müller">
                     <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Dieser Name erscheint als Absender bei E-Mails an Ihre Empfehler.</p>
@@ -337,11 +324,9 @@ include __DIR__ . '/../../includes/dashboard-header.php';
         </form>
     </div>
     
-    <!-- Impressum -->
     <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 mb-6">
         <h3 class="font-semibold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
-            <i class="fas fa-map-marker-alt text-primary-500"></i>
-            Impressumsadresse
+            <i class="fas fa-map-marker-alt text-primary-500"></i>Impressumsadresse
         </h3>
         
         <form method="POST">
@@ -350,24 +335,24 @@ include __DIR__ . '/../../includes/dashboard-header.php';
             <div class="space-y-4">
                 <div>
                     <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Straße & Hausnummer *</label>
-                    <input type="text" name="address_street" value="<?= htmlspecialchars($customer['address_street']) ?>" required
+                    <input type="text" name="address_street" value="<?= e($customer['address_street']) ?>" required
                            class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white">
                 </div>
                 <div class="grid grid-cols-3 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">PLZ *</label>
-                        <input type="text" name="address_zip" value="<?= htmlspecialchars($customer['address_zip']) ?>" required
+                        <input type="text" name="address_zip" value="<?= e($customer['address_zip']) ?>" required
                                class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white">
                     </div>
                     <div class="col-span-2">
                         <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Stadt *</label>
-                        <input type="text" name="address_city" value="<?= htmlspecialchars($customer['address_city']) ?>" required
+                        <input type="text" name="address_city" value="<?= e($customer['address_city']) ?>" required
                                class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white">
                     </div>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">USt-IdNr. (optional)</label>
-                    <input type="text" name="tax_id" value="<?= htmlspecialchars($customer['tax_id'] ?? '') ?>"
+                    <input type="text" name="tax_id" value="<?= e($customer['tax_id'] ?? '') ?>"
                            class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white" 
                            placeholder="DE123456789">
                 </div>
@@ -379,11 +364,9 @@ include __DIR__ . '/../../includes/dashboard-header.php';
         </form>
     </div>
     
-    <!-- Features -->
     <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 mb-6">
         <h3 class="font-semibold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
-            <i class="fas fa-sliders-h text-primary-500"></i>
-            Funktionen
+            <i class="fas fa-sliders-h text-primary-500"></i>Funktionen
         </h3>
         
         <form method="POST">
@@ -431,11 +414,9 @@ include __DIR__ . '/../../includes/dashboard-header.php';
         </form>
     </div>
     
-    <!-- Passwort -->
     <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 mb-6">
         <h3 class="font-semibold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
-            <i class="fas fa-lock text-primary-500"></i>
-            Passwort ändern
+            <i class="fas fa-lock text-primary-500"></i>Passwort ändern
         </h3>
         
         <form method="POST">
@@ -465,12 +446,10 @@ include __DIR__ . '/../../includes/dashboard-header.php';
         </form>
     </div>
     
-    <!-- Setup Wizard wieder anzeigen -->
     <?php if ($setupWizard->isHidden()): ?>
     <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 mb-6">
         <h3 class="font-semibold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
-            <i class="fas fa-rocket text-primary-500"></i>
-            Einrichtungs-Checkliste
+            <i class="fas fa-rocket text-primary-500"></i>Einrichtungs-Checkliste
         </h3>
         <p class="text-sm text-slate-500 dark:text-slate-400 mb-4">
             Sie haben die Einrichtungs-Checkliste ausgeblendet. Möchten Sie sie wieder anzeigen?
@@ -484,15 +463,13 @@ include __DIR__ . '/../../includes/dashboard-header.php';
     </div>
     <?php endif; ?>
     
-    <!-- Subdomain Info -->
     <div class="bg-slate-100 dark:bg-slate-700/50 rounded-2xl p-6">
         <h3 class="font-semibold text-slate-800 dark:text-white mb-2 flex items-center gap-2">
-            <i class="fas fa-globe text-primary-500"></i>
-            Ihre Empfehlungsseite
+            <i class="fas fa-globe text-primary-500"></i>Ihre Empfehlungsseite
         </h3>
         <p class="text-slate-600 dark:text-slate-300 mb-2">
-            <a href="https://<?= htmlspecialchars($customer['subdomain']) ?>.empfehlungen.cloud" target="_blank" class="text-primary-500 hover:underline">
-                <?= htmlspecialchars($customer['subdomain']) ?>.empfehlungen.cloud
+            <a href="https://<?= e($customer['subdomain']) ?>.empfehlungen.cloud" target="_blank" class="text-primary-500 hover:underline">
+                <?= e($customer['subdomain']) ?>.empfehlungen.cloud
                 <i class="fas fa-external-link-alt text-xs ml-1"></i>
             </a>
         </p>
