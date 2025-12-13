@@ -80,6 +80,10 @@ try {
         );
     }
     
+    // Auto-Login Token generieren (sicher, einmalig, zeitlich begrenzt)
+    $autoLoginToken = bin2hex(random_bytes(32));
+    $autoLoginExpiry = date('Y-m-d H:i:s', strtotime('+10 minutes'));
+    
     // Kundendaten mit Defaults für optionale Felder
     $customerData = [
         'email' => $data['email'],
@@ -105,6 +109,8 @@ try {
         'email_sender_name' => $data['company_name'],
         'onboarding_completed_at' => date('Y-m-d H:i:s'),
         'onboarding_token' => null,
+        'auto_login_token' => $autoLoginToken,
+        'auto_login_expires' => $autoLoginExpiry,
         'updated_at' => date('Y-m-d H:i:s')
     ];
     
@@ -158,22 +164,22 @@ try {
             'contact_name' => $data['contact_name'],
             'company_name' => $data['company_name'],
             'subdomain' => $data['subdomain'],
-            'dashboard_url' => 'https://empfehlungen.cloud/dashboard'
+            'dashboard_url' => 'https://' . $data['subdomain'] . '.empfehlungen.cloud/dashboard'
         ]),
         'priority' => 10,
         'status' => 'pending',
         'created_at' => date('Y-m-d H:i:s')
     ]);
     
-    // Session setzen (Auto-Login)
-    $_SESSION['customer_id'] = $customerId;
-    $_SESSION['customer_email'] = $data['email'];
-    $_SESSION['user_type'] = 'customer';
+    // WICHTIG: Redirect zur Subdomain mit Auto-Login Token
+    // Die Session funktioniert nicht subdomain-übergreifend, deshalb Token-basierter Auto-Login
+    $subdomain = strtolower($data['subdomain']);
+    $redirectUrl = 'https://' . $subdomain . '.empfehlungen.cloud/dashboard/login.php?auto=' . $autoLoginToken . '&welcome=1';
     
     jsonSuccess([
         'customer_id' => $customerId,
-        'subdomain' => $data['subdomain'],
-        'redirect' => '/dashboard?welcome=1'
+        'subdomain' => $subdomain,
+        'redirect' => $redirectUrl
     ], 'Einrichtung erfolgreich abgeschlossen!');
     
 } catch (Exception $e) {
@@ -311,7 +317,7 @@ function activateEmailSequences($db, $customerId) {
  * Generiert HTML für Willkommens-E-Mail
  */
 function generateWelcomeEmailHtml($contactName, $companyName, $subdomain) {
-    $dashboardUrl = 'https://empfehlungen.cloud/dashboard';
+    $dashboardUrl = 'https://' . $subdomain . '.empfehlungen.cloud/dashboard';
     $referralUrl = "https://{$subdomain}.empfehlungen.cloud";
     
     return <<<HTML
