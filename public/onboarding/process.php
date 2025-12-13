@@ -141,12 +141,18 @@ try {
     // E-Mail-Sequenzen aktivieren
     activateEmailSequences($db, $customerId);
     
-    // Willkommens-E-Mail in Queue
+    // Willkommens-E-Mail in Queue (mit korrekten Spaltennamen)
+    $welcomeHtml = generateWelcomeEmailHtml($data['contact_name'], $data['company_name'], $data['subdomain']);
+    
     $db->insert('email_queue', [
         'customer_id' => $customerId,
-        'recipient_email' => $data['email'],
-        'recipient_name' => $data['contact_name'],
+        'to_email' => $data['email'],
+        'to_name' => $data['contact_name'],
+        'from_email' => 'noreply@empfehlungen.cloud',
+        'from_name' => 'Leadbusiness',
         'subject' => 'Willkommen bei Leadbusiness – Ihr Empfehlungsprogramm ist bereit!',
+        'body_html' => $welcomeHtml,
+        'body_text' => strip_tags($welcomeHtml),
         'template' => 'customer_welcome',
         'variables' => json_encode([
             'contact_name' => $data['contact_name'],
@@ -299,4 +305,81 @@ function getDefaultRewardTitle($type) {
 
 function activateEmailSequences($db, $customerId) {
     // Standard-Sequenzen nutzen
+}
+
+/**
+ * Generiert HTML für Willkommens-E-Mail
+ */
+function generateWelcomeEmailHtml($contactName, $companyName, $subdomain) {
+    $dashboardUrl = 'https://empfehlungen.cloud/dashboard';
+    $referralUrl = "https://{$subdomain}.empfehlungen.cloud";
+    
+    return <<<HTML
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4; padding: 20px 0;">
+        <tr>
+            <td align="center">
+                <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <!-- Header -->
+                    <tr>
+                        <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center;">
+                            <h1 style="color: #ffffff; margin: 0; font-size: 24px;">🎉 Willkommen bei Leadbusiness!</h1>
+                        </td>
+                    </tr>
+                    
+                    <!-- Content -->
+                    <tr>
+                        <td style="padding: 40px 30px;">
+                            <p style="font-size: 16px; color: #333; margin: 0 0 20px;">Hallo {$contactName},</p>
+                            
+                            <p style="font-size: 16px; color: #333; margin: 0 0 20px;">
+                                herzlichen Glückwunsch! Ihr Empfehlungsprogramm für <strong>{$companyName}</strong> ist jetzt eingerichtet und bereit.
+                            </p>
+                            
+                            <div style="background-color: #f8f9fa; border-radius: 8px; padding: 20px; margin: 20px 0;">
+                                <p style="font-size: 14px; color: #666; margin: 0 0 10px;"><strong>Ihre Empfehlungsseite:</strong></p>
+                                <a href="{$referralUrl}" style="color: #667eea; font-size: 16px; word-break: break-all;">{$referralUrl}</a>
+                            </div>
+                            
+                            <p style="font-size: 16px; color: #333; margin: 20px 0;">
+                                <strong>Nächste Schritte:</strong>
+                            </p>
+                            <ol style="font-size: 15px; color: #333; padding-left: 20px;">
+                                <li style="margin-bottom: 10px;">Teilen Sie den Link mit Ihren bestehenden Kunden</li>
+                                <li style="margin-bottom: 10px;">Beobachten Sie im Dashboard, wie neue Empfehler hinzukommen</li>
+                                <li style="margin-bottom: 10px;">Belohnungen werden automatisch versendet</li>
+                            </ol>
+                            
+                            <div style="text-align: center; margin: 30px 0;">
+                                <a href="{$dashboardUrl}" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #ffffff; text-decoration: none; padding: 14px 30px; border-radius: 6px; font-weight: bold; font-size: 16px;">Zum Dashboard</a>
+                            </div>
+                            
+                            <p style="font-size: 14px; color: #666; margin: 30px 0 0; border-top: 1px solid #eee; padding-top: 20px;">
+                                Bei Fragen stehen wir Ihnen gerne zur Verfügung.<br>
+                                Ihr Leadbusiness-Team
+                            </p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                        <td style="background-color: #f8f9fa; padding: 20px; text-align: center;">
+                            <p style="font-size: 12px; color: #999; margin: 0;">
+                                © 2025 Leadbusiness | <a href="https://empfehlungen.cloud/datenschutz" style="color: #667eea;">Datenschutz</a> | <a href="https://empfehlungen.cloud/impressum" style="color: #667eea;">Impressum</a>
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
+HTML;
 }
