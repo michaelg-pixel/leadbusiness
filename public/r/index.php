@@ -3,7 +3,7 @@
  * Leadbusiness - Empfehlungsseite (Referral Landing Page)
  * 
  * Diese Seite wird unter den Kunden-Subdomains angezeigt:
- * z.B. zahnarzt-mueller.empfohlen.de
+ * z.B. zahnarzt-mueller.empfehlungen.cloud
  * 
  * URL-Struktur:
  * - / oder /r/ = Hauptseite (Anmeldung als Empfehler)
@@ -22,14 +22,16 @@ require_once __DIR__ . '/../../includes/services/BackgroundService.php';
 require_once __DIR__ . '/../../includes/services/LeaderboardService.php';
 require_once __DIR__ . '/../../includes/services/LeadEventHandler.php';
 
+use Leadbusiness\Database;
+
 $db = Database::getInstance();
 
 // Subdomain aus Host ermitteln
 $host = $_SERVER['HTTP_HOST'] ?? '';
 $subdomain = '';
 
-// Subdomain extrahieren (zahnarzt-mueller aus zahnarzt-mueller.empfohlen.de)
-if (preg_match('/^([a-z0-9-]+)\.empfohlen\.de$/i', $host, $matches)) {
+// Subdomain extrahieren - unterstützt empfehlungen.cloud UND empfohlen.de
+if (preg_match('/^([a-z0-9-]+)\.(empfehlungen\.cloud|empfohlen\.de)$/i', $host, $matches)) {
     $subdomain = strtolower($matches[1]);
 }
 
@@ -38,9 +40,10 @@ if (empty($subdomain) && isset($_GET['subdomain'])) {
     $subdomain = strtolower($_GET['subdomain']);
 }
 
-if (empty($subdomain)) {
-    // Keine Subdomain - zur Hauptseite weiterleiten
-    header('Location: https://empfohlen.de');
+// www oder leere Subdomain ausschließen
+if (empty($subdomain) || $subdomain === 'www') {
+    // Keine gültige Subdomain - zur Hauptseite weiterleiten
+    header('Location: https://empfehlungen.cloud');
     exit;
 }
 
@@ -229,7 +232,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isAjax()) {
         ]);
         
         // Bestaetigungs-E-Mail in Queue
-        $confirmUrl = "https://{$subdomain}.empfohlen.de/confirm/{$confirmationToken}";
+        $confirmUrl = "https://{$subdomain}.empfehlungen.cloud/confirm/{$confirmationToken}";
         
         $db->insert('email_queue', [
             'customer_id' => $customer['id'],
@@ -308,7 +311,7 @@ $pageTitle = "Empfehlen Sie {$customer['company_name']} und erhalten Sie tolle B
     <meta property="og:title" content="<?= htmlspecialchars($pageTitle) ?>">
     <meta property="og:description" content="Empfehlen Sie <?= htmlspecialchars($customer['company_name']) ?> und erhalten Sie tolle Belohnungen!">
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://<?= htmlspecialchars($subdomain) ?>.empfohlen.de">
+    <meta property="og:url" content="https://<?= htmlspecialchars($subdomain) ?>.empfehlungen.cloud">
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
