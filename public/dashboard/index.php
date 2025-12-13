@@ -1,13 +1,14 @@
 <?php
 /**
  * Leadbusiness - Kunden-Dashboard
- * Mit Dark/Light Mode
+ * Mit Dark/Light Mode und Setup-Wizard
  */
 
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../config/settings.php';
 require_once __DIR__ . '/../../includes/Database.php';
 require_once __DIR__ . '/../../includes/Auth.php';
+require_once __DIR__ . '/../../includes/SetupWizard.php';
 require_once __DIR__ . '/../../includes/helpers.php';
 
 // Auth prüfen
@@ -19,6 +20,9 @@ if (!$auth->isLoggedIn() || $auth->getUserType() !== 'customer') {
 $customer = $auth->getCurrentCustomer();
 $customerId = $customer['id'];
 $db = Database::getInstance();
+
+// Setup-Wizard initialisieren
+$setupWizard = new \Leadbusiness\SetupWizard($customer);
 
 // Statistiken laden
 $stats = $db->fetch(
@@ -72,19 +76,18 @@ include __DIR__ . '/../../includes/dashboard-header.php';
 ?>
 
 <?php if ($isNewCustomer): ?>
-<!-- Welcome Banner -->
-<div class="bg-gradient-to-r from-primary-500 to-primary-700 rounded-2xl p-6 text-white mb-6">
+<!-- Welcome Banner (nur beim ersten Mal) -->
+<div class="bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl p-6 text-white mb-6">
     <div class="flex items-start gap-4">
         <div class="text-4xl">🎉</div>
         <div>
             <h2 class="text-xl font-bold mb-2">Herzlichen Glückwunsch!</h2>
             <p class="text-white/90 mb-4">
-                Ihr Empfehlungsprogramm ist eingerichtet und bereit. 
-                Teilen Sie jetzt Ihren Link mit Ihren Kunden:
+                Ihr Account wurde erfolgreich erstellt. Folgen Sie der Checkliste unten, um Ihr Empfehlungsprogramm zu vervollständigen.
             </p>
             <div class="flex items-center gap-2 bg-white/20 rounded-lg px-4 py-2 inline-flex">
-                <code class="text-sm"><?= e($customer['subdomain']) ?>.empfohlen.de</code>
-                <button onclick="copyToClipboard('https://<?= e($customer['subdomain']) ?>.empfohlen.de', this)" class="text-white/80 hover:text-white">
+                <code class="text-sm"><?= e($customer['subdomain']) ?>.empfehlungen.cloud</code>
+                <button onclick="copyToClipboard('https://<?= e($customer['subdomain']) ?>.empfehlungen.cloud', this)" class="text-white/80 hover:text-white">
                     <i class="fas fa-copy"></i>
                 </button>
             </div>
@@ -92,6 +95,13 @@ include __DIR__ . '/../../includes/dashboard-header.php';
     </div>
 </div>
 <?php endif; ?>
+
+<?php 
+// Setup-Wizard anzeigen (wenn nicht versteckt oder nicht vollständig)
+if (!$setupWizard->isHidden() || !$setupWizard->isSetupComplete()):
+    include __DIR__ . '/../../includes/components/setup-wizard-widget.php';
+endif;
+?>
 
 <!-- Stats Grid -->
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -147,6 +157,23 @@ include __DIR__ . '/../../includes/dashboard-header.php';
     </div>
 </div>
 
+<!-- Quick Actions (wenn Setup nicht vollständig) -->
+<?php if (!$setupWizard->isSetupComplete()): ?>
+<div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-2xl p-4 mb-8">
+    <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center text-amber-600 dark:text-amber-400">
+            <i class="fas fa-lightbulb"></i>
+        </div>
+        <div class="flex-1">
+            <p class="text-amber-800 dark:text-amber-200 text-sm">
+                <strong>Tipp:</strong> Vervollständigen Sie die Einrichtung, um Ihre Conversion-Rate zu verbessern. 
+                Ein professionelles Logo und Design erhöhen das Vertrauen Ihrer Empfehler.
+            </p>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
+
 <!-- Charts & Activity -->
 <div class="grid lg:grid-cols-3 gap-6 mb-8">
     
@@ -167,7 +194,15 @@ include __DIR__ . '/../../includes/dashboard-header.php';
         </h3>
         
         <?php if (empty($topLeads)): ?>
-        <p class="text-slate-500 dark:text-slate-400 text-sm">Noch keine aktiven Empfehler.</p>
+        <div class="text-center py-8">
+            <div class="w-16 h-16 bg-slate-100 dark:bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-users text-slate-400 dark:text-slate-500 text-2xl"></i>
+            </div>
+            <p class="text-slate-500 dark:text-slate-400 text-sm mb-4">Noch keine aktiven Empfehler.</p>
+            <a href="/dashboard/share.php" class="text-primary-600 dark:text-primary-400 text-sm font-medium hover:underline">
+                Jetzt Empfehlungslink teilen →
+            </a>
+        </div>
         <?php else: ?>
         <div class="space-y-4">
             <?php foreach ($topLeads as $index => $lead): ?>
@@ -200,7 +235,19 @@ include __DIR__ . '/../../includes/dashboard-header.php';
     </h3>
     
     <?php if (empty($recentActivity)): ?>
-    <p class="text-slate-500 dark:text-slate-400">Noch keine Aktivitäten. Teilen Sie Ihren Empfehlungslink!</p>
+    <div class="text-center py-12">
+        <div class="w-20 h-20 bg-slate-100 dark:bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-4">
+            <i class="fas fa-share-alt text-slate-400 dark:text-slate-500 text-3xl"></i>
+        </div>
+        <p class="text-slate-600 dark:text-slate-300 font-medium mb-2">Noch keine Aktivitäten</p>
+        <p class="text-slate-500 dark:text-slate-400 text-sm mb-6">
+            Teilen Sie Ihren Empfehlungslink mit Ihren Kunden, um loszulegen.
+        </p>
+        <a href="/dashboard/share.php" class="inline-flex items-center gap-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg text-sm font-medium transition-colors">
+            <i class="fas fa-share-alt"></i>
+            Empfehlungslink teilen
+        </a>
+    </div>
     <?php else: ?>
     <div class="space-y-4">
         <?php foreach ($recentActivity as $activity): ?>
@@ -246,8 +293,8 @@ include __DIR__ . '/../../includes/dashboard-header.php';
             datasets: [{
                 label: 'Neue Empfehler',
                 data: data,
-                borderColor: '#0ea5e9',
-                backgroundColor: 'rgba(14, 165, 233, 0.1)',
+                borderColor: '#667eea',
+                backgroundColor: 'rgba(102, 126, 234, 0.1)',
                 tension: 0.4,
                 fill: true,
                 pointRadius: 3,
@@ -271,6 +318,17 @@ include __DIR__ . '/../../includes/dashboard-header.php';
             }
         }
     });
+    
+    // Copy to clipboard function
+    function copyToClipboard(text, btn) {
+        navigator.clipboard.writeText(text).then(() => {
+            const icon = btn.querySelector('i');
+            icon.className = 'fas fa-check';
+            setTimeout(() => {
+                icon.className = 'fas fa-copy';
+            }, 2000);
+        });
+    }
 </script>
 
 <?php include __DIR__ . '/../../includes/dashboard-footer.php'; ?>
