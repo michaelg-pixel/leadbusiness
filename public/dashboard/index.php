@@ -374,22 +374,180 @@ endif;
     </div>
 </div>
 
+<!-- ============================================= -->
+<!-- PROFESSIONAL FEATURES SECTION                 -->
+<!-- Nur für Professional & Enterprise Kunden      -->
+<!-- ============================================= -->
+<?php if ($customer['plan'] !== 'starter'): ?>
+<div class="professional-features-section mb-8">
+    <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
+            <i class="fas fa-star text-blue-500"></i>
+            Professional Features
+        </h2>
+        <span class="text-xs text-slate-500 dark:text-slate-400">
+            Exklusiv für <?= ucfirst($customer['plan']) ?>
+        </span>
+    </div>
+    
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+        
+        <!-- Broadcast E-Mails -->
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+            <?php 
+            $broadcastModulePath = __DIR__ . "/../../includes/components/dashboard-modules/broadcast.php";
+            if (file_exists($broadcastModulePath)) {
+                include $broadcastModulePath;
+            } else {
+                // Fallback wenn Modul noch nicht existiert
+                ?>
+                <div class="p-6">
+                    <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-2">
+                        <i class="fas fa-paper-plane text-primary-500 mr-2"></i>
+                        Broadcast E-Mails
+                    </h3>
+                    <p class="text-sm text-slate-600 dark:text-slate-400 mb-4">
+                        Senden Sie E-Mails an alle Ihre Empfehler.
+                    </p>
+                    <a href="/dashboard/broadcasts.php" class="btn btn-primary w-full">
+                        <i class="fas fa-paper-plane mr-2"></i>
+                        Broadcasts verwalten
+                    </a>
+                </div>
+                <?php
+            }
+            ?>
+        </div>
+        
+        <!-- Website Widget -->
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+            <?php 
+            $widgetModulePath = __DIR__ . "/../../includes/components/dashboard-modules/website_widget.php";
+            if (file_exists($widgetModulePath)) {
+                include $widgetModulePath;
+            } else {
+                ?>
+                <div class="p-6">
+                    <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-2">
+                        <i class="fas fa-code text-primary-500 mr-2"></i>
+                        Website-Widget
+                    </h3>
+                    <p class="text-sm text-slate-600 dark:text-slate-400 mb-4">
+                        Binden Sie das Empfehlungsprogramm auf Ihrer Website ein.
+                    </p>
+                    <a href="/dashboard/api.php#widget" class="btn btn-primary w-full">
+                        <i class="fas fa-code mr-2"></i>
+                        Widget einrichten
+                    </a>
+                </div>
+                <?php
+            }
+            ?>
+        </div>
+        
+        <!-- API & Webhooks -->
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+            <?php 
+            $apiModulePath = __DIR__ . "/../../includes/components/dashboard-modules/api_access.php";
+            if (file_exists($apiModulePath)) {
+                include $apiModulePath;
+            } else {
+                ?>
+                <div class="p-6">
+                    <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-2">
+                        <i class="fas fa-plug text-primary-500 mr-2"></i>
+                        API & Webhooks
+                    </h3>
+                    <p class="text-sm text-slate-600 dark:text-slate-400 mb-4">
+                        Integrieren Sie Leadbusiness in Ihre Systeme.
+                    </p>
+                    <a href="/dashboard/api.php" class="btn btn-primary w-full">
+                        <i class="fas fa-book mr-2"></i>
+                        API-Dokumentation
+                    </a>
+                </div>
+                <?php
+            }
+            ?>
+        </div>
+    </div>
+    
+    <!-- E-Mail-Vorlagen (volle Breite - nur für Online-Businesses) -->
+    <?php if ($businessType === 'online' || $businessType === 'hybrid'): ?>
+    <div class="mt-4">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+            <?php 
+            $emailTemplatesPath = __DIR__ . "/../../includes/components/dashboard-modules/email_templates.php";
+            if (file_exists($emailTemplatesPath)) {
+                include $emailTemplatesPath;
+            } else {
+                ?>
+                <div class="p-6">
+                    <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-2">
+                        <i class="fas fa-envelope text-primary-500 mr-2"></i>
+                        E-Mail-Vorlagen
+                    </h3>
+                    <p class="text-sm text-slate-600 dark:text-slate-400">
+                        Fertige Texte zum Kopieren und per E-Mail versenden.
+                    </p>
+                </div>
+                <?php
+            }
+            ?>
+        </div>
+    </div>
+    <?php endif; ?>
+    
+    <!-- Weitere Professional Links -->
+    <div class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
+        <a href="/dashboard/leads.php?export=1" class="flex items-center gap-2 p-3 bg-slate-100 dark:bg-slate-700/50 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-colors text-sm text-slate-700 dark:text-slate-300">
+            <i class="fas fa-download text-green-500"></i>
+            Lead-Export
+        </a>
+        <a href="/dashboard/webhooks.php" class="flex items-center gap-2 p-3 bg-slate-100 dark:bg-slate-700/50 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-colors text-sm text-slate-700 dark:text-slate-300">
+            <i class="fas fa-bolt text-purple-500"></i>
+            Webhooks
+        </a>
+        <a href="/dashboard/whitelabel.php" class="flex items-center gap-2 p-3 bg-slate-100 dark:bg-slate-700/50 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-colors text-sm text-slate-700 dark:text-slate-300">
+            <i class="fas fa-paint-brush text-pink-500"></i>
+            Whitelabel
+        </a>
+        <a href="/dashboard/domain.php" class="flex items-center gap-2 p-3 bg-slate-100 dark:bg-slate-700/50 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-colors text-sm text-slate-700 dark:text-slate-300">
+            <i class="fas fa-globe text-blue-500"></i>
+            Eigene Domain
+        </a>
+    </div>
+</div>
+<?php endif; ?>
+
 <!-- Upgrade-Hinweis für Starter -->
-<?php if ($customer['plan'] === 'starter' && !empty($dashboardLayout['upgrade_modules'])): ?>
-<div class="upgrade-cta bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-2xl p-6 border border-blue-200 dark:border-blue-800">
+<?php if ($customer['plan'] === 'starter'): ?>
+<div class="upgrade-cta bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-2xl p-6 border border-blue-200 dark:border-blue-800 mb-8">
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
             <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-1">
                 <i class="fas fa-rocket text-blue-500 mr-2"></i>
                 Mehr Funktionen freischalten
             </h3>
-            <p class="text-sm text-slate-600 dark:text-slate-300">
+            <p class="text-sm text-slate-600 dark:text-slate-300 mb-3">
                 <?php if ($businessType === 'offline'): ?>
                     Mit Professional: Druckvorlagen, Empfehler-Liste, detaillierte Statistiken und mehr.
                 <?php else: ?>
                     Mit Professional: E-Mail-Vorlagen, Website-Widget, detaillierte Analytics und mehr.
                 <?php endif; ?>
             </p>
+            <!-- Feature Preview -->
+            <div class="flex flex-wrap gap-2">
+                <?php 
+                $proFeatures = ['Broadcast E-Mails', 'Website-Widget', 'API & Webhooks', 'Lead-Export', 'Eigene Domain'];
+                foreach (array_slice($proFeatures, 0, 4) as $feature): 
+                ?>
+                <span class="inline-flex items-center px-2 py-1 bg-white/50 dark:bg-slate-800/50 rounded text-xs text-slate-600 dark:text-slate-300">
+                    <i class="fas fa-lock text-slate-400 mr-1"></i>
+                    <?= $feature ?>
+                </span>
+                <?php endforeach; ?>
+            </div>
         </div>
         <a href="/dashboard/upgrade.php" class="btn btn-primary whitespace-nowrap">
             <i class="fas fa-arrow-up mr-2"></i>
@@ -457,6 +615,28 @@ endif;
                 ...data
             })
         }).catch(() => {});
+    }
+    
+    // Toast Funktion (falls nicht global vorhanden)
+    if (typeof window.showToast !== 'function') {
+        window.showToast = function(message, type = 'info') {
+            const colors = {
+                success: 'bg-green-500',
+                error: 'bg-red-500',
+                warning: 'bg-amber-500',
+                info: 'bg-blue-500'
+            };
+            
+            const toast = document.createElement('div');
+            toast.className = `fixed bottom-4 right-4 ${colors[type] || colors.info} text-white px-4 py-2 rounded-lg shadow-lg z-50 animate-fade-in`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.add('animate-fade-out');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        };
     }
 </script>
 
