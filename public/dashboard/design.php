@@ -10,6 +10,10 @@ require_once __DIR__ . '/../../includes/Auth.php';
 require_once __DIR__ . '/../../includes/helpers.php';
 require_once __DIR__ . '/../../includes/services/BackgroundService.php';
 
+// Auth und Database haben Namespace, BackgroundService nicht
+use Leadbusiness\Auth;
+use Leadbusiness\Database;
+
 $auth = new Auth();
 if (!$auth->isLoggedIn() || $auth->getUserType() !== 'customer') {
     redirect('/dashboard/login.php');
@@ -49,7 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $updateData['custom_background_url'] = null;
     }
     
-    if ($customer['plan'] === 'professional' && !empty($_FILES['custom_background']['tmp_name'])) {
+    if (in_array($customer['plan'], ['professional', 'enterprise']) && !empty($_FILES['custom_background']['tmp_name'])) {
         $file = $_FILES['custom_background'];
         $allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
         
@@ -169,7 +173,7 @@ include __DIR__ . '/../../includes/dashboard-header.php';
             <input type="file" name="custom_background" accept="image/jpeg,image/png,image/webp"
                    class="w-full px-4 py-2 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-white">
             <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Empfohlen: 1920x1080px, max. 5MB, JPG/PNG/WebP</p>
-            <?php if ($customer['custom_background_url']): ?>
+            <?php if (!empty($customer['custom_background_url'])): ?>
             <p class="text-xs text-green-600 dark:text-green-400 mt-1">
                 <i class="fas fa-check-circle mr-1"></i>
                 Eigenes Bild aktiv: <?= e(basename($customer['custom_background_url'])) ?>
