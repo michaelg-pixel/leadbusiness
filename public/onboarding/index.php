@@ -559,7 +559,8 @@ $initialLevels = 3;
                             <div class="flex items-start gap-3 text-left mb-6">
                                 <input type="checkbox" name="accept_terms" id="acceptTerms" required class="mt-1 w-5 h-5 text-primary-500 rounded border-gray-300 dark:border-slate-600 focus:ring-primary-500 bg-white dark:bg-slate-700">
                                 <label for="acceptTerms" class="text-xs sm:text-sm text-gray-600 dark:text-slate-300">
-                                    Ich akzeptiere die <a href="/agb" target="_blank" class="text-primary-500 hover:underline">AGB</a> 
+                                    Ich akzeptiere die <a href="/agb" target="_blank" class="text-primary-500 hover:underline">AGB</a>, 
+                                    den <a href="/avv" target="_blank" class="text-primary-500 hover:underline">Auftragsverarbeitungsvertrag (AVV)</a> 
                                     und habe die <a href="/datenschutz" target="_blank" class="text-primary-500 hover:underline">Datenschutzerklärung</a> gelesen.
                                 </label>
                             </div>
