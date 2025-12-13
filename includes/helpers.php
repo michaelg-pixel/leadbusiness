@@ -478,6 +478,197 @@ function getPlanFeatures(string $plan): array
 }
 
 /**
+ * =====================================================
+ * PLAN-LIMITS SYSTEM
+ * =====================================================
+ * Zentrale Verwaltung aller Plan-basierten Limits
+ */
+
+/**
+ * Alle Plan-Limits abrufen
+ * 
+ * @return array Komplette Limits für alle Pläne
+ */
+function getPlanLimits(): array
+{
+    return [
+        'starter' => [
+            'max_leads' => 200,
+            'max_rewards' => 3,
+            'max_campaigns' => 1,
+            'max_badges' => 5,
+            'weekly_digest' => false,
+            'broadcast_emails' => false,
+            'custom_background' => false,
+            'lead_export' => false,
+            'webhooks_api' => false,
+            'embed_widget' => false,
+            'remove_branding' => false,
+            'custom_domain' => false,
+            'priority_support' => false,
+            'gamification_extended' => false,
+        ],
+        'professional' => [
+            'max_leads' => 5000,
+            'max_rewards' => 5,
+            'max_campaigns' => 999,
+            'max_badges' => 9,
+            'weekly_digest' => true,
+            'broadcast_emails' => true,
+            'custom_background' => true,
+            'lead_export' => true,
+            'webhooks_api' => true,
+            'embed_widget' => true,
+            'remove_branding' => true,
+            'custom_domain' => true, // Gegen Aufpreis
+            'priority_support' => true,
+            'gamification_extended' => true,
+        ],
+        'enterprise' => [
+            'max_leads' => 999999,
+            'max_rewards' => 10,
+            'max_campaigns' => 999,
+            'max_badges' => 99,
+            'weekly_digest' => true,
+            'broadcast_emails' => true,
+            'custom_background' => true,
+            'lead_export' => true,
+            'webhooks_api' => true,
+            'embed_widget' => true,
+            'remove_branding' => true,
+            'custom_domain' => true,
+            'priority_support' => true,
+            'gamification_extended' => true,
+            'dedicated_support' => true,
+            'custom_integrations' => true,
+        ],
+    ];
+}
+
+/**
+ * Limits für einen bestimmten Plan abrufen
+ * 
+ * @param string $plan Plan-Name (starter, professional, enterprise)
+ * @return array Limits für den Plan
+ */
+function getPlanLimit(string $plan): array
+{
+    $limits = getPlanLimits();
+    return $limits[$plan] ?? $limits['starter'];
+}
+
+/**
+ * Bestimmtes Limit für einen Plan abrufen
+ * 
+ * @param string $plan Plan-Name
+ * @param string $key Limit-Schlüssel (z.B. 'max_rewards')
+ * @param mixed $default Standardwert falls nicht gefunden
+ * @return mixed Limit-Wert
+ */
+function getPlanLimitValue(string $plan, string $key, mixed $default = null): mixed
+{
+    $limits = getPlanLimit($plan);
+    return $limits[$key] ?? $default;
+}
+
+/**
+ * Prüfen ob ein Feature für einen Plan verfügbar ist
+ * 
+ * @param string $plan Plan-Name
+ * @param string $feature Feature-Schlüssel
+ * @return bool True wenn verfügbar
+ */
+function hasPlanFeature(string $plan, string $feature): bool
+{
+    return (bool) getPlanLimitValue($plan, $feature, false);
+}
+
+/**
+ * Prüfen ob ein numerisches Limit erreicht ist
+ * 
+ * @param string $plan Plan-Name
+ * @param string $limitKey Limit-Schlüssel
+ * @param int $currentValue Aktueller Wert
+ * @return bool True wenn Limit erreicht
+ */
+function isPlanLimitReached(string $plan, string $limitKey, int $currentValue): bool
+{
+    $maxValue = getPlanLimitValue($plan, $limitKey, 0);
+    return $currentValue >= $maxValue;
+}
+
+/**
+ * Verbleibende Anzahl bis zum Limit berechnen
+ * 
+ * @param string $plan Plan-Name
+ * @param string $limitKey Limit-Schlüssel
+ * @param int $currentValue Aktueller Wert
+ * @return int Verbleibende Anzahl (0 wenn Limit erreicht)
+ */
+function getPlanLimitRemaining(string $plan, string $limitKey, int $currentValue): int
+{
+    $maxValue = getPlanLimitValue($plan, $limitKey, 0);
+    return max(0, $maxValue - $currentValue);
+}
+
+/**
+ * Upgrade-Empfehlung für ein Limit abrufen
+ * 
+ * @param string $currentPlan Aktueller Plan
+ * @param string $limitKey Limit-Schlüssel das erhöht werden soll
+ * @return array|null Upgrade-Info oder null wenn bereits Enterprise
+ */
+function getUpgradeRecommendation(string $currentPlan, string $limitKey): ?array
+{
+    $planOrder = ['starter', 'professional', 'enterprise'];
+    $currentIndex = array_search($currentPlan, $planOrder);
+    
+    if ($currentIndex === false || $currentIndex >= count($planOrder) - 1) {
+        return null; // Bereits auf höchstem Plan
+    }
+    
+    $nextPlan = $planOrder[$currentIndex + 1];
+    $currentLimit = getPlanLimitValue($currentPlan, $limitKey);
+    $nextLimit = getPlanLimitValue($nextPlan, $limitKey);
+    
+    if ($nextLimit === $currentLimit) {
+        return null; // Kein Vorteil durch Upgrade
+    }
+    
+    return [
+        'next_plan' => $nextPlan,
+        'next_plan_name' => ucfirst($nextPlan),
+        'current_limit' => $currentLimit,
+        'next_limit' => $nextLimit,
+        'improvement' => is_numeric($nextLimit) && is_numeric($currentLimit) 
+            ? $nextLimit - $currentLimit 
+            : ($nextLimit ? 'Verfügbar' : 'Nicht verfügbar'),
+    ];
+}
+
+/**
+ * Plan-Vergleichstabelle für eine Limit-Kategorie
+ * 
+ * @param string $limitKey Limit-Schlüssel
+ * @return array Vergleich aller Pläne
+ */
+function getPlanComparison(string $limitKey): array
+{
+    $limits = getPlanLimits();
+    $comparison = [];
+    
+    foreach ($limits as $plan => $planLimits) {
+        $comparison[$plan] = [
+            'plan' => $plan,
+            'plan_name' => ucfirst($plan),
+            'value' => $planLimits[$limitKey] ?? null,
+        ];
+    }
+    
+    return $comparison;
+}
+
+/**
  * Branche-Name abrufen
  */
 function getIndustryName(string $key): string
