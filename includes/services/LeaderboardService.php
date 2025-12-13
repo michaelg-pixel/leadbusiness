@@ -3,7 +3,10 @@
  * Leadbusiness - Leaderboard Service
  * 
  * Verwaltet das Leaderboard/Rangliste der Top-Empfehler
+ * PHP 7.4+ kompatibel
  */
+
+use Leadbusiness\Database;
 
 class LeaderboardService {
     
