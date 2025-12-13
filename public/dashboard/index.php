@@ -11,6 +11,10 @@ require_once __DIR__ . '/../../includes/Auth.php';
 require_once __DIR__ . '/../../includes/SetupWizard.php';
 require_once __DIR__ . '/../../includes/helpers.php';
 
+use Leadbusiness\Auth;
+use Leadbusiness\Database;
+use Leadbusiness\SetupWizard;
+
 // Auth prüfen
 $auth = new Auth();
 if (!$auth->isLoggedIn() || $auth->getUserType() !== 'customer') {
@@ -22,7 +26,7 @@ $customerId = $customer['id'];
 $db = Database::getInstance();
 
 // Setup-Wizard initialisieren
-$setupWizard = new \Leadbusiness\SetupWizard($customer);
+$setupWizard = new SetupWizard($customer);
 
 // Statistiken laden
 $stats = $db->fetch(
