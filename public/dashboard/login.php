@@ -1,7 +1,7 @@
 <?php
 /**
  * Leadbusiness - Kunden Login
- * Mit Dark/Light Mode
+ * Mit Dark/Light Mode und Auto-Login via Token (für Onboarding)
  */
 
 require_once __DIR__ . '/../../config/database.php';
@@ -15,14 +15,71 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 $auth = new Auth();
+$db = \Leadbusiness\Database::getInstance();
 
 // Bereits eingeloggt?
 if ($auth->isLoggedIn() && $auth->getUserType() === 'customer') {
-    redirect('/dashboard');
+    $welcomeParam = isset($_GET['welcome']) ? '?welcome=1' : '';
+    redirect('/dashboard' . $welcomeParam);
 }
 
 $error = '';
 $success = '';
+
+// ========================================
+// AUTO-LOGIN via Token (nach Onboarding)
+// ========================================
+if (!empty($_GET['auto'])) {
+    $autoToken = trim($_GET['auto']);
+    
+    // Token in DB suchen
+    $customer = $db->fetch(
+        "SELECT id, email, company_name, auto_login_expires 
+         FROM customers 
+         WHERE auto_login_token = ? AND auto_login_token IS NOT NULL",
+        [$autoToken]
+    );
+    
+    if ($customer) {
+        // Token Ablauf prüfen
+        $expiresAt = strtotime($customer['auto_login_expires'] ?? '');
+        
+        if ($expiresAt && $expiresAt > time()) {
+            // Token gültig - Kunde einloggen
+            $_SESSION['customer_id'] = $customer['id'];
+            $_SESSION['customer_email'] = $customer['email'];
+            $_SESSION['user_type'] = 'customer';
+            
+            // Token invalidieren (one-time use)
+            $db->update('customers', [
+                'auto_login_token' => null,
+                'auto_login_expires' => null
+            ], 'id = ?', [$customer['id']]);
+            
+            // Erfolgs-Logging
+            error_log("Auto-Login successful for customer ID: {$customer['id']}");
+            
+            // Weiterleitung zum Dashboard
+            $welcomeParam = isset($_GET['welcome']) ? '?welcome=1' : '';
+            redirect('/dashboard' . $welcomeParam);
+            exit;
+        } else {
+            // Token abgelaufen
+            error_log("Auto-Login token expired for customer ID: {$customer['id']}");
+            $error = 'Der Login-Link ist abgelaufen. Bitte melden Sie sich mit Ihren Zugangsdaten an.';
+            
+            // Abgelaufenen Token löschen
+            $db->update('customers', [
+                'auto_login_token' => null,
+                'auto_login_expires' => null
+            ], 'id = ?', [$customer['id']]);
+        }
+    } else {
+        // Ungültiger Token
+        error_log("Invalid auto-login token attempted: " . substr($autoToken, 0, 10) . "...");
+        $error = 'Ungültiger Login-Link. Bitte melden Sie sich mit Ihren Zugangsdaten an.';
+    }
+}
 
 // Login verarbeiten
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -53,6 +110,9 @@ if (empty($_SESSION['csrf_token'])) {
 
 // Theme aus Cookie
 $theme = $_COOKIE['dashboard_theme'] ?? 'light';
+
+// Welcome-Hinweis wenn von Onboarding kommend aber Token ungültig
+$showWelcomeHint = isset($_GET['welcome']) && $error;
 ?>
 <!DOCTYPE html>
 <html lang="de" class="<?= $theme === 'dark' ? 'dark' : '' ?>">
@@ -116,12 +176,21 @@ $theme = $_COOKIE['dashboard_theme'] ?? 'light';
         <!-- Login Card -->
         <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-8">
             <h1 class="text-2xl font-bold text-slate-800 dark:text-white mb-2 text-center">Anmelden</h1>
-            <p class="text-slate-500 dark:text-slate-400 text-center mb-6">Willkommen zurück!</p>
+            <p class="text-slate-500 dark:text-slate-400 text-center mb-6">
+                <?= $showWelcomeHint ? 'Bitte melden Sie sich an, um Ihr Dashboard zu sehen.' : 'Willkommen zurück!' ?>
+            </p>
             
             <?php if ($error): ?>
             <div class="mb-6 p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 rounded-xl">
                 <i class="fas fa-exclamation-circle mr-2"></i>
                 <?= e($error) ?>
+            </div>
+            <?php endif; ?>
+            
+            <?php if ($showWelcomeHint): ?>
+            <div class="mb-6 p-4 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-300 rounded-xl">
+                <i class="fas fa-check-circle mr-2"></i>
+                Ihr Konto wurde erfolgreich erstellt! Melden Sie sich jetzt mit Ihrer E-Mail und dem gewählten Passwort an.
             </div>
             <?php endif; ?>
             
