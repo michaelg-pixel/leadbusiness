@@ -45,6 +45,15 @@ class Auth
         if (isset($_SESSION['user_type'], $_SESSION['user_id'])) {
             $this->loadUser($_SESSION['user_type'], $_SESSION['user_id']);
         }
+        
+        // Fallback: Alte Session-Variablen (customer_id)
+        if (!$this->user && isset($_SESSION['customer_id'])) {
+            $this->loadUser('customer', $_SESSION['customer_id']);
+            if ($this->user) {
+                $_SESSION['user_type'] = 'customer';
+                $_SESSION['user_id'] = $_SESSION['customer_id'];
+            }
+        }
     }
     
     /**
@@ -186,6 +195,12 @@ class Auth
         $_SESSION['created_at'] = time();
         $_SESSION['ip'] = $_SERVER['REMOTE_ADDR'] ?? '';
         
+        // Auch alte Session-Variablen für Kompatibilität
+        if ($type === 'customer') {
+            $_SESSION['customer_id'] = $id;
+            $_SESSION['customer_email'] = $this->user['email'] ?? '';
+        }
+        
         // In DB speichern
         $this->db->execute(
             "INSERT INTO sessions (session_id, user_type, user_id, ip_address, user_agent, expires_at)
@@ -279,6 +294,39 @@ class Auth
     public function getUser(): ?array
     {
         return $this->user;
+    }
+    
+    /**
+     * Aktuellen Kunden abrufen (Alias für getUser bei Kunden)
+     */
+    public function getCurrentCustomer(): ?array
+    {
+        if ($this->userType === 'customer') {
+            return $this->user;
+        }
+        return null;
+    }
+    
+    /**
+     * Aktuellen Lead abrufen
+     */
+    public function getCurrentLead(): ?array
+    {
+        if ($this->userType === 'lead') {
+            return $this->user;
+        }
+        return null;
+    }
+    
+    /**
+     * Aktuellen Admin abrufen
+     */
+    public function getCurrentAdmin(): ?array
+    {
+        if ($this->userType === 'admin') {
+            return $this->user;
+        }
+        return null;
     }
     
     /**
