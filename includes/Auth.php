@@ -3,6 +3,7 @@
  * Auth Klasse
  * 
  * Authentifizierung und Session-Management für Kunden, Leads und Admins.
+ * PHP 7.4+ kompatibel
  */
 
 namespace Leadbusiness;
@@ -58,15 +59,23 @@ class Auth
     
     /**
      * Benutzer aus DB laden
+     * PHP 7.4 kompatibel: switch statt match
      */
     private function loadUser(string $type, int $id): bool
     {
-        $table = match ($type) {
-            'customer' => 'customers',
-            'lead' => 'leads',
-            'admin' => 'admin_users',
-            default => null
-        };
+        switch ($type) {
+            case 'customer':
+                $table = 'customers';
+                break;
+            case 'lead':
+                $table = 'leads';
+                break;
+            case 'admin':
+                $table = 'admin_users';
+                break;
+            default:
+                $table = null;
+        }
         
         if (!$table) {
             return false;
@@ -460,15 +469,23 @@ class Auth
     
     /**
      * Zur Login-Seite weiterleiten
+     * PHP 7.4 kompatibel: switch statt match
      */
     private function redirectToLogin(?string $type): void
     {
-        $url = match ($type) {
-            'admin' => '/admin/login.php',
-            'customer' => '/dashboard/login.php',
-            'lead' => '/lead/',
-            default => '/dashboard/login.php'
-        };
+        switch ($type) {
+            case 'admin':
+                $url = '/admin/login.php';
+                break;
+            case 'customer':
+                $url = '/dashboard/login.php';
+                break;
+            case 'lead':
+                $url = '/lead/';
+                break;
+            default:
+                $url = '/dashboard/login.php';
+        }
         
         header("Location: {$url}");
         exit;
@@ -504,8 +521,10 @@ class Auth
     
     /**
      * Plan-Limit abrufen
+     * PHP 7.4 kompatibel: mixed Type Hint entfernt
+     * @return mixed
      */
-    public function getPlanLimit(string $limit): mixed
+    public function getPlanLimit(string $limit)
     {
         if (!$this->isCustomer()) {
             return null;
