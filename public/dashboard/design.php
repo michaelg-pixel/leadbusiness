@@ -10,10 +10,6 @@ require_once __DIR__ . '/../../includes/Auth.php';
 require_once __DIR__ . '/../../includes/helpers.php';
 require_once __DIR__ . '/../../includes/services/BackgroundService.php';
 
-use Leadbusiness\Auth;
-use Leadbusiness\Database;
-use Leadbusiness\BackgroundService;
-
 $auth = new Auth();
 if (!$auth->isLoggedIn() || $auth->getUserType() !== 'customer') {
     redirect('/dashboard/login.php');
@@ -114,7 +110,7 @@ include __DIR__ . '/../../includes/dashboard-header.php';
         <div class="absolute inset-0 bg-black/50 flex items-center justify-center">
             <div class="text-center text-white">
                 <div class="text-2xl font-bold mb-2"><?= e($customer['company_name']) ?></div>
-                <a href="https://<?= e($customer['subdomain']) ?>.empfohlen.de" target="_blank" 
+                <a href="https://<?= e($customer['subdomain']) ?>.empfehlungen.cloud" target="_blank" 
                    class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium"
                    style="background-color: <?= e($customer['primary_color']) ?>;">
                     <i class="fas fa-external-link-alt"></i>Live-Seite ansehen
@@ -131,7 +127,15 @@ include __DIR__ . '/../../includes/dashboard-header.php';
         <h3 class="font-semibold text-slate-800 dark:text-white mb-4">
             <i class="fas fa-image text-primary-500 mr-2"></i>Hintergrundbild wählen
         </h3>
-        <p class="text-sm text-slate-500 dark:text-slate-400 mb-4">Passend zu Ihrer Branche: <?= ucfirst($customer['industry']) ?></p>
+        
+        <?php if (empty($backgrounds) && empty($allgemeinBackgrounds)): ?>
+        <div class="text-center py-8 text-slate-500 dark:text-slate-400">
+            <i class="fas fa-image text-4xl mb-3 opacity-50"></i>
+            <p>Noch keine Hintergrundbilder für Ihre Branche verfügbar.</p>
+            <p class="text-sm mt-1">Kontaktieren Sie uns, um passende Bilder hinzuzufügen.</p>
+        </div>
+        <?php else: ?>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mb-4">Passend zu Ihrer Branche: <?= ucfirst(e($customer['industry'] ?? 'Allgemein')) ?></p>
         
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
             <?php foreach ($backgrounds as $bg): ?>
@@ -154,8 +158,9 @@ include __DIR__ . '/../../includes/dashboard-header.php';
             </label>
             <?php endforeach; ?>
         </div>
+        <?php endif; ?>
         
-        <?php if ($customer['plan'] === 'professional'): ?>
+        <?php if (in_array($customer['plan'], ['professional', 'enterprise'])): ?>
         <div class="mt-6 p-4 bg-slate-50 dark:bg-slate-700/50 rounded-xl">
             <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                 <i class="fas fa-crown text-amber-500 mr-1"></i>
@@ -176,6 +181,7 @@ include __DIR__ . '/../../includes/dashboard-header.php';
             <p class="text-amber-800 dark:text-amber-300 text-sm">
                 <i class="fas fa-lock mr-2"></i>
                 <strong>Professional-Feature:</strong> Eigene Hintergrundbilder hochladen.
+                <a href="/dashboard/upgrade.php" class="underline ml-1">Jetzt upgraden</a>
             </p>
         </div>
         <?php endif; ?>
@@ -198,7 +204,7 @@ include __DIR__ . '/../../includes/dashboard-header.php';
         <!-- Quick Colors -->
         <div class="flex flex-wrap gap-2">
             <?php 
-            $quickColors = ['#0ea5e9', '#0284c7', '#0369a1', '#10b981', '#059669', '#f59e0b', '#ef4444', '#8b5cf6'];
+            $quickColors = ['#0ea5e9', '#0284c7', '#0369a1', '#10b981', '#059669', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#64748b'];
             foreach ($quickColors as $color): 
             ?>
             <button type="button" onclick="setColor('<?= $color ?>')" 
@@ -223,6 +229,18 @@ include __DIR__ . '/../../includes/dashboard-header.php';
         document.getElementById('colorPicker').value = color;
         document.getElementById('colorText').value = color;
     }
+    
+    // Radio-Button Klick-Feedback
+    document.querySelectorAll('input[name="background_id"]').forEach(function(radio) {
+        radio.addEventListener('change', function() {
+            document.querySelectorAll('input[name="background_id"]').forEach(function(r) {
+                r.closest('label').classList.remove('border-primary-500', 'ring-2', 'ring-primary-500');
+                r.closest('label').classList.add('border-transparent');
+            });
+            this.closest('label').classList.remove('border-transparent');
+            this.closest('label').classList.add('border-primary-500', 'ring-2', 'ring-primary-500');
+        });
+    });
 </script>
 
 <?php include __DIR__ . '/../../includes/dashboard-footer.php'; ?>
