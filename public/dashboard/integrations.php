@@ -12,6 +12,10 @@ require_once __DIR__ . '/../../includes/Auth.php';
 require_once __DIR__ . '/../../includes/SetupWizard.php';
 require_once __DIR__ . '/../../includes/helpers.php';
 
+use Leadbusiness\Auth;
+use Leadbusiness\Database;
+use Leadbusiness\SetupWizard;
+
 $auth = new Auth();
 if (!$auth->isLoggedIn() || $auth->getUserType() !== 'customer') {
     redirect('/dashboard/login.php');
@@ -21,13 +25,11 @@ $customer = $auth->getCurrentCustomer();
 $customerId = $customer['id'];
 $db = Database::getInstance();
 
-// Setup-Wizard: Schritt als erledigt markieren wenn Seite besucht wird
-$setupWizard = new \Leadbusiness\SetupWizard($customer);
+$setupWizard = new SetupWizard($customer);
 
 $message = '';
 $messageType = '';
 
-// Form verarbeiten
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
     
@@ -38,7 +40,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $tagId = $_POST['tag_id'] ?? '';
         
         if (empty($emailTool) || $emailTool === 'none') {
-            // Tool entfernen
             $db->execute(
                 "UPDATE customers SET email_tool = NULL, email_tool_api_key = NULL, email_tool_settings = NULL WHERE id = ?",
                 [$customerId]
@@ -46,7 +47,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $message = 'E-Mail-Tool-Verbindung wurde entfernt.';
             $messageType = 'success';
         } else {
-            // Tool speichern
             $settings = json_encode([
                 'api_secret' => $apiSecret,
                 'tag_id' => $tagId
@@ -59,11 +59,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $message = 'E-Mail-Tool wurde erfolgreich verbunden.';
             $messageType = 'success';
             
-            // Setup-Wizard aktualisieren
             $setupWizard->markAsReviewed('email_tool');
         }
         
-        // Kunde neu laden
         $customer = $db->fetch("SELECT * FROM customers WHERE id = ?", [$customerId]);
     }
 }
@@ -124,7 +122,6 @@ include __DIR__ . '/../../includes/dashboard-header.php';
 
 <div class="max-w-4xl mx-auto">
     
-    <!-- Header -->
     <div class="mb-8">
         <h1 class="text-2xl font-bold text-slate-800 dark:text-white mb-2">
             <i class="fas fa-plug text-primary-500 mr-2"></i>Integrationen
@@ -138,12 +135,11 @@ include __DIR__ . '/../../includes/dashboard-header.php';
     <div class="mb-6 p-4 rounded-xl <?= $messageType === 'success' ? 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800' : 'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800' ?>">
         <div class="flex items-center gap-2">
             <i class="fas <?= $messageType === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle' ?>"></i>
-            <?= htmlspecialchars($message) ?>
+            <?= e($message) ?>
         </div>
     </div>
     <?php endif; ?>
     
-    <!-- Info Box -->
     <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-2xl p-6 mb-8">
         <div class="flex items-start gap-4">
             <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center text-blue-500 flex-shrink-0">
@@ -159,7 +155,6 @@ include __DIR__ . '/../../includes/dashboard-header.php';
         </div>
     </div>
     
-    <!-- Current Connection -->
     <?php if ($currentTool && isset($emailTools[$currentTool])): ?>
     <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-2xl p-6 mb-8">
         <div class="flex items-start justify-between gap-4">
@@ -168,7 +163,7 @@ include __DIR__ . '/../../includes/dashboard-header.php';
                     <i class="fas fa-check-circle text-xl"></i>
                 </div>
                 <div>
-                    <h3 class="font-semibold text-green-800 dark:text-green-200">Verbunden mit <?= htmlspecialchars($emailTools[$currentTool]['name']) ?></h3>
+                    <h3 class="font-semibold text-green-800 dark:text-green-200">Verbunden mit <?= e($emailTools[$currentTool]['name']) ?></h3>
                     <p class="text-sm text-green-700 dark:text-green-300 mt-1">
                         Neue Empfehler werden automatisch synchronisiert.
                     </p>
@@ -185,7 +180,6 @@ include __DIR__ . '/../../includes/dashboard-header.php';
     </div>
     <?php endif; ?>
     
-    <!-- Email Tools Grid -->
     <div class="grid sm:grid-cols-2 gap-6 mb-8">
         <?php foreach ($emailTools as $toolKey => $tool): 
             $isConnected = ($currentTool === $toolKey);
@@ -205,14 +199,14 @@ include __DIR__ . '/../../includes/dashboard-header.php';
                 </div>
                 <div class="flex-1">
                     <div class="flex items-center gap-2">
-                        <h3 class="font-bold text-slate-800 dark:text-white"><?= htmlspecialchars($tool['name']) ?></h3>
+                        <h3 class="font-bold text-slate-800 dark:text-white"><?= e($tool['name']) ?></h3>
                         <?php if ($isConnected): ?>
                         <span class="px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 text-xs font-medium rounded-full">
                             Verbunden
                         </span>
                         <?php endif; ?>
                     </div>
-                    <p class="text-sm text-slate-500 dark:text-slate-400"><?= htmlspecialchars($tool['description']) ?></p>
+                    <p class="text-sm text-slate-500 dark:text-slate-400"><?= e($tool['description']) ?></p>
                 </div>
             </div>
             
@@ -231,7 +225,6 @@ include __DIR__ . '/../../includes/dashboard-header.php';
         <?php endforeach; ?>
     </div>
     
-    <!-- Webhook Info -->
     <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700">
         <h3 class="font-bold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
             <i class="fas fa-code text-primary-500"></i>
@@ -262,7 +255,6 @@ include __DIR__ . '/../../includes/dashboard-header.php';
     </div>
 </div>
 
-<!-- Modal für Tool-Konfiguration -->
 <div id="toolModal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center p-4">
     <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
         <div class="p-6 border-b border-slate-200 dark:border-slate-700">
@@ -278,10 +270,7 @@ include __DIR__ . '/../../includes/dashboard-header.php';
             <input type="hidden" name="action" value="save_email_tool">
             <input type="hidden" name="email_tool" id="modalToolKey" value="">
             
-            <div id="modalFields" class="space-y-4 mb-6">
-                <!-- Felder werden per JS eingefügt -->
-            </div>
-            
+            <div id="modalFields" class="space-y-4 mb-6"></div>
             <div id="modalDocsLink" class="mb-6"></div>
             
             <div class="flex gap-3">
@@ -310,7 +299,6 @@ function openToolModal(toolKey) {
     document.getElementById('modalTitle').textContent = tool.name + ' verbinden';
     document.getElementById('modalToolKey').value = toolKey;
     
-    // Felder generieren
     let fieldsHtml = '';
     tool.fields.forEach(field => {
         const value = field.name === 'api_key' ? currentApiKey : (currentSettings[field.name] || '');
@@ -328,7 +316,6 @@ function openToolModal(toolKey) {
     });
     document.getElementById('modalFields').innerHTML = fieldsHtml;
     
-    // Docs-Link
     document.getElementById('modalDocsLink').innerHTML = `
         <a href="${tool.docs_url}" target="_blank" rel="noopener" 
            class="text-sm text-primary-500 hover:text-primary-600">
@@ -345,7 +332,6 @@ function closeToolModal() {
     document.getElementById('toolModal').classList.remove('flex');
 }
 
-// Close modal on backdrop click
 document.getElementById('toolModal').addEventListener('click', function(e) {
     if (e.target === this) closeToolModal();
 });
