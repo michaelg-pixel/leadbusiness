@@ -37,7 +37,7 @@ $stats = $db->fetch(
         (SELECT SUM(clicks) FROM leads WHERE customer_id = ?) as total_clicks,
         (SELECT COUNT(*) FROM leads WHERE customer_id = ? AND DATE(created_at) = CURDATE()) as leads_today,
         (SELECT COUNT(*) FROM conversions c 
-         JOIN leads l ON c.referrer_id = l.id 
+         JOIN leads l ON c.lead_id = l.id 
          WHERE l.customer_id = ? AND c.status = 'confirmed' AND DATE(c.created_at) = CURDATE()) as conversions_today
     ",
     [$customerId, $customerId, $customerId, $customerId, $customerId, $customerId]
@@ -51,7 +51,7 @@ $recentActivity = $db->fetchAll(
      FROM leads l WHERE l.customer_id = ?
      UNION ALL
      SELECT 'conversion' as type, l.name, l.email, c.created_at, 'Erfolgreiche Empfehlung' as action
-     FROM conversions c JOIN leads l ON c.referrer_id = l.id
+     FROM conversions c JOIN leads l ON c.lead_id = l.id
      WHERE l.customer_id = ? AND c.status = 'confirmed'
      ORDER BY created_at DESC LIMIT 10",
     [$customerId, $customerId]
