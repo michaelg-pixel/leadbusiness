@@ -3,19 +3,18 @@
  * DisposableEmailBlocker
  * 
  * Blockiert Wegwerf-E-Mail-Adressen.
+ * PHP 7.4+ kompatibel - ohne Namespace für Konsistenz
  */
-
-namespace Leadbusiness\Security;
 
 use Leadbusiness\Database;
 
 class DisposableEmailBlocker
 {
-    private Database $db;
-    private array $inMemoryBlacklist = [];
+    private $db;
+    private $inMemoryBlacklist = [];
     
     // Bekannte große Wegwerf-E-Mail-Anbieter
-    private array $hardcodedDomains = [
+    private $hardcodedDomains = [
         'tempmail.com', 'temp-mail.org', 'guerrillamail.com',
         '10minutemail.com', 'mailinator.com', 'throwaway.email',
         'getnada.com', 'yopmail.com', 'trashmail.com', 'maildrop.cc',
@@ -24,7 +23,7 @@ class DisposableEmailBlocker
     ];
     
     // Verdächtige Muster in Domain-Namen
-    private array $suspiciousPatterns = [
+    private $suspiciousPatterns = [
         '/^temp/i',
         '/^trash/i', 
         '/^fake/i',
@@ -40,7 +39,7 @@ class DisposableEmailBlocker
     ];
     
     // Verdächtige Muster in lokalen E-Mail-Teilen
-    private array $suspiciousLocalPatterns = [
+    private $suspiciousLocalPatterns = [
         '/^test\d*$/i',
         '/^user\d+$/i',
         '/^admin\d*$/i',
@@ -65,15 +64,25 @@ class DisposableEmailBlocker
         try {
             $domains = $this->db->fetchAll("SELECT domain FROM email_domain_blacklist");
             $this->inMemoryBlacklist = array_column($domains, 'domain');
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->inMemoryBlacklist = [];
         }
     }
     
     /**
      * Prüfen ob E-Mail eine Wegwerf-Adresse ist
+     * Gibt true/false zurück für einfache Nutzung
      */
-    public function isDisposable(string $email): array
+    public function isDisposable(string $email): bool
+    {
+        $result = $this->checkDisposable($email);
+        return $result['is_disposable'];
+    }
+    
+    /**
+     * Detaillierte Prüfung ob E-Mail eine Wegwerf-Adresse ist
+     */
+    public function checkDisposable(string $email): array
     {
         $email = strtolower(trim($email));
         
@@ -122,8 +131,7 @@ class DisposableEmailBlocker
      */
     public function check(string $email): bool
     {
-        $result = $this->isDisposable($email);
-        return $result['is_disposable'];
+        return $this->isDisposable($email);
     }
     
     /**
@@ -202,7 +210,7 @@ class DisposableEmailBlocker
         $results = [];
         
         foreach ($emails as $email) {
-            $results[$email] = $this->isDisposable($email);
+            $results[$email] = $this->checkDisposable($email);
         }
         
         return $results;
