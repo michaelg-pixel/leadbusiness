@@ -3,16 +3,15 @@
  * BotDetector
  * 
  * Erkennt Bots anhand verschiedener Signale.
+ * PHP 7.4+ kompatibel - ohne Namespace für Konsistenz
  */
-
-namespace Leadbusiness\Security;
 
 use Leadbusiness\Database;
 
 class BotDetector
 {
-    private Database $db;
-    private array $config;
+    private $db;
+    private $config;
     
     public function __construct()
     {
