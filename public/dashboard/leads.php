@@ -9,6 +9,9 @@ require_once __DIR__ . '/../../includes/Database.php';
 require_once __DIR__ . '/../../includes/Auth.php';
 require_once __DIR__ . '/../../includes/helpers.php';
 
+use Leadbusiness\Auth;
+use Leadbusiness\Database;
+
 $auth = new Auth();
 if (!$auth->isLoggedIn() || $auth->getUserType() !== 'customer') {
     redirect('/dashboard/login.php');
