@@ -8,6 +8,11 @@
  * URL-Struktur:
  * - / oder /r/ = Hauptseite (Anmeldung als Empfehler)
  * - /r/{code} = Empfehlungslink (trackt Klick, zeigt Anmeldeformular)
+ * 
+ * Subdomain-Quellen (in Prioritätsreihenfolge):
+ * 1. $_SERVER['LEADBUSINESS_SUBDOMAIN'] - vom Hauptrouter (index.php)
+ * 2. HTTP Host Header - direkte Subdomain-Aufrufe
+ * 3. $_GET['subdomain'] - lokale Entwicklung
  */
 
 require_once __DIR__ . '/../../config/database.php';
@@ -26,18 +31,30 @@ use Leadbusiness\Database;
 
 $db = Database::getInstance();
 
-// Subdomain aus Host ermitteln
-$host = $_SERVER['HTTP_HOST'] ?? '';
+// =============================================================================
+// SUBDOMAIN ERMITTELN
+// =============================================================================
+
 $subdomain = '';
 
-// Subdomain extrahieren - unterstützt empfehlungen.cloud UND empfohlen.de
-if (preg_match('/^([a-z0-9-]+)\.(empfehlungen\.cloud|empfohlen\.de)$/i', $host, $matches)) {
-    $subdomain = strtolower($matches[1]);
+// Priorität 1: Vom Hauptrouter (index.php) über Server-Variable
+if (!empty($_SERVER['LEADBUSINESS_SUBDOMAIN'])) {
+    $subdomain = strtolower($_SERVER['LEADBUSINESS_SUBDOMAIN']);
 }
 
-// Fallback für lokale Entwicklung
+// Priorität 2: Direkt aus HTTP Host extrahieren
+if (empty($subdomain)) {
+    $host = $_SERVER['HTTP_HOST'] ?? '';
+    
+    // Subdomain extrahieren - unterstützt empfehlungen.cloud UND empfohlen.de
+    if (preg_match('/^([a-z0-9-]+)\.(empfehlungen\.cloud|empfohlen\.de)$/i', $host, $matches)) {
+        $subdomain = strtolower($matches[1]);
+    }
+}
+
+// Priorität 3: Fallback für lokale Entwicklung via GET-Parameter
 if (empty($subdomain) && isset($_GET['subdomain'])) {
-    $subdomain = strtolower($_GET['subdomain']);
+    $subdomain = strtolower(preg_replace('/[^a-z0-9-]/', '', $_GET['subdomain']));
 }
 
 // www oder leere Subdomain ausschließen
@@ -46,6 +63,10 @@ if (empty($subdomain) || $subdomain === 'www') {
     header('Location: https://empfehlungen.cloud');
     exit;
 }
+
+// =============================================================================
+// KUNDE UND KAMPAGNE LADEN
+// =============================================================================
 
 // Kunde anhand Subdomain laden
 $customer = $db->fetch(
@@ -85,6 +106,10 @@ $rewards = $db->fetchAll(
     [$campaign['id']]
 );
 
+// =============================================================================
+// REFERRAL-CODE VERARBEITEN
+// =============================================================================
+
 // Referral-Code aus URL extrahieren
 $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $referralCode = null;
@@ -122,6 +147,10 @@ if (preg_match('/\/r\/([A-Z0-9]+)/i', $path, $matches)) {
     }
 }
 
+// =============================================================================
+// SERVICES INITIALISIEREN
+// =============================================================================
+
 // Hintergrundbild URL
 $backgroundService = new BackgroundService();
 $backgroundUrl = $backgroundService->getCustomerBackgroundUrl($customer);
@@ -135,6 +164,10 @@ $leaderboard = [];
 if ($customer['leaderboard_enabled']) {
     $leaderboard = $leaderboardService->getAnonymizedLeaderboard($campaign['id'], 5);
 }
+
+// =============================================================================
+// SESSION UND SICHERHEIT
+// =============================================================================
 
 // Session fuer Form
 if (session_status() === PHP_SESSION_NONE) {
@@ -150,7 +183,10 @@ if (empty($_SESSION['csrf_token'])) {
 $botDetector = new BotDetector();
 $protectionFields = $botDetector->getAllProtectionFields();
 
-// Formular verarbeiten (AJAX)
+// =============================================================================
+// FORMULAR VERARBEITEN (AJAX)
+// =============================================================================
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isAjax()) {
     header('Content-Type: application/json');
     
@@ -285,6 +321,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isAjax()) {
         exit;
     }
 }
+
+// =============================================================================
+// SEITE RENDERN
+// =============================================================================
 
 // Impressum-Adresse zusammenbauen
 $impressumAddress = '';
